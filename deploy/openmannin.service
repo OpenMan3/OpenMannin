@@ -1,0 +1,92 @@
+[Unit]
+Description=OpenMannin - provenance-first Isle of Man map
+Documentation=https://github.com/OWNER/openmannin
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=openmannin
+Group=openmannin
+WorkingDirectory=/opt/openmannin
+
+Environment=NODE_ENV=production
+Environment=NEXT_TELEMETRY_DISABLED=1
+Environment=PORT=3000
+
+# systemd does not run ExecStart through a shell, so it uses neither your
+# interactive PATH nor a version manager shims. Pin a sane PATH and resolve node
+# through env, because where node lives depends on how it was installed:
+# /usr/bin/node from a distro package, /usr/local/bin/node from the official
+# tarball, or a mise/asdf/nvm path.
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Overrides for the above. Create /etc/default/openmannin (chmod 640, owned by
+# root) if node lives somewhere unusual, e.g.
+#   NODE_BIN=/home/user/.local/share/mise/installs/node/22.11.0/bin/node
+EnvironmentFile=-/etc/default/openmannin
+
+# AISSTREAM_API_KEY is intentionally absent.
+#
+# AISStream is graded NO-LICENCE and publishes no terms document, so /api/marine
+# answers 503 until a key exists. Setting it is the deliberate act of asserting
+# that permission has been granted. To add it later:
+#
+#   systemctl edit openmannin     # and add it under [Service]
+#   systemctl restart openmannin
+#
+# Put it in an EnvironmentFile= instead if you would rather not have it in the
+# unit: chmod 600 that file, owned by root.
+
+# Next's own entry point, invoked through node directly rather than via npm.
+# `npm run start` would work but adds a shell wrapper and a package.json lookup
+# for no benefit, and a wrong npm path fails far more confusingly than a missing
+# node does. systemd-analyze verify checks this resolves.
+ExecStart=/usr/bin/env node /opt/openmannin/node_modules/next/dist/bin/next start
+Restart=always
+RestartSec=5
+
+# ---- hardening ------------------------------------------------------------
+# The app only ever needs to read its own directory and reach the network.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ReadWritePaths=/opt/openmannin
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+
+# The tile proxy makes outbound requests, so egress must NOT be blocked.
+# Note the cost: every basemap switch pulls ~20 OpenTopoMap tiles through this
+# host. Cached a week client-side, so steady-state is low, but a cold cache on a
+# busy page is not.
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=openmannin
+
+[Install]
+WantedBy=multi-user.target
+
+# ---- first install ---------------------------------------------------------
+#   sudo useradd --system --home /opt/openmannin --shell /usr/sbin/nologin openmannin
+#   sudo -u openmannin git clone <repo> /opt/openmannin
+#   cd /opt/openmannin
+#   sudo -u openmannin npm ci
+#   sudo -u openmannin npm run ingest:all      # no map data is committed
+#   sudo -u openmannin npm run build
+#   sudo cp deploy/openmannin.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now openmannin
+#   curl -s localhost:3000/api/health | python3 -m json.tool
+#
+# The ingest step is the fragile one: it calls Overpass, CelesTrak and gov.im,
+# all of which rate-limit. If it fails, re-run it rather than deploying.
+#
+# Upgrading: repeat the npm ci / ingest / build steps, then
+#   sudo systemctl restart openmannin

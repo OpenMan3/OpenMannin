@@ -28,7 +28,17 @@
 # ---------------------------------------------------------------------------
 
 # ---- deps -------------------------------------------------------------------
-FROM node:22-alpine AS deps
+# Node version used by every stage. Next 16 requires >=20.9.0.
+#
+# DISCLOSED MISMATCH: local development and the checks in scripts/ were run on
+# Node 26, while the default here is 22 LTS. Nothing in this app uses a
+# Node-26-only API, and 22 satisfies Next's floor, but "validated on X,
+# deployed on Y" is precisely the gap that hid the MapLibre worker bug and the
+# attribution bug. If you can test on 22, do. Otherwise build with
+# --build-arg NODE_VERSION=26-alpine to deploy exactly what was verified.
+ARG NODE_VERSION=22-alpine
+
+FROM node:${NODE_VERSION} AS deps
 WORKDIR /app
 # libc6-compat is required by satellite.js's WASM calculator on musl.
 RUN apk add --no-cache libc6-compat
@@ -36,7 +46,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 # ---- build: compile and generate the data -----------------------------------
-FROM node:22-alpine AS build
+FROM node:${NODE_VERSION} AS build
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 COPY --from=deps /app/node_modules ./node_modules
@@ -59,7 +69,7 @@ RUN node -e "const m=require('./public/data/manifest.json'); const absent=m.abse
 RUN npm run build
 
 # ---- runtime ----------------------------------------------------------------
-FROM node:22-alpine AS runtime
+FROM node:${NODE_VERSION} AS runtime
 WORKDIR /app
 RUN apk add --no-cache libc6-compat && addgroup -g 1001 -S mannin && adduser -S -u 1001 -G mannin mannin
 

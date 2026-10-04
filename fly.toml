@@ -1,0 +1,66 @@
+# Fly.io deployment for OpenMannin.
+#
+#   fly launch --no-deploy        (first time, to create the app)
+#   fly deploy
+#   fly secrets set AISSTREAM_API_KEY=...    # only once permission exists
+#
+# WHY FLY AND NOT A PAAS. The AIS route holds one upstream WebSocket to
+# AISStream and fans it out in-process. That needs a long-lived process, which
+# serverless-style platforms do not give you. Everything else on this app works
+# fine on Vercel; AIS is the deciding factor.
+#
+# NOTE ON DATA. public/data/*.geojson is gitignored, so a Fly build starts with
+# no map data. The Dockerfile generates it inside the image. Fly builds Docker,
+# so this file works as-is - but that means EVERY deploy re-runs ingest against
+# Overpass, CelesTrak and gov.im, all of which rate-limit. If deploys start
+# failing for no code reason, that is why. See "Bake the data in" in DEPLOY.md.
+
+app = "openmannin"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  NEXT_TELEMETRY_DISABLED = "1"
+  PORT = "3000"
+
+# AISSTREAM_API_KEY is intentionally NOT set here.
+#
+# AISStream is graded NO-LICENCE and publishes no terms document, so /api/marine
+# returns 503 until a key exists. Setting it is the deliberate act of asserting
+# that permission has been granted - do not set it to silence a warning.
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # Never let a deploy idle out: cold starts mean the MapLibre worker and the
+  # CelesTrak TLE fetch both have to happen on the first request, and the tile
+  # proxy has no cache in front of it.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 25
+    hard_limit = 50
+
+  # The map is useless without its worker and its data, and both are generated.
+  # Failing the health check pulls the machine out of rotation rather than
+  # serving a blank island.
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+
+# Data volume: not needed, public/data is baked into the image rather than
+# persisted. A volume would be wrong here - the data is regenerated wholesale on
+# each build, not mutated in place.

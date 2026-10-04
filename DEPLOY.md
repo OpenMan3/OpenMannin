@@ -76,14 +76,22 @@ docker build --build-arg SKIP_INGEST=1 -t openmannin .
 
 ## Option B: Fly.io
 
+`fly.toml` is committed and validated (parses as TOML, health check path and
+machine settings confirmed).
+
 ```bash
-fly launch --now --build-only=false
-fly secrets set AISSTREAM_API_KEY=...   # only once you have permission
+fly launch --no-deploy      # first time only, to create the app
 fly deploy
+fly secrets set AISSTREAM_API_KEY=...   # only once you have permission
+fly curl localhost:3000/api/health
 ```
 
-Add a `fly.toml` with `http_service` on port 3000. Long-running processes, so
-the AIS socket survives.
+Two deliberate settings: `auto_stop_machines = "off"` with
+`min_machines_running = 1`, because a cold start means the MapLibre worker and
+the CelesTrak TLE fetch both happen on the first request and there is no cache in
+front of the tile proxy; and the health check wired to `/api/health`, so a
+deploy that comes up without its worker or data is pulled from rotation instead
+of serving a blank island.
 
 ## Option C: Vercel
 
@@ -101,16 +109,78 @@ Two things to handle:
 
 ## Option D: Plain VPS
 
+`deploy/openmannin.service` (systemd) and `deploy/nginx.conf` are committed.
+
 ```bash
-git clone <repo> && cd openmannin
-npm ci
-npm run ingest:all
-npm run build
-npm run start        # or systemd / pm2 / nginx in front
+sudo useradd --system --home /opt/openmannin --shell /usr/sbin/nologin openmannin
+sudo -u openmannin git clone <repo> /opt/openmannin
+cd /opt/openmannin
+sudo -u openmannin npm ci
+sudo -u openmannin npm run ingest:all      # no map data is committed
+sudo -u openmannin npm run build
+
+sudo cp deploy/openmannin.service /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now openmannin
+
+sudo cp deploy/nginx.conf /etc/nginx/sites-available/openmannin
+sudo ln -s /etc/nginx/sites-available/openmannin /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
 ```
 
-Simplest to reason about, and the only option with no platform policy in the
-way. Put nginx in front for TLS.
+The systemd unit passes `systemd-analyze verify`. That check earned its keep: it
+caught a hardcoded `ExecStart=/usr/bin/npm`, which would have left the service
+permanently dead on any machine where npm is not at `/usr/bin` - a mise, asdf or
+nvm install, or a tarball install. It now resolves node via `env` with a pinned
+PATH and an overridable `EnvironmentFile`. Verify it on your target host:
+
+```bash
+systemd-analyze verify /etc/systemd/system/openmannin.service
+```
+
+nginx needs this in the `http {}` block of your main `nginx.conf`:
+
+```nginx
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+```
+
+The nginx config is written but **not syntax-checked** - nginx is not installed
+in the environment where it was written. Run `nginx -t` before reloading.
+
+Two things the nginx config deliberately gets right, because getting either
+wrong reproduces a bug already seen during development:
+
+- `/maplibre-gl-worker.mjs` is forced to `application/javascript`. If a proxy
+  serves it as `text/html`, the browser refuses it and **every data layer
+  silently disappears** while the basemap keeps drawing.
+- `/api/marine` is **not** cached. It is a live vessel feed; caching it would
+  present stale positions as current.
+
+## What is verified, and what is not
+
+Honest accounting, because two of these gaps produced real bugs already.
+
+| Checked | How |
+|---|---|
+| `fly.toml` | parses as TOML; health path and machine settings read back |
+| `openmannin.service` | `systemd-analyze verify` passes clean |
+| `nginx.conf` | braces balanced and reviewed — **nginx not installed, so not syntax-checked** |
+| `docker-compose.yml` | parses as YAML |
+| `Dockerfile` | instructions and ARG wiring reviewed — **daemon unreachable, so the image was never built** |
+| Node version | **mismatch: validated on Node 26, image defaults to Node 22** |
+
+On that last row: Next 16 requires `>=20.9.0` so Node 22 is valid, and nothing
+here uses a Node-26-only API. But "validated on X, deployed on Y" is exactly
+the gap that hid the MapLibre worker bug and the attribution bug. The Dockerfile
+takes a build arg so you can pin what you actually tested:
+
+```bash
+docker build --build-arg NODE_VERSION=26-alpine -t openmannin .
+```
+
+If you can test on 22, prefer 22 LTS for production.
 
 ## Verifying a deploy
 

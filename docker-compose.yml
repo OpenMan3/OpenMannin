@@ -1,0 +1,45 @@
+# OpenMannin - local deployment. `docker compose up` builds and runs.
+#
+# The ingest step runs inside the image build. It calls third-party APIs
+# (Overpass, CelesTrak, gov.im) that rate-limit, so if a build fails here, check
+# whether it was ingest rather than anything to do with this configuration.
+# To build without network dependency, bake data in first:
+#
+#   npm run ingest:all && docker build --build-arg SKIP_INGEST=1 -t openmannin .
+
+services:
+  openmannin:
+    build:
+      context: .
+      args:
+        # Set to 1 only when public/data has already been populated.
+        SKIP_INGEST: "0"
+    image: openmannin
+    container_name: openmannin
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      # Deliberately NOT set. AISStream is graded NO-LICENCE and publishes no
+      # terms document; /api/marine returns 503 until you have permission and
+      # set this deliberately.
+      # AISSTREAM_API_KEY: ""
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then(r=>r.json()).then(j=>process.exit(j.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    # The tile proxy and the pass predictor both make outbound requests. No
+    # egress restriction is needed, but note the tile proxy bills bandwidth to
+    # whatever host this runs on.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

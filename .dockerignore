@@ -1,0 +1,29 @@
+# Build artefacts and dependencies are produced inside the image.
+node_modules
+.next
+.git
+.gitignore
+
+# Generated data is produced by the ingest step in the Dockerfile. Baking a
+# stale copy in would defeat the point, and would silently satisfy the
+# manifest check if someone passed SKIP_INGEST=1 by mistake.
+public/data/*.geojson
+public/data/manifest.json
+public/data/*.json
+
+# Copied from node_modules at build time by scripts/copy-maplibre-worker.mjs.
+public/maplibre-gl-worker.mjs
+public/maplibre-gl-shared.mjs
+
+# Local env and editor noise.
+.env
+.env.local
+.env.*.local
+.DS_Store
+*.swp
+.idea
+.vscode
+*.tsbuildinfo
+
+# Verification artefacts.
+smoke.png

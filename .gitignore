@@ -1,0 +1,51 @@
+# dependencies
+node_modules/
+
+# next.js build output
+.next/
+out/
+next-env.d.ts
+
+# typescript incremental build cache
+*.tsbuildinfo
+
+# env / local overrides
+.env
+.env.local
+.env.*.local
+
+# editor + os noise
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# ---------------------------------------------------------------------------
+# generated at build time by scripts/copy-maplibre-worker.mjs
+#
+# MapLibre cannot derive its worker URL once bundled (import.meta.url is not an
+# http URL, so new Worker("") resolves to "/" and the browser is served HTML).
+# The worker is copied into public/ verbatim at build time and MapView points at
+# it with setWorkerUrl(). Committing a vendored 500 kB library bundle would mean
+# tracking a file that changes on every maplibre-gl upgrade.
+public/maplibre-gl-worker.mjs
+public/maplibre-gl-shared.mjs
+
+# ---------------------------------------------------------------------------
+# generated data layers
+#
+# Everything under public/data/ is rebuilt by `npm run ingest:all`, which is the
+# documented and reproducible path. Every ingest run rewrites all 38 layers plus
+# the manifest and the ingest reports with fresh timestamps, so committing them
+# would mean ~10 MB of pure diff churn on each refresh, and it would obscure
+# real changes in review.
+#
+# The generated files carry their own provenance inline (source, licence,
+# coordGrade, caveats) and the layer registry in src/lib/layers.ts records the
+# licence of every source. To commit the data instead, delete this block.
+#
+# Several layers are MANNGIS-derived and redistributed under OGL-derived terms;
+# that is a licensing decision for the project owner, not a build detail.
+public/data/
+# stray editor/agent backups
+*.bak

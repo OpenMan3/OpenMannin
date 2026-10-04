@@ -202,6 +202,13 @@ export function MapView({
 
       mapRef.current = map;
 
+      // Debug handle. Layer paint order is the kind of bug that is invisible
+      // to any check which only asks "does this layer exist" - an opaque raster
+      // basemap appended on top leaves every data layer present but hidden - so
+      // scripts/verify-basemap.mjs asserts against real style order via this.
+      // Named so it is obviously a debug surface rather than app state.
+      (window as unknown as { __openmanninMap?: unknown }).__openmanninMap = map;
+
       // Lets an ancestor panel ask the map to recentre without holding a ref to
       // the MapLibre instance, which is created asynchronously below.
       const onFlyTo = (e: Event) => {
@@ -355,7 +362,22 @@ export function MapView({
       tileSize: 256,
       attribution: bm.attribution,
     });
-    map.addLayer({ id: "basemap", type: "raster", source: "basemap" });
+
+    // The basemap MUST be re-inserted at the bottom of the layer stack.
+    // addLayer without a beforeId appends to the end, which would drop an
+    // opaque raster layer on top of every data layer and make the whole map
+    // look empty - and because the effect runs on both directions of the
+    // switch, swapping back would not recover it either. Only a refresh
+    // rebuilt the style with the basemap first, which is exactly the "it
+    // fixes itself if I reload" symptom.
+    const firstDataLayer = map
+      .getStyle()
+      .layers?.find((l) => l.id.startsWith("om-"))?.id;
+    map.addLayer(
+      { id: "basemap", type: "raster", source: "basemap" },
+      // Sit directly above the background and below everything we drew.
+      firstDataLayer ?? (map.getLayer("background") ? "background" : undefined),
+    );
 
     map.setMaxZoom(bm.maxzoom);
     void syncRef.current?.();

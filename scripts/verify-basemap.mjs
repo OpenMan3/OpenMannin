@@ -89,6 +89,68 @@ try {
   const tileErrors = errors.filter((e) => /api\/tiles\/opentopo/i.test(e));
   if (tileErrors.length) fails.push(`${tileErrors.length} opentopo tile error(s): ${tileErrors[0].slice(0, 140)}`);
 
+  // LAYER ORDER, not layer existence.
+  // addLayer without a beforeId appends to the end, putting an opaque raster
+  // basemap ON TOP of every data layer. Every layer still exists, so an
+  // existence check passes while the map looks empty - and because the effect
+  // runs in both directions, swapping back does not recover it. Only a refresh
+  // rebuilds the style with the basemap first, which is exactly the reported
+  // "it only fixes itself if I reload" symptom.
+  const orderProbe = `(() => {
+    const m = window.__openmanninMap;
+    if (!m) return { error: "no debug handle" };
+    const ids = m.getStyle().layers.map(l => l.id);
+    const basemap = ids.indexOf("basemap");
+    const data = ids.filter(id => id.startsWith("om-"));
+    return {
+      basemapIndex: basemap,
+      dataCount: data.length,
+      firstDataIndex: data.length ? ids.indexOf(data[0]) : -1,
+      basemapBelowAllData:
+        data.length === 0 ? null : basemap !== -1 && basemap < ids.indexOf(data[0]),
+      order: ids,
+    };
+  })()`;
+
+  const assertOrder = (label, probe) => {
+    if (probe.error) { fails.push(`${label}: ${probe.error}`); return; }
+    if (probe.dataCount === 0) { fails.push(`${label}: no data layers in style at all`); return; }
+    if (!probe.basemapBelowAllData) {
+      fails.push(
+        `${label}: basemap is NOT below the data layers ` +
+        `(basemap at ${probe.basemapIndex}, first data layer at ${probe.firstDataIndex}) - ` +
+        `an opaque raster layer is covering them. order: ${probe.order.join(" > ")}`,
+      );
+    }
+  };
+
+  const orderAfterSwitch = await evaluate(orderProbe, sessionId);
+  assertOrder("after switching to opentopo", orderAfterSwitch);
+
+  // And back again: the old bug survived the return trip too.
+  await evaluate(`(() => {
+    const sel = [...document.querySelectorAll("select")].find(s =>
+      [...s.options].some(o => o.value === "esri"));
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set;
+    setter.call(sel, "esri");
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    return "ok";
+  })()`, sessionId);
+  await sleep(4000);
+  const orderAfterBack = await evaluate(orderProbe, sessionId);
+  assertOrder("after switching back to esri", orderAfterBack);
+
+  // Put it back on opentopo for the screenshot and attribution assertions.
+  await evaluate(`(() => {
+    const sel = [...document.querySelectorAll("select")].find(s =>
+      [...s.options].some(o => o.value === "opentopo"));
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set;
+    setter.call(sel, "opentopo");
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    return "ok";
+  })()`, sessionId);
+  await sleep(6000);
+
   // Count proxied tile requests that the browser actually made.
   const perf = await evaluate(`(() => performance.getEntriesByType("resource")
      .filter(e => e.name.includes("/api/tiles/opentopo/"))
@@ -117,6 +179,8 @@ try {
   console.log("\nOpenTopoMap basemap check");
   console.log(`  proxied tile requests ${(perf ?? []).length} (${okTiles.length} with body)`);
   console.log(`  tile request errors   ${tileErrors.length}`);
+  console.log(`  basemap layer index   ${orderAfterSwitch.basemapIndex} (first data layer ${orderAfterSwitch.firstDataIndex}, ${orderAfterSwitch.dataCount} data layers)`);
+  console.log(`  below data, both ways ${orderAfterSwitch.basemapBelowAllData && orderAfterBack.basemapBelowAllData ? "yes" : "NO"}`);
   console.log(`  attribution          ${(attribution ?? "(none)").slice(0, 90)}`);
   console.log(`  slowest tile          ${Math.max(0, ...okTiles.map((t) => t.dur))} ms`);
   console.log("  screenshot            /tmp/opencode/opentopo-basemap.png");

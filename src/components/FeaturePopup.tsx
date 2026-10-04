@@ -92,6 +92,18 @@ export function FeaturePopup({
           </dl>
         )}
 
+        {typeof properties?.nearestPlace === "string" && (
+          <p className="border-t border-[#1e2a35] px-3 py-2 text-[11px] text-[#9fb0bd]">
+            <span className="font-semibold text-[#d7e3ec]">Located near</span>{" "}
+            {properties.nearestPlace}
+            <span className="mt-1 block text-[10px] text-[#7d8f9d]">
+              This is derived context, not the asset&apos;s name. No naming source
+              exists for it, so nothing has been invented &mdash; use this to find it
+              on the map, then check OpenStreetMap for its tags.
+            </span>
+          </p>
+        )}
+
         {typeof properties?.coordGrade === "string" && (
           <p className="border-t border-[#1e2a35] px-3 py-2 text-[11px] text-[#fbbf24]">
             Coordinate grade {properties.coordGrade}

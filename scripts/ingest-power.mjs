@@ -28,6 +28,7 @@
  * consulted identifies which nine MEA means.
  */
 
+import fs from "node:fs";
 import { get, writeJSON, roundCoords } from "./lib/fetch.mjs";
 
 const OUT = "public/data/power.geojson";
@@ -99,6 +100,103 @@ const QUERY = `[out:json][timeout:90];
 );
 out tags geom;`;
 
+/**
+ * Nearest named place for context on features OSM leaves unnamed.
+ *
+ * There is no authoritative naming source for the island's 53 unnamed
+ * substations: MANNGIS publishes no substation layer and OSM has no `name` tag
+ * on them. Inventing one would be fabrication, so instead each gets the
+ * nearest settlement from the project's own toponyms layer. That is DERIVED
+ * CONTEXT, NOT IDENTITY - "400 m NNE of Ballabeg" tells you where to look on a
+ * map, it does not tell you what the substation is called, and the field name
+ * says so.
+ */
+async function loadToponyms() {
+  const path = new URL("../public/data/topos.json", import.meta.url);
+  const candidates = [
+    new URL("../public/data/toponyms.geojson", import.meta.url),
+    path,
+  ];
+  for (const url of candidates) {
+    try {
+      const g = JSON.parse(fs.readFileSync(url, "utf8"));
+      const pts = [];
+      for (const f of g.features ?? []) {
+        const nm = f.properties?.name ?? f.properties?.NAME ?? f.properties?.toponym;
+        const c = firstPoint(f.geometry);
+        if (!nm || !c) continue;
+        pts.push({ name: String(nm), lon: c[0], lat: c[1] });
+      }
+      return pts;
+    } catch {
+      /* try the next candidate */
+    }
+  }
+  return [];
+}
+
+/**
+ * First lon/lat pair of any geometry kind, or null.
+ *
+ * GeoJSON nests by kind: a Point is [lon, lat] but a Polygon's first vertex is
+ * two levels down ([[[lon, lat], ...]]), and a MultiPoint or LineString one
+ * level down. Rather than switch on the type and get it subtly wrong for one
+ * of them, descend until a numeric pair appears. The first vertex is close
+ * enough for a "which settlement is near" hint on the small features here.
+ */
+function firstPoint(geometry) {
+  let c = geometry?.coordinates;
+  for (let depth = 0; depth < 4 && Array.isArray(c); depth++) {
+    if (typeof c[0] === "number" && typeof c[1] === "number") return [c[0], c[1]];
+    c = c[0];
+  }
+  return null;
+}
+
+/** Great-circle distance in km. */
+function kmBetween(aLon, aLat, bLon, bLat) {
+  const R = 6371;
+  const dLat = ((bLat - aLat) * Math.PI) / 180;
+  const dLon = ((bLon - aLon) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+
+const COMPASS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+
+/** Compass bearing from a to b, degrees 0-360. */
+function bearing(aLon, aLat, bLon, bLat) {
+  const p1 = (aLat * Math.PI) / 180;
+  const p2 = (bLat * Math.PI) / 180;
+  const dl = ((bLon - aLon) * Math.PI) / 180;
+  const y = Math.sin(dl) * Math.cos(p2);
+  const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
+  return (Math.atan2(y, x) * 180 / 360 + 360) % 360;
+}
+
+function nearestPlace(lon, lat, toponyms) {
+  let best = null;
+  let bestKm = Infinity;
+  let bestBearing = 0;
+  for (const t of toponyms) {
+    const d = kmBetween(lon, lat, t.lon, t.lat);
+    if (d < bestKm) {
+      bestKm = d;
+      best = t;
+      bestBearing = bearing(lon, lat, t.lon, t.lat);
+    }
+  }
+  if (!best) return null;
+  return {
+    name: best.name,
+    distanceKm: Math.round(bestKm * 10) / 10,
+    bearingDeg: Math.round(bestBearing),
+    compass: COMPASS[Math.round(bestBearing / 22.5) % 16],
+  };
+}
+
 async function overpass() {
   for (const ep of OVERPASS) {
     try {
@@ -119,11 +217,13 @@ const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g
 
 function main() {
   overpass()
-    .then(({ els, endpoint }) => {
+    .then(async ({ els, endpoint }) => {
       console.log(`  fetched ${els.length} elements from ${new URL(endpoint).host}`);
 
       const features = [];
       const counts = { substation: 0, "substation (unnamed)": 0, plant: 0, solar: 0, wind: 0, other: 0 };
+      const toponyms = await loadToponyms();
+      console.log(`  loaded ${toponyms.length} toponyms for unnamed-feature context`);
 
       for (const el of els) {
         const t = el.tags;
@@ -160,6 +260,17 @@ function main() {
 
         const label = name ?? (isSubstation ? "Unnamed substation" : isPlant ? "Unnamed power plant" : "Unnamed generator");
 
+        // For the 78 features OSM leaves unnamed, attach the nearest settlement
+        // as derived context. See nearestPlace(): this is a locator, not a name.
+        let context = null;
+        if (!name) {
+          const c = firstPoint(geometry);
+          const near = c ? nearestPlace(c[0], c[1], toponyms) : null;
+          if (near) {
+            context = `${near.distanceKm} km ${near.compass} of ${near.name}`;
+          }
+        }
+
         features.push({
           type: "Feature",
           id: `power/${slug(label)}-${el.type}-${el.id}`,
@@ -168,6 +279,11 @@ function main() {
             name: label,
             kind,
             identified: Boolean(name),
+            // Derived locator for unnamed features. NOT the substation's name:
+            // no naming source exists for these, and inventing one would be
+            // worse than saying where it is instead.
+            nearestPlace: context,
+            nearestPlaceIsIdentity: false,
             // MEA-supplied capacity, where a named site could be joined.
             installedMW: cap?.installedMW ?? null,
             typicalSupplyMW: cap?.typicalSupplyMW ?? null,

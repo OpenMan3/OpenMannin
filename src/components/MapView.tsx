@@ -31,7 +31,7 @@ export interface PickedFeature {
   lat: number;
 }
 
-export type BasemapId = "esri";
+export type BasemapId = "esri" | "opentopo";
 
 /** MapLibre layer id for a registry layer, e.g. toponyms + symbol -> om-toponyms-symbol. */
 const layerIdFor = (id: string, suffix: string) => `om-${id}-${suffix}`;
@@ -57,6 +57,16 @@ const BASEMAPS: Record<BasemapId, { tiles: string[]; attribution: string; maxzoo
     attribution:
       "Imagery &copy; Esri, Maxar, Earthstar Geographics. Basemap terms are the least certain licence in this project.",
     maxzoom: 19,
+  },
+  opentopo: {
+    // Proxied, not direct. OpenTopoMap sends no Access-Control-Allow-Origin
+    // header, so MapLibre loading it cross-origin is blocked by the browser
+    // with nothing the client can set to fix it. Going through our own origin
+    // removes the cross-origin step entirely. See src/app/api/tiles/opentopo.
+    tiles: ["/api/tiles/opentopo/{z}/{x}/{y}"],
+    attribution:
+      "Map data &copy; OpenStreetMap contributors, SRTM | Map style &copy; OpenTopoMap (CC-BY-SA), proxied",
+    maxzoom: 17,
   },
 }
 
@@ -112,6 +122,8 @@ export function MapView({
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     let cancelled = false;
+    /** Polling handles for live layers, cleared on unmount. */
+    const liveTimers: ReturnType<typeof setInterval>[] = [];
 
     (async () => {
       const maplibregl = (await import("maplibre-gl")) as typeof import("maplibre-gl");
@@ -242,10 +254,68 @@ export function MapView({
       }
       syncRef.current = syncLayers;
       void syncLayers();
+
+      // ---- live layers ----------------------------------------------------
+      // Static layers are fetched once. Live layers are polled, because a
+      // vessel or a satellite moves and a snapshot would be a lie within the
+      // minute. The registry's `endpoint` is always same-origin, so no CORS
+      // handling is needed here and no provider token reaches the browser.
+      const liveEnabled = layersRef.current.filter(
+        (d) => d.kind === "live" && enabledRef.current.has(d.id) && d.endpoint,
+      );
+
+      if (liveEnabled.length) {
+        const added = new Set<string>();
+        for (const def of liveEnabled) {
+          const poll = async () => {
+            const map = mapRef.current;
+            if (!map || !readyRef.current || !enabledRef.current.has(def.id)) return;
+            try {
+              const res = await fetch(def.endpoint!, { cache: "no-store" });
+              // A route that refuses to run (no credentials, upstream down)
+              // answers with a JSON error, not a FeatureCollection. Say so in
+              // the console rather than painting an empty source that looks
+              // like "nothing is happening right now".
+              if (!res.ok) {
+                const body = await res.json().catch(() => null);
+                console.warn(
+                  `[live] ${def.id} unavailable (${res.status}):`,
+                  body?.reason ?? body?.error ?? "unknown",
+                );
+                return;
+              }
+              const fc = await res.json();
+              if (!fc?.features) return;
+
+              const sourceId = `om-${def.id}`;
+              const existing = map.getSource(sourceId) as
+                | import("maplibre-gl").GeoJSONSource
+                | undefined;
+              if (existing) {
+                existing.setData(fc as never);
+                return;
+              }
+              if (map.getLayer(`${sourceId}-circle`)) return;
+              map.addSource(sourceId, { type: "geojson", data: fc as never });
+              addPaintLayers(maplibregl, map, def, geometryKindOf(fc));
+              added.add(def.id);
+            } catch (e) {
+              console.warn(`[live] ${def.id} poll failed:`, (e as Error).message);
+            }
+          };
+
+          await poll();
+          // 30 s is a sensible compromise: fast enough to feel live, slow
+          // enough not to hammer the route or the upstream provider.
+          const timer = setInterval(poll, 30_000);
+          liveTimers.push(timer);
+        }
+      }
     })();
 
     return () => {
       cancelled = true;
+      for (const t of liveTimers) clearInterval(t);
       syncRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
@@ -270,9 +340,23 @@ export function MapView({
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
     const bm = BASEMAPS[basemap];
-    const src = map.getSource("basemap") as import("maplibre-gl").RasterTileSource | undefined;
-    if (!src) return;
-    src.setTiles(bm.tiles);
+
+    // The raster source has to be REPLACED, not retargeted. Attribution in
+    // MapLibre is a property of the source in the style, and setTiles() keeps
+    // the original attribution - so switching basemaps that way leaves the
+    // control crediting Esri while OpenTopoMap's CC-BY-SA tiles are on screen.
+    // That is a licence-compliance bug, not a cosmetic one.
+    if (map.getLayer("basemap")) map.removeLayer("basemap");
+    if (map.getSource("basemap")) map.removeSource("basemap");
+
+    map.addSource("basemap", {
+      type: "raster",
+      tiles: bm.tiles,
+      tileSize: 256,
+      attribution: bm.attribution,
+    });
+    map.addLayer({ id: "basemap", type: "raster", source: "basemap" });
+
     map.setMaxZoom(bm.maxzoom);
     void syncRef.current?.();
   }, [basemap]);

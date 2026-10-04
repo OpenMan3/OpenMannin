@@ -124,7 +124,7 @@ export function LayerPanel({
                       type="checkbox"
                       id={`layer-${layer.id}`}
                       checked={isOn}
-                      disabled={isMissing || isLive}
+                      disabled={isMissing}
                       onChange={() => onToggle(layer.id)}
                       className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-[#35c9d4] disabled:opacity-40"
                     />
@@ -159,7 +159,9 @@ export function LayerPanel({
                           </span>
                         )}
                         {isLive && (
-                          <span className="rounded bg-[#12283a] px-1 text-[#7dd3fc]">no route yet</span>
+                          <span className="rounded bg-[#12283a] px-1 text-[#7dd3fc]">
+                            live route
+                          </span>
                         )}
                         {isMissing && (
                           <span className="rounded bg-[#3a1414] px-1 text-[#f87171]">no data</span>

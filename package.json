@@ -28,6 +28,7 @@
     "ingest:osm": "node scripts/ingest-osm.mjs",
     "verify:registry": "node --experimental-strip-types --no-warnings scripts/verify-registry.mjs",
     "verify:render": "node scripts/verify-render.mjs",
+    "verify:basemap": "node scripts/verify-basemap.mjs",
     "build:manifest": "node --experimental-strip-types --no-warnings scripts/build-manifest.mjs",
     "smoke": "node scripts/smoke.mjs"
   },
@@ -35,7 +36,8 @@
     "maplibre-gl": "^6.12.0",
     "next": "^16.3.8",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "satellite.js": "^7.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",

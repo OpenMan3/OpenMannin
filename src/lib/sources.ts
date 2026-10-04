@@ -76,6 +76,16 @@ export const SOURCES: Record<string, Source> = {
     notes:
       "Terms of Use §3(vi) and the summary box require a PREVIOUS WRITTEN AGREEMENT for any 'operational' use, including integration into a live product, 'regardless of the entity's non-profit status'. Anonymous tier = 400 credits/day. CORS hard-pinned to their own origin, so server-side proxy is mandatory.",
   },
+  celestrak: {
+    id: "celestrak",
+    name: "CelesTrak orbital elements",
+    publisher: "CelesTrak (GP data by TLE)",
+    url: "https://celestrak.org/",
+    licence: "PUBLIC-DOMAIN",
+    lastChecked: "2026-10-04",
+    notes:
+      "Two-line element sets for the ISS and crewed spacecraft. Published by the US Space Force as public domain and redistributed by CelesTrak with no key, no login and no terms restricting use. Propagated with SGP4 via satellite.js (MIT). This is the only live feed here that needs nobody's permission, which is why it is the only one enabled.",
+  },
   aisstream: {
     id: "aisstream",
     name: "AISStream.io",

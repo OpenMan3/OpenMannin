@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-06T12:39:01.107Z",
+  "generatedAt": "2026-10-06T14:14:00.769Z",
   "report": [
     {
       "file": "field-parcels.geojson",
@@ -39,32 +39,6 @@
       ],
       "kb": 27,
       "ms": 695,
-      "warned": 0
-    },
-    {
-      "file": "registered-buildings.geojson",
-      "features": 338,
-      "datasets": [
-        {
-          "name": "Registered Buildings",
-          "count": 338
-        }
-      ],
-      "kb": 155,
-      "ms": 947,
-      "warned": 0
-    },
-    {
-      "file": "registered-trees.geojson",
-      "features": 1199,
-      "datasets": [
-        {
-          "name": "Registered Trees",
-          "count": 1199
-        }
-      ],
-      "kb": 167,
-      "ms": 1111,
       "warned": 0
     },
     {
@@ -492,6 +466,32 @@
       "ms": 721,
       "warned": 0,
       "note": "Watershed polygons, not water bodies. Four of seven impounding reservoirs are operational: West Baldwin, Sulby (completed 1982), Clypse, Kerrowdhoo."
+    },
+    {
+      "file": "registered-buildings.geojson",
+      "features": 338,
+      "datasets": [
+        {
+          "name": "Registered Buildings",
+          "count": 338
+        }
+      ],
+      "kb": 244,
+      "ms": 875,
+      "warned": 0
+    },
+    {
+      "file": "registered-trees.geojson",
+      "features": 1199,
+      "datasets": [
+        {
+          "name": "Registered Trees",
+          "count": 1199
+        }
+      ],
+      "kb": 369,
+      "ms": 1435,
+      "warned": 0
     }
   ]
 }

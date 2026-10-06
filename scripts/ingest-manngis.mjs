@@ -14,7 +14,7 @@
  *   node scripts/ingest-manngis.mjs
  */
 
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -76,21 +76,28 @@ const MANIFEST = [
     out: "registered-buildings.geojson",
     datasets: [{ url: `${DEFA}/16`, name: "Registered Buildings" }],
     keep: {
-      label: ["ADDRESS", "address", "Name", "NAME"],
-      regNo: ["registration_number", "REGISTRATION_NUMBER", "RegNo"],
-      grade: ["grade", "GRADE"],
-      dateRegistered: ["date_registered", "DATE_REGISTERED"],
-      dateCertified: ["date_certified", "DATE_CERTIFIED"],
-      caseRef: ["case_ref", "CASE_REF"],
-      url: ["hyperlink", "HYPERLINK"],
+      label: ["Address"],
+      regNo: ["RegisteredBuildingNo"],
+      grade: ["Grade"],
+      dateRegistered: ["RegistrationDate"],
+      dateCertified: ["Certified"],
+      caseRef: ["RegistrationCaseRef"],
+      url: ["Hyperlink"],
+      description: ["Description"],
+      specialNote: ["SpecialNote"],
     },
   },
   {
     out: "registered-trees.geojson",
     datasets: [{ url: `${DEFA}/1`, name: "Registered Trees" }],
     keep: {
-      label: ["ADDRESS", "address", "Name", "NAME", "LOCATION"],
-      regNo: ["registration_number", "REGISTRATION_NUMBER"],
+      label: ["Location"],
+      regNo: ["FeatureRef"],
+      species: ["Species"],
+      dateRegistered: ["RegistrationDate"],
+      surveyDate: ["SurveyDate"],
+      plan1987: ["Z2_87_Desc"],
+      surveyNote: ["Note"],
     },
   },
 
@@ -322,9 +329,30 @@ async function resolveDatasets(entry) {
 
 async function run() {
   mkdirSync(OUT, { recursive: true });
-  const report = [];
+
+  // The optional layer filter re-fetches only the named files. MANNGIS hosts
+  // dozens of layers; a focused fix should not have to re-pull every one of
+  // them (and re-hit an upstream that is only intermittently reachable). A
+  // filtered run must not clobber the report for the layers it did not touch:
+  // the report is the record of how every file's data came to be, so this run's
+  // entries replace only the ones for the files actually processed.
+  const only = process.argv.slice(2);
+  let report = [];
+  const reportPath = join(OUT, "_ingest-manngis-report.json");
+  if (only.length > 0 && existsSync(reportPath)) {
+    try {
+      const previous = JSON.parse(readFileSync(reportPath, "utf8"));
+      if (Array.isArray(previous.report)) {
+        const skip = new Set(only);
+        report = previous.report.filter((r) => !skip.has(r.file));
+      }
+    } catch {
+      report = [];
+    }
+  }
 
   for (const entry of MANIFEST) {
+    if (only.length > 0 && !only.includes(entry.out)) continue;
     const t0 = Date.now();
     const datasets = await resolveDatasets(entry);
     const merged = emptyFC();
@@ -396,7 +424,7 @@ async function run() {
       }
     }
   }
-  writeJSON(join(OUT, "_ingest-manngis-report.json"), { generatedAt: new Date().toISOString(), report }, { pretty: true });
+  writeJSON(reportPath, { generatedAt: new Date().toISOString(), report }, { pretty: true });
 }
 
 run().catch((err) => {

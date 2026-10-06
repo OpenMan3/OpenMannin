@@ -7,8 +7,14 @@
  * provenance underneath the feature's own attributes, so a screenshot of this
  * panel carries its own citation. Webcam features additionally show the live
  * snapshot, which is the whole point of a webcam layer.
+ *
+ * It is a DIALOG, and keyboard users can reach it: `role="dialog"`, focus moves
+ * in when it opens, Escape closes it. Without that the panel was mouse-only -
+ * feature picking itself is a click on the canvas, but once open, a keyboard
+ * user had no way to dismiss it.
  */
 
+import { useEffect, useRef, useState } from "react";
 import type { LayerDef } from "@/lib/types";
 import { SOURCES } from "@/lib/sources";
 import { LICENCES } from "@/lib/licences";
@@ -26,6 +32,54 @@ const HIDDEN_KEYS = new Set([
   "coordSource",
 ]);
 
+/** Attribute rows shown before the "and N more" line. */
+const MAX_ENTRIES = 14;
+/** Hard cap on a formatted value, so one huge nested property cannot fill the card. */
+const MAX_VALUE_CHARS = 400;
+
+/**
+ * Render a property value as readable text.
+ *
+ * `String(v)` is what this used to do, and it is correct for exactly the
+ * types GeoJSON properties are assumed to hold - strings, numbers, booleans -
+ * and wrong for everything else: an array of runway objects came out as
+ * "[object Object],[object Object]", which is the failure this layer's own
+ * satellite-pass properties were explicitly restructured to avoid (see
+ * passes-worker.ts) but which the generic renderer never learned. Arrays of
+ * primitives join with ", "; objects and arrays of objects flatten to
+ * "key: value" pairs, recursively, then truncate.
+ */
+function formatValue(v: unknown, depth = 0): string {
+  if (v === null || v === undefined) return "";
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (depth > 3) return "[…]";
+
+  if (Array.isArray(v)) {
+    if (v.length === 0) return "(empty list)";
+    const parts = v.map((item) => formatValue(item, depth + 1)).filter((s) => s !== "");
+    const joined = parts.join(", ");
+    return truncate(joined);
+  }
+
+  if (typeof v === "object") {
+    const entries = Object.entries(v as Record<string, unknown>).filter(
+      ([, val]) => val !== null && val !== undefined && val !== "",
+    );
+    if (entries.length === 0) return "(no values)";
+    const joined = entries
+      .map(([k, val]) => `${k}: ${formatValue(val, depth + 1)}`)
+      .join(", ");
+    return truncate(joined);
+  }
+
+  return String(v);
+}
+
+function truncate(s: string): string {
+  return s.length > MAX_VALUE_CHARS ? `${s.slice(0, MAX_VALUE_CHARS)}…` : s;
+}
+
 export function FeaturePopup({
   picked,
   onClose,
@@ -35,20 +89,48 @@ export function FeaturePopup({
   onClose: () => void;
   onLocate?: (lon: number, lat: number) => void;
 }) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  // Hooks first: the early return below would otherwise make the hook count
+  // depend on whether something is picked, which is a rules-of-hooks violation
+  // the moment two clicks alternate.
+  useEffect(() => {
+    if (!picked) return;
+    setImageFailed(false);
+    rootRef.current?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [picked, onClose]);
+
   if (!picked) return null;
 
   const { layer, properties, lon, lat } = picked;
   const src = SOURCES[layer.sourceId];
   const lic = src ? LICENCES[src.licence] : undefined;
 
-  const entries = Object.entries(properties ?? {})
-    .filter(([k, v]) => !HIDDEN_KEYS.has(k) && v !== null && v !== "" && v !== undefined)
-    .slice(0, 14);
+  const visible = Object.entries(properties ?? {}).filter(
+    ([k, v]) => !HIDDEN_KEYS.has(k) && v !== null && v !== "" && v !== undefined,
+  );
+  const entries = visible.slice(0, MAX_ENTRIES);
 
   const image = typeof properties?.image === "string" ? properties.image : null;
 
   return (
-    <div className="absolute top-3 left-3 z-20 w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-lg border border-[#1e2a35] bg-[#0d141a]/95 shadow-2xl backdrop-blur">
+    <div
+      ref={rootRef}
+      role="dialog"
+      aria-label={`${layer.label}: ${featureLabel(properties)}`}
+      tabIndex={-1}
+      className="absolute top-3 left-3 z-20 w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-lg border border-[#1e2a35] bg-[#0d141a]/95 shadow-2xl backdrop-blur focus:outline-none"
+    >
       <div className="flex items-start justify-between gap-2 border-b border-[#1e2a35] px-3 py-2">
         <div className="min-w-0">
           <div className="text-[10px] tracking-wide text-[#7d8f9d] uppercase">{layer.label}</div>
@@ -60,13 +142,13 @@ export function FeaturePopup({
           type="button"
           onClick={onClose}
           aria-label="Close feature details"
-          className="shrink-0 px-1 text-lg leading-none text-[#55636e] hover:text-[#d7e3ec]"
+          className="shrink-0 px-1 text-lg leading-none text-[#9fb0bd] hover:text-[#d7e3ec]"
         >
           &times;
         </button>
       </div>
 
-      {image && (
+      {image && !imageFailed && (
         <a href={image} target="_blank" rel="noopener noreferrer" className="block">
           {/* Snapshot only. The publisher serves no video stream, and there is no
               published grant for reusing these images, so this is a hotlink. */}
@@ -76,6 +158,12 @@ export function FeaturePopup({
             alt={featureLabel(properties)}
             className="block max-h-48 w-full bg-black object-cover"
             loading="lazy"
+            // Hotlinks break: the webcam publisher sits behind a WAF that
+            // rejects some requests (see the layer's own caveats), and any
+            // rotated URL leaves a broken-image glyph where the snapshot was.
+            // The card is still useful without the picture, so drop the image
+            // rather than advertise the failure.
+            onError={() => setImageFailed(true)}
           />
         </a>
       )}
@@ -86,10 +174,15 @@ export function FeaturePopup({
             {entries.map(([k, v]) => (
               <div key={k} className="flex gap-2 px-3 py-1 text-[11px]">
                 <dt className="w-28 shrink-0 text-[#7d8f9d]">{humanise(k)}</dt>
-                <dd className="min-w-0 flex-1 break-words text-[#d7e3ec]">{String(v)}</dd>
+                <dd className="min-w-0 flex-1 break-words text-[#d7e3ec]">{formatValue(v)}</dd>
               </div>
             ))}
           </dl>
+        )}
+        {visible.length > entries.length && (
+          <p className="px-3 py-1 text-[10px] text-[#7d8f9d]">
+            Showing {entries.length} of {visible.length} attributes.
+          </p>
         )}
 
         {typeof properties?.nearestPlace === "string" && (

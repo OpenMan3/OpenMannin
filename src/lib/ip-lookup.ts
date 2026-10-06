@@ -73,7 +73,13 @@ export function parseIPv4(input: string): bigint | null {
   if (!m) return null;
   let value = 0n;
   for (let i = 1; i <= 4; i++) {
-    const octet = Number(m[i]);
+    const digits = m[i];
+    // Leading zeros are rejected rather than read as decimal. "010.0.0.1" is
+    // decimal 10 here and octal 8 in inet_aton and several CIDR tools, so
+    // accepting it means the same string indexes as two different networks
+    // depending on which side did the parsing.
+    if (digits.length > 1 && digits.startsWith("0")) return null;
+    const octet = Number(digits);
     if (octet > 255) return null;
     value = (value << 8n) | BigInt(octet);
   }
@@ -100,8 +106,10 @@ export function parseIPv6(input: string): bigint | null {
   const compression = text.indexOf("::");
   let head: string[];
   let tail: string[];
+  let compressed = false;
   if (compression !== -1) {
     if (text.indexOf("::", compression + 1) !== -1) return null;
+    compressed = true;
     const left = text.slice(0, compression);
     const right = text.slice(compression + 2);
     head = left === "" ? [] : left.split(":");
@@ -112,7 +120,18 @@ export function parseIPv6(input: string): bigint | null {
   }
 
   const known = head.length + tail.length;
-  if (known > 8) return null;
+  if (compressed) {
+    // `::` stands for AT LEAST one group of zeros, so a full eight groups
+    // with a `::` in them is not a valid address either.
+    if (known >= 8) return null;
+  } else if (known !== 8) {
+    // Without `::` every group must be present. Padding short input up to
+    // eight - which is what this used to do - accepted "1:2:3" as a valid
+    // address, and a malformed query then matched an indexed prefix and
+    // reported a found network that does not exist.
+    return null;
+  }
+
   const groups = [...head, ...new Array<string>(8 - known).fill("0"), ...tail];
   if (groups.length !== 8) return null;
 
@@ -304,24 +323,6 @@ export function lookup(index: PrefixIndex, query: string): LookupResult {
     allMatches: matches,
     found: true,
   };
-}
-
-/** Every IoM-registered prefix overlapping a CIDR, for "what covers this range". */
-export function lookupRange(index: PrefixIndex, cidr: string): PrefixEntry[] {
-  const slash = cidr.lastIndexOf("/");
-  if (slash === -1) return [];
-  const parsed = parseAddress(cidr.slice(0, slash));
-  const prefixLength = Number(cidr.slice(slash + 1));
-  if (!parsed || !Number.isInteger(prefixLength)) return [];
-  const { value, family } = parsed;
-  const bits = family === 4 ? 32 : 128;
-  if (prefixLength < 0 || prefixLength > bits) return [];
-
-  const mask = maskFor(prefixLength, bits);
-  const qStart = value & mask;
-  const qEnd = qStart | (mask ^ ((1n << BigInt(bits)) - 1n));
-
-  return matchAll(index, qStart, family).filter((e) => e.start <= qEnd && e.end >= qStart);
 }
 
 export function addressCount(entry: PrefixEntry): bigint {

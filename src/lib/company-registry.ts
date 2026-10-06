@@ -43,15 +43,36 @@ export type RegistrySearchMode = "name" | "number";
  */
 const COMPANY_NUMBER = /^\d{6}[A-Z]$/i;
 
+/**
+ * Something the user clearly MEANT as a number, even though the shape is
+ * wrong: all digits, or digits with one trailing letter.
+ *
+ * `005629` (the suffix forgotten) is the common case. Telling that apart from
+ * a name matters because the Registry silently searches whichever field the
+ * radio button selects - searching the NAME field for a number returns nothing
+ * with no error, which looks like "this company does not exist" rather than
+ * "you searched the wrong box".
+ */
+const NUMBER_LIKE = /^\d+[A-Z]?$/i;
+
 export function normaliseCompanyNumber(input: string): string | null {
   const cleaned = input.replace(/[\s-]/g, "").toUpperCase();
   return COMPANY_NUMBER.test(cleaned) ? cleaned : null;
 }
 
-/** An Isle of Man company number starts with a letter; names do not. */
+/**
+ * Which registry field this input belongs in.
+ *
+ * A company number is DIGITS then a suffix letter - it starts with a digit,
+ * names do not. Anything digit-shaped is sent to the number field even when it
+ * is not a valid number, because that is still the field the user meant; the
+ * panel then says the shape is wrong instead of quietly searching names.
+ */
 export function guessMode(input: string): RegistrySearchMode {
   const cleaned = input.replace(/[\s-]/g, "");
-  return COMPANY_NUMBER.test(cleaned.toUpperCase()) ? "number" : "name";
+  if (COMPANY_NUMBER.test(cleaned.toUpperCase())) return "number";
+  if (NUMBER_LIKE.test(cleaned)) return "number";
+  return "name";
 }
 
 /**

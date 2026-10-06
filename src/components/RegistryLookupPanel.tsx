@@ -52,9 +52,10 @@ export function RegistryLookupPanel() {
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          required
           placeholder="company name or number, e.g. 005629V"
           aria-label="Company name or number"
-          className="min-w-0 flex-1 rounded border border-[#1e2a35] bg-[#0b0f14] px-2 py-1.5 text-xs text-[#d7e3ec] placeholder:text-[#55636e] focus:border-[#35c9d4] focus:outline-none"
+          className="min-w-0 flex-1 rounded border border-[#1e2a35] bg-[#0b0f14] px-2 py-1.5 text-xs text-[#d7e3ec] placeholder:text-[#7d8f9d] focus:border-[#35c9d4] focus:outline-none"
         />
         <button
           type="submit"
@@ -142,7 +143,7 @@ export function RegistryLookupPanel() {
             FSA regulated-entity registers ↗
           </a>
         </p>
-        <p className="text-[#55636e]">
+        <p className="text-[#7d8f9d]">
           A company in the Registry is not necessarily regulated, and an FSA-regulated entity is
           not necessarily an incorporated company. They are separate registers.
         </p>

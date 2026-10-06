@@ -67,7 +67,7 @@ export function IpLookup() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="195.10.105.1 or 2a01:6a00::1"
           aria-label="IP address or CIDR"
-          className="min-w-0 flex-1 rounded border border-[#1e2a35] bg-[#0b0f14] px-2 py-1.5 font-mono text-xs text-[#d7e3ec] placeholder:text-[#55636e] focus:border-[#35c9d4] focus:outline-none"
+          className="min-w-0 flex-1 rounded border border-[#1e2a35] bg-[#0b0f14] px-2 py-1.5 font-mono text-xs text-[#d7e3ec] placeholder:text-[#6b7f8c] focus:border-[#35c9d4] focus:outline-none"
         />
         <button
           type="submit"
@@ -140,7 +140,7 @@ export function IpLookup() {
               <ul className="mt-1 space-y-0.5">
                 {result.allMatches.slice(0, 6).map((e: PrefixEntry) => (
                   <li key={e.cidr} className="font-mono text-[11px] text-[#9fb0bd]">
-                    {e.cidr} <span className="text-[#55636e]">AS{e.network.asn}</span>
+                    {e.cidr} <span className="text-[#6b7f8c]">AS{e.network.asn}</span>
                   </li>
                 ))}
               </ul>
@@ -166,7 +166,7 @@ export function IpLookup() {
               without an address space.
             </p>
           )}
-          <p className="text-[#55636e]">Data: RIPEstat, {index.ripestatQueryTime ?? "unknown"}.</p>
+          <p className="text-[#6b7f8c]">Data: RIPEstat, {index.ripestatQueryTime ?? "unknown"}.</p>
         </div>
       )}
     </div>

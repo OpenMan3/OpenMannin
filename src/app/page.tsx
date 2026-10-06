@@ -26,11 +26,18 @@ export default function Page() {
   // Layers the registry lists but public/data does not have; populated by the map
   // as each failed fetch surfaces.
   const [missing, setMissing] = useState<Set<string>>(new Set());
+  // Live layers that are on but failing, so the panel can badge them.
+  const [feedErrors, setFeedErrors] = useState<Record<string, string>>({});
 
-  // Default to whatever the registry marked defaultOn, minus the live layers
-  // that have no API route behind them yet.
+  // Start from whatever the registry marked defaultOn.
+  //
+  // Live layers are off by default except the two that genuinely work:
+  // weather (Open-Meteo, CORS *, keyless), and - off by default but wired the
+  // same way - satellite passes (public-domain TLEs + SGP4 in a worker).
+  // OpenSky, AISStream and FindMyBus are on hold pending data agreements:
+  // polling is disabled and they badge as such in the panel.
   const [enabled, setEnabled] = useState<Set<string>>(
-    () => new Set(LAYERS.filter((l) => l.defaultOn && l.kind === "geojson").map((l) => l.id)),
+    () => new Set(LAYERS.filter((l) => l.defaultOn).map((l) => l.id)),
   );
 
   const toggle = useCallback((id: string) => {
@@ -43,6 +50,7 @@ export default function Page() {
   }, []);
 
   const onMissing = useCallback((next: Set<string>) => setMissing(next), []);
+  const onFeedErrors = useCallback((next: Record<string, string>) => setFeedErrors(next), []);
 
   const centreOn = useCallback((lon: number, lat: number) => {
     window.dispatchEvent(
@@ -63,7 +71,7 @@ export default function Page() {
             type="button"
             onClick={() => setPanelOpen((v) => !v)}
             aria-label={panelOpen ? "Collapse panel" : "Expand panel"}
-            className="shrink-0 px-1 text-xs text-[#55636e] hover:text-[#d7e3ec]"
+            className="shrink-0 px-1 text-xs text-[#6b7f8c] hover:text-[#d7e3ec]"
           >
             {panelOpen ? "⟨" : "⟩"}
           </button>
@@ -104,6 +112,7 @@ export default function Page() {
                   layers={LAYERS}
                   enabled={enabled}
                   missing={missing}
+                  feedErrors={feedErrors}
                   onToggle={toggle}
                 />
               )}
@@ -124,7 +133,7 @@ export default function Page() {
                   <option value="opentopo">OpenTopoMap</option>
                 </select>
               </label>
-              <p className="mt-1 text-[10px] leading-snug text-[#55636e]">
+              <p className="mt-1 text-[10px] leading-snug text-[#6b7f8c]">
                 Esri is keyless and zooms to z19 but its terms are the least certain licence here.
               </p>
             </div>
@@ -140,6 +149,7 @@ export default function Page() {
           basemap={basemap}
           onPick={setPicked}
           onMissing={onMissing}
+          onFeedErrors={onFeedErrors}
         />
 
         <FeaturePopup picked={picked} onClose={() => setPicked(null)} onLocate={centreOn} />

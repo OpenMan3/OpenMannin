@@ -29,7 +29,7 @@ export function GapsPanel({ gaps }: { gaps: Gap[] }) {
       {gaps.map((gap) => {
         const sev = SEVERITY[gap.severity];
         return (
-          <details key={gap.id} className="group border-b border-[#131b23]">
+          <details key={gap.id} data-gap={gap.id} className="group border-b border-[#131b23]">
             <summary className="flex cursor-pointer list-none items-start gap-2 px-3 py-2 hover:bg-[#0d141a]">
               <span className="flex-1 text-[13px] text-[#d7e3ec]">{gap.title}</span>
               <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] ${sev.className}`}>

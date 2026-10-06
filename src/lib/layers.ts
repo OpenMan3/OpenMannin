@@ -188,6 +188,7 @@ export const LAYERS: LayerDef[] = [
     group: "trails",
     kind: "geojson",
     file: "walking-routes.geojson",
+    featureCount: 90,
     color: "#16a34a",
     defaultOn: true,
     description:
@@ -202,6 +203,7 @@ export const LAYERS: LayerDef[] = [
     group: "trails",
     kind: "geojson",
     file: "cycling-routes.geojson",
+    featureCount: 13,
     color: "#0891b2",
     defaultOn: false,
     description:
@@ -219,6 +221,7 @@ export const LAYERS: LayerDef[] = [
     group: "trails",
     kind: "geojson",
     file: "pilgrimage-walks.geojson",
+    featureCount: 23,
     color: "#7c3aed",
     defaultOn: false,
     description: "Published pilgrimage walk alignments.",
@@ -321,6 +324,7 @@ export const LAYERS: LayerDef[] = [
     group: "transport",
     kind: "geojson",
     file: "tt-course.geojson",
+    featureCount: 749,
     color: "#dc2626",
     defaultOn: true,
     minZoom: 11,
@@ -355,6 +359,7 @@ export const LAYERS: LayerDef[] = [
     group: "transport",
     kind: "geojson",
     file: "traffic-signals.geojson",
+    featureCount: 4,
     color: "#f59e0b",
     defaultOn: false,
     minZoom: 13,
@@ -372,6 +377,7 @@ export const LAYERS: LayerDef[] = [
     group: "transport",
     kind: "geojson",
     file: "coastal-access.geojson",
+    featureCount: 40,
     color: "#0ea5e9",
     defaultOn: false,
     minZoom: 12,
@@ -603,6 +609,7 @@ export const LAYERS: LayerDef[] = [
     group: "energy",
     kind: "geojson",
     file: "reservoirs.geojson",
+    featureCount: 7,
     color: "#0d9488",
     defaultOn: false,
     minZoom: 10,
@@ -651,6 +658,7 @@ export const LAYERS: LayerDef[] = [
     group: "environment",
     kind: "geojson",
     file: "protected-areas.geojson",
+    featureCount: 102,
     color: "#22c55e",
     defaultOn: true,
     description:
@@ -686,6 +694,7 @@ export const LAYERS: LayerDef[] = [
     group: "environment",
     kind: "geojson",
     file: "marine-habitats.geojson",
+    featureCount: 434,
     color: "#2dd4bf",
     defaultOn: false,
     minZoom: 8,
@@ -780,17 +789,25 @@ export const LAYERS: LayerDef[] = [
     label: "Live vehicles (bus, steam train, tram, horse tram)",
     group: "live",
     kind: "live",
-    endpoint: "/api/transit",
+    // Marks this as a live feed. Resolved in src/lib/feeds. This deployment is a
+    // static export on Cloudflare Pages with no server, so function-backed feeds
+    // are reported as unavailable rather than fetched.
+    endpoint: "function:live-transit",
     color: "#22d3ee",
-    defaultOn: true,
+    defaultOn: false,
+    // As of 2026-10-06 this feed is on hold: polling is disabled and no
+    // requests are made until a data agreement is secured (FEEDS_ON_HOLD).
     description:
-      "Live positions from the FindMyBus.im SignalR hub. This single stream covers ALL government-operated road passenger transport: buses (type B), school buses (S), steam trains (L), trams (T) and horse trams (H). Server-side ingest, one upstream connection, fanned out to all clients.",
+      "Live positions from the FindMyBus.im SignalR hub. This single stream covers ALL government-operated road passenger transport: buses (type B), school buses (S), steam trains (L), trams (T) and horse trams (H). Server-side ingest, one upstream connection, fanned out to all clients. OFF BY DEFAULT: it needs FINDMYBUS_PERMISSION=1 and, as of 2026-10-05, the upstream is not actually delivering.",
     caveats: [
-      "The official timetable PDF says: 'To track your Heritage Railway services in real time visit findmybus.im'. So this is the sanctioned way to see the heritage lines — but it is still an undocumented feed.",
-      "NO robots.txt (404), no terms page, no licence. Absence of a licence is not a grant. Contact infrastructure@gov.im before publishing.",
-      "An F5 BIG-IP WAF sits in front and returned HTTP 504 on 7 of 15 long-polls during testing. Keep exactly one sequential poll in flight, preserve ARRAFFinity and TS01 cookies, and treat 504 as normal.",
-      "The client hard-deletes markers older than 300 s. That is the staleness ceiling.",
-      "Fields at indices 1, 2 and 7 are transmitted but never read by the official client. We do not guess their meaning.",
+      "*** DELIVERY IS UNVERIFIED. *** Re-tested 2026-10-05: negotiate, handshake and poll all succeed, and 11 separate connections were held for 160 s in total, but NOT ONE TransportData frame was ever pushed. The hub accepted an invocation and returned 200 with an empty body. So the protocol is right and the endpoint is live, and we still have never seen a vehicle on it. Do not describe this layer as working until a real frame has been seen.",
+      "The route is built to the protocol verified from the official client bundle: POST /transporthub/negotiate?negotiateVersion=1, then handshake and poll with the returned CONNECTION TOKEN (not connectionId - using connectionId gets 'No Connection with that ID' on every request), frames terminated by 0x1e, method 'TransportData'.",
+      "THE SERVER DROPS THE CONNECTION ABOUT 15 SECONDS after the handshake, whether or not it sent anything, and answers each poll immediately instead of holding it. Verified. So this cannot be a held-open socket like the AIS feed: the route re-negotiates on a loop and keeps last-known position per vehicle, with the receive time as the staleness clock.",
+      "NO robots.txt (404), no terms page, no licence. Absence of a licence is not a grant. The route refuses to run unless FINDMYBUS_PERMISSION=1, so setting it is the deliberate act of saying you have checked. Contact infrastructure@gov.im before publishing.",
+      "An F5 BIG-IP WAF sits in front and returns HTTP 504 on a fraction of long-polls. Treat 504 as normal, keep exactly one poll in flight, and carry the ARRAFFinity cookie across negotiate, handshake and poll or the WAF moves us to a different backend mid-conversation.",
+      "The client hard-deletes markers older than 300 s. That interval is read from api/v1/clientconfig rather than hardcoded, so a change on their side does not silently become a lie here.",
+      "The payload carries no trustworthy timestamp, so age is measured from when we received the record. A congested upstream inflates every age on the map.",
+      "Fields at indices 1, 2 and 7 are transmitted but never read by the official client. We do not guess their meaning; the raw record is carried through uninterpreted.",
       "Groudle Glen Railway and Great Laxey Mine Railway are absent from this feed entirely.",
     ],
     confidence: "A",
@@ -801,18 +818,24 @@ export const LAYERS: LayerDef[] = [
     label: "Live aircraft",
     group: "live",
     kind: "live",
-    endpoint: "/api/flights",
+    // Server-backed, and unavailable here. OpenSky pins CORS to its own origin, so a
+    // browser cannot call it at all - see src/lib/feeds. As of 2026-10-06 it is
+    // on hold: no polling runs and no requests are made until a written data
+    // agreement is secured - see FEEDS_ON_HOLD in src/lib/feeds/index.ts.
+    endpoint: "function:live-flights",
     color: "#f472b6",
-    defaultOn: true,
+    defaultOn: false,
     description:
       "ADS-B aircraft state vectors within a 0.15 x 0.25 degree box centred on the Isle of Man, which falls in the <=25 sq degree cost tier at 1 credit per call.",
     caveats: [
-      "PERMISSION REQUIRED BEFORE PUBLISHING. OpenSky's Terms of Use §3(vi) and its own summary box require a previous written agreement for any 'operational' use, including integration into a live product, 'even for only internal' use and 'regardless of the entity's non-profit status'. Email contact@opensky-network.org.",
-      "400 credits/day on the anonymous tier, IP-bucketed. That is about 400 refreshes per day across ALL your users behind one egress IP. You need an OAuth2 account (basic auth was removed 2026-03-18) and aggressive caching.",
-      "CORS is hard-pinned to https://opensky-network.org regardless of the Origin header. A server-side proxy is mandatory.",
+      "PERMISSION REQUIRED BEFORE PUBLISHING. OpenSky's Terms of Use §3(vi) and its own summary box require a previous written agreement for any 'operational' use, including integration into a live product, 'even for only internal' use and 'regardless of the entity's non-profit status'. Email contact@opensky-network.org. The route refuses to run without OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET, so setting them is the deliberate act of saying the agreement exists.",
+      "400 credits/day on the anonymous tier, IP-bucketed. That is about 400 refreshes per day across ALL your users behind one egress IP. You need an OAuth2 account (basic auth was removed 2026-03-18) and aggressive caching. The box used is 0.4 x 0.6 degrees = 0.24 sq degrees, inside the <=25 sq degree tier at 1 credit per call; widening it to catch more traffic crosses into the next tier.",
+      "CORS is hard-pinned to https://opensky-network.org regardless of the Origin header - verified by request. A browser cannot read this feed, and it would need a server-side proxy to be reachable from one at all.",
+      "`category` IS ABSENT FROM THE ANONYMOUS TIER ENTIRELY. Re-tested 2026-10-05: state vectors came back as 17-element arrays with no index 17, so the ADS-B emitter category is simply not there. Indexing the documented position blindly yields undefined where a number belongs, which becomes NaN in JSON and draws a marker at 0,0 off West Africa. Every field is read through a null guard for this reason.",
       "`category` is the ADS-B EMITTER category (0-20), not a civil/military flag. Treating category 1 or 14 as 'military' is community folklore and will miss most military traffic, because most military aircraft emit category 1 or 7.",
-      "`/api/tracks` and `/api/tracks/all` return 404. Only the /api/flights/* family responds.",
+      "`/tracks` and `/tracks/all` return 404 from OpenSky. Only the /states/all family responds.",
       "An empty box returns `\"states\": null`, not `[]`. Guard against null.",
+      "This is ADS-B over a volunteer receiver network. An aircraft with no transmitter, or one below coverage, does not appear at all - an empty layer does not mean an empty sky, and coverage over the Irish Sea is thinner than over land.",
     ],
     confidence: "A",
     sourceId: "opensky",
@@ -822,12 +845,14 @@ export const LAYERS: LayerDef[] = [
     label: "Satellite pass predictions",
     group: "live",
     kind: "live",
-    endpoint: "/api/passes",
+    // Client-side: CelesTrak sends CORS *, the TLEs are public domain, and the
+    // SGP4 arithmetic runs in a Web Worker. See src/lib/feeds/passes-client.ts.
+    endpoint: "client:satellite-passes",
     color: "#c084fc",
     defaultOn: false,
     minZoom: 5,
     description:
-      "Predicted pass windows for the ISS and other crewed spacecraft over the island's two ground stations, computed server-side by propagating public-domain two-line element sets with SGP4.",
+      "Predicted pass windows for the ISS and other crewed spacecraft over the island's two ground stations, computed in your browser by propagating public-domain two-line element sets with SGP4, in a Web Worker so the map stays responsive.",
     caveats: [
       "PREDICTED, NOT OBSERVED. These are pass windows computed from a TLE by SGP4. Nothing here has been correlated against an actual signal received on the ground.",
       "SGP4 is good to a few kilometres and a few seconds in LEO, which answers 'roughly when could a receiver here see it' and nothing operational.",
@@ -843,16 +868,20 @@ export const LAYERS: LayerDef[] = [
     label: "Live vessels (AIS)",
     group: "live",
     kind: "live",
-    endpoint: "/api/marine",
+    // Server-backed, and unavailable here. An AISStream key must not be readable in
+    // devtools, and their 3-connections-per-IP cap forbids a socket per visitor.
+    endpoint: "function:live-vessels",
     color: "#2dd4bf",
     defaultOn: false,
+    // On hold as of 2026-10-06: polling disabled, no upstream requests
+    // (FEEDS_ON_HOLD).
     minZoom: 5,
     description:
-      "AIS PositionReports inside a bounding box around the Isle of Man, ingested once server-side and fanned out.",
+      "AIS PositionReports inside a bounding box around the Isle of Man. Would need one server-side ingest fanned out to all clients, which a static host cannot provide.",
     caveats: [
       "There is NO free, no-key, programmatic AIS source. MarineTraffic is ~EUR 330 per 10,000 credits and now sales-gated. Global Fishing Watch needs a token and is CC BY-NC (non-commercial only, which rules out an ad-supported site).",
       "AISStream is free but has NO published terms document, no SLA and no replay. Absence of a prohibition is not a commercial-use grant — this is a legal gap, not an open licence.",
-      "AISStream caps you at 3 connections per account AND 3 per originating IP, which is why the architecture is one ingest plus internal fan-out rather than one socket per client.",
+      "AISStream caps you at 3 connections per account AND 3 per originating IP, which is why this would need one ingest plus internal fan-out rather than one socket per client.",
       "Send permessage-deflate; uncompressed connections are bandwidth-capped from September 2026.",
     ],
     confidence: "C",
@@ -863,35 +892,24 @@ export const LAYERS: LayerDef[] = [
     label: "Weather & sea state",
     group: "live",
     kind: "live",
-    endpoint: "/api/weather",
+    // Client-side: Open-Meteo sends CORS * and needs no key. See
+    // src/lib/feeds/weather-client.ts.
+    endpoint: "client:weather",
     color: "#38bdf8",
-    defaultOn: false,
+    defaultOn: true,
     description:
-      "Current conditions, hourly forecast and marine wave/sea-surface-temperature from Open-Meteo. Grid-snaps to 54.1875, -4.5 for weather and 54.125, -4.4583 for marine.",
+      "Current conditions, 6-hour forecast and marine wave/sea-surface-temperature from Open-Meteo, at the two model grid cells the API actually uses. Fetched directly from your browser: keyless, no account, CC-BY 4.0, CORS *, so this feed needs no server at all.",
     caveats: [
-      "NON-COMMERCIAL ONLY on the free tier. Their terms count subscriptions OR advertising as commercial. If you monetise this app you need a paid plan.",
-      "10,000 calls/day, 300,000/month, and no rate-limit headers are returned — you get a bare 429 and must track usage yourself.",
-      "There is NO tide or sea-level-height product. Wave height and sea surface temperature only. Do not conflate marine with tide.",
-      "Ronaldsway Met Office observations are hourly and continuous since 7 May 1946, but there is NO public CSV or JSON feed for them — the WiskiWeb dashboard fetches from an endpoint buried inside its SAP/OpenUI5 bundle.",
+      "NON-COMMERCIAL ONLY on the free tier. Their terms count subscriptions OR advertising as commercial. If you monetise this app you need a paid plan - this is the one live feed that is enabled by default, so it is the one most likely to be misused by accident.",
+      "MODEL OUTPUT, NOT OBSERVATIONS. No Met Office observation is used. The marker is the grid cell the API snapped to, not an instrument, and it is drawn where the API says the cell is rather than where we asked.",
+      "THERE IS NO TIDE PRODUCT. Wave height and sea surface temperature only. Do not conflate marine with tide, and do not read the sea-surface figure as a tide level.",
+      "10,000 calls/day, 300,000/month, and no rate-limit headers are returned - you get a bare 429 and must track usage yourself. The route caches for 10 minutes, which is ~144 calls/day.",
+      "Ronaldsway Met Office observations are hourly and continuous since 7 May 1946, but there is NO public CSV or JSON feed for them - the WiskiWeb dashboard fetches from an endpoint buried inside its SAP/OpenUI5 bundle.",
     ],
     confidence: "A",
     sourceId: "openmeteo",
   },
 ];
-
-export const LAYER_GROUPS = [
-  { id: "geography", label: "Geography" },
-  { id: "trails", label: "Roads & trails" },
-  { id: "transport", label: "Transport" },
-  { id: "cables", label: "Subsea cables" },
-  { id: "infrastructure", label: "Infrastructure" },
-  { id: "energy", label: "Energy" },
-  { id: "environment", label: "Environment" },
-  { id: "aviation", label: "Aviation" },
-  { id: "marine", label: "Marine" },
-  { id: "surveillance", label: "Surveillance & sensors" },
-  { id: "live", label: "Live feeds" },
-] as const;
 
 /**
  * Things the brief asked for that we could NOT get. Rendered in the UI as a

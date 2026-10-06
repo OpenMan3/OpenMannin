@@ -120,6 +120,6 @@ export function collectionCaveats(fc: FeatureCollection): string[] {
   return [];
 }
 
-export function layersWithFiles(layers: LayerDef[]): LayerDef[] {
+export function layersWithFiles(layers: LayerDef[]): (LayerDef & { file: string })[] {
   return layers.filter((l): l is LayerDef & { file: string } => l.kind === "geojson" && !!l.file);
 }

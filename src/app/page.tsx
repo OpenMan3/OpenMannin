@@ -5,14 +5,16 @@ import { GAPS, LAYERS } from "@/lib/layers";
 import { MapView, type BasemapId, type PickedFeature } from "@/components/MapView";
 import { LayerPanel } from "@/components/LayerPanel";
 import { FeaturePopup } from "@/components/FeaturePopup";
+import { FeatureBrowser } from "@/components/FeatureBrowser";
 import { GapsPanel } from "@/components/GapsPanel";
 import { IpLookup } from "@/components/IpLookup";
 import { RegistryLookupPanel } from "@/components/RegistryLookupPanel";
 
-type Tab = "layers" | "lookup" | "registry" | "gaps";
+type Tab = "layers" | "browse" | "lookup" | "registry" | "gaps";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "layers", label: "Layers" },
+  { id: "browse", label: "Browse" },
   { id: "lookup", label: "IP lookup" },
   { id: "registry", label: "Companies" },
   { id: "gaps", label: "Gaps" },
@@ -47,6 +49,13 @@ export default function Page() {
       else next.add(id);
       return next;
     });
+  }, []);
+
+  // The feature browser turns a layer on so its features are visible while it
+  // is being stepped through (a footprint you cannot see is still hard to find
+  // even when the map has flown to it).
+  const ensureEnabled = useCallback((id: string) => {
+    setEnabled((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
   }, []);
 
   const onMissing = useCallback((next: Set<string>) => setMissing(next), []);
@@ -114,6 +123,14 @@ export default function Page() {
                   missing={missing}
                   feedErrors={feedErrors}
                   onToggle={toggle}
+                />
+              )}
+              {tab === "browse" && (
+                <FeatureBrowser
+                  layers={LAYERS}
+                  enabled={enabled}
+                  onEnsureEnabled={ensureEnabled}
+                  onLocate={centreOn}
                 />
               )}
               {tab === "lookup" && <IpLookup />}

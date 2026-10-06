@@ -192,6 +192,8 @@ export function MapView({
   const syncRef = useRef<(() => Promise<void>) | null>(null);
   /** The `openmannin:fly-to` listener, held so cleanup can detach it. */
   const flyToRef = useRef<((e: Event) => void) | null>(null);
+  /** The `openmannin:highlight-feature` listener, held for the same reason. */
+  const highlightRef = useRef<((e: Event) => void) | null>(null);
   /** Which basemap the current map object was last built or switched to. */
   const appliedBasemapRef = useRef<string | null>(null);
 
@@ -343,6 +345,19 @@ export function MapView({
       // double-mount in dev - called `flyTo` on a removed Map.
       flyToRef.current = onFlyTo;
 
+      // The FeatureBrowser "cycle" tool asks the map to point at a specific
+      // feature without going through the click path. A temporary marker on top
+      // of every data layer keeps the step visible no matter what is enabled
+      // underneath - stepping through a dense layer is exactly the case where
+      // the feature is NOT otherwise identifiable.
+      const onHighlight = (e: Event) => {
+        const { geometry } = (e as CustomEvent).detail as { geometry?: unknown };
+        if (!geometry) return;
+        sinkHighlight(map, geometry as never);
+      };
+      window.addEventListener("openmannin:highlight-feature", onHighlight);
+      highlightRef.current = onHighlight;
+
       // ---- add or remove our layers to match `enabled` ----------------------
       async function syncLayers() {
         const map = mapRef.current;
@@ -419,6 +434,8 @@ export function MapView({
       syncRef.current = null;
       if (flyToRef.current) window.removeEventListener("openmannin:fly-to", flyToRef.current);
       flyToRef.current = null;
+      if (highlightRef.current) window.removeEventListener("openmannin:highlight-feature", highlightRef.current);
+      highlightRef.current = null;
       appliedBasemapRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
@@ -850,6 +867,7 @@ function addPaintLayers(
         "text-halo-width": 1.4,
       },
     });
+    liftHighlight(map);
     return;
   }
 
@@ -866,4 +884,80 @@ function addPaintLayers(
       "circle-stroke-width": 1,
     },
   });
+  liftHighlight(map);
 }
+
+/**
+ * The amber browse marker, drawn on top of everything.
+ *
+ * The FeatureBrowser steps through a layer and calls this with each feature's
+ * geometry. It is a point ring for a Point (a big, obvious circle at the exact
+ * spot) and an outlined translucent fill for a polygon or line, so a building
+ * footprint stays recognisable while the layer underneath is what it is.
+ */
+function sinkHighlight(
+  map: import("maplibre-gl").Map,
+  geometry: { type: string; coordinates?: unknown },
+) {
+  const id = HIGHLIGHT_SOURCE;
+  // The library types keep Feature minimal (geometry + properties only), so the
+  // GeoJSON envelopes are written loose and cast at the only two call sites
+  // that the API accepts them.
+  const fc: unknown = {
+    type: "FeatureCollection",
+    features: [{ type: "Feature", properties: {}, geometry }],
+  };
+
+  if (map.getSource(id)) {
+    (map.getSource(id) as import("maplibre-gl").GeoJSONSource).setData(fc as never);
+    liftHighlight(map);
+    return;
+  }
+
+  map.addSource(id, { type: "geojson", data: fc as never });
+  const point = geometry.type === "Point" || geometry.type === "MultiPoint";
+  if (point) {
+    map.addLayer({
+      id,
+      type: "circle",
+      source: id,
+      paint: {
+        "circle-radius": 10,
+        "circle-color": "#fbbf24",
+        "circle-opacity": 0.95,
+        "circle-stroke-color": "#0b0f14",
+        "circle-stroke-width": 2,
+      },
+    });
+  } else {
+    map.addLayer({
+      id: `${id}-fill`,
+      type: "fill",
+      source: id,
+      paint: { "fill-color": "#fbbf24", "fill-opacity": 0.28 },
+    });
+    map.addLayer({
+      id: `${id}-line`,
+      type: "line",
+      source: id,
+      paint: { "line-color": "#fbbf24", "line-width": 2.5, "line-opacity": 0.95 },
+    });
+  }
+}
+
+/**
+ * Keep the browse marker above every data layer.
+ *
+ * MapLibre paints layers in style order (last = top), and our data layers are
+ * appended when they are first enabled. If the browse marker already exists
+ * when a heavy layer arrives, that layer silently sits on TOP of the marker
+ * and the whole point - "here is the feature you are stepping through" - is
+ * defeated. moveLayer with no beforeId moves a layer to the end of the stack.
+ */
+function liftHighlight(map: import("maplibre-gl").Map) {
+  for (const layer of [`${HIGHLIGHT_SOURCE}-fill`, `${HIGHLIGHT_SOURCE}-line`, HIGHLIGHT_SOURCE]) {
+    if (map.getLayer(layer)) map.moveLayer(layer);
+  }
+}
+
+const HIGHLIGHT_SOURCE = "om-browse-highlight";

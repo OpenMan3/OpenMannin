@@ -22,7 +22,18 @@ import { layersWithFiles } from "@/lib/layer-data";
 import { indexFeatures, type BrowseEntry } from "@/lib/feature-index";
 
 /** Fields worth a labelled row in the detail card, in display order. */
-const DETAIL_KEYS = ["regNo", "grade", "species", "description", "plan1987"];
+const DETAIL_KEYS = [
+  "stopNo",
+  "naptan",
+  "locality",
+  "shelter",
+  "services",
+  "regNo",
+  "grade",
+  "species",
+  "description",
+  "plan1987",
+];
 /** Rows rendered before the count-overflow note; the list is searchable. */
 const MAX_LIST_ROWS = 250;
 
@@ -127,7 +138,8 @@ export function FeatureBrowser({
   };
 
   const shrink = (value: unknown): string => {
-    const s = String(value ?? "");
+    const list = Array.isArray(value) ? value.map((v) => String(v)).join(", ") : value;
+    const s = String(list ?? "");
     return s.length > 120 ? `${s.slice(0, 120)}…` : s;
   };
 

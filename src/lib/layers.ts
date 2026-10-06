@@ -265,7 +265,7 @@ export const LAYERS: LayerDef[] = [
   // ==========================================================================
   {
     id: "bus-stops",
-    label: "Bus stops (NaPTAN)",
+    label: "Bus stops",
     group: "transport",
     kind: "geojson",
     file: "bus-stops.geojson",
@@ -273,14 +273,15 @@ export const LAYERS: LayerDef[] = [
     defaultOn: true,
     minZoom: 13,
     description:
-      "215 bus stops with 5-digit stop number and full 11-digit NaPTAN code. The NaPTAN area code for the Isle of Man is confirmed as 891085 (e.g. 891085000101 = Banks Circus, Douglas).",
+      "732 bus stops from OpenStreetMap with per-stop services. Official MANNGIS stop numbers and NaPTAN codes are matched where they exist.",
     caveats: [
-      "Created October 2015. The paired route layer is stale: it lists 66 route numbers from the OLD network and lacks current services (1h, 2a, 4b, 4n, 5a, 5j, 6c) while retaining withdrawn ones (28b, 28s).",
-      "There is NO official GTFS feed for the Isle of Man. Full-text search of all 564 MANNGIS items for 'GTFS' returns zero results.",
+      "Per-stop services are a best-effort merge: OSM route relations where they exist (current but partial — only 44 stops are members), otherwise a spatial join against the site's own bus-routes layer, which is a DOCUMENTED 2015 network. Route numbers change less often than timetables, but VERIFY against current timetables (iombusandrail.im) before relying on services.",
+      "Official stop numbers and NaPTAN codes are matched from the MANNGIS Bus Stops layer (© IoM Government, OGL — derived) where a stop carries the same ref or is within 150 m; stops beyond that carry only OSM identifiers.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 215,
+    confidence: "B",
+    sourceId: "osmIOM",
+    featureCount: 732,
   },
   {
     id: "bus-routes",

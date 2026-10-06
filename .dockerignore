@@ -1,19 +1,23 @@
 # Build artefacts and dependencies are produced inside the image.
 node_modules
 .next
+out
+.tsbuildinfo
 .git
 .gitignore
 
-# Generated data is produced by the ingest step in the Dockerfile. Baking a
-# stale copy in would defeat the point, and would silently satisfy the
-# manifest check if someone passed SKIP_INGEST=1 by mistake.
-public/data/*.geojson
-public/data/manifest.json
-public/data/*.json
+# public/data is deliberately NOT ignored, because the SKIP_INGEST=1 path needs
+# it: excluding it here made that flag impossible to satisfy (the manifest test
+# could never pass, since the manifest was also filtered out of the context).
+# The default build ignores whatever copy arrives and re-runs ingest anyway, so
+# stale data cannot ship by accident - only by asking for it explicitly with
+# --build-arg SKIP_INGEST=1, which is the flag's whole contract.
 
-# Copied from node_modules at build time by scripts/copy-maplibre-worker.mjs.
+# Copied from node_modules at build time by scripts/copy-maplibre-worker.mjs,
+# and regenerated before every build by scripts/build-passes-worker.mjs.
 public/maplibre-gl-worker.mjs
 public/maplibre-gl-shared.mjs
+public/passes-worker.mjs
 
 # Local env and editor noise.
 .env
@@ -25,5 +29,6 @@ public/maplibre-gl-shared.mjs
 .vscode
 *.tsbuildinfo
 
-# Verification artefacts.
+# Verification artefacts and local caches.
 smoke.png
+.wrangler

@@ -10,8 +10,7 @@ User=openmannin
 Group=openmannin
 WorkingDirectory=/opt/openmannin
 
-Environment=NODE_ENV=production
-Environment=NEXT_TELEMETRY_DISABLED=1
+# The only runtime setting scripts/serve.mjs reads.
 Environment=PORT=3000
 
 # systemd does not run ExecStart through a shell, so it uses neither your
@@ -26,28 +25,36 @@ Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 #   NODE_BIN=/home/user/.local/share/mise/installs/node/22.11.0/bin/node
 EnvironmentFile=-/etc/default/openmannin
 
-# AISSTREAM_API_KEY is intentionally absent.
+# WHAT THIS SERVES. out/ - the static export produced by `npm run build` - via
+# scripts/serve.mjs, a zero-dependency file server that also applies the
+# security headers Cloudflare Pages would apply to the same files. There is no
+# Next server: `next start` refuses to serve an `output: "export"` build, which
+# is exactly the bug this unit exists to not have.
 #
-# AISStream is graded NO-LICENCE and publishes no terms document, so /api/marine
-# answers 503 until a key exists. Setting it is the deliberate act of asserting
-# that permission has been granted. To add it later:
+# THERE ARE NO ENVIRONMENT VARIABLES FOR THE LIVE FEEDS, and no secrets are
+# needed to run this service. Weather and satellite passes are fetched by the
+# BROWSER straight from Open-Meteo and CelesTrak. The three feeds that would
+# need a server (OpenSky, AISStream, FindMyBus) are on hold in
+# src/lib/feeds/index.ts: no requests are made and nothing is configured. If a
+# doc tells you to set AISSTREAM_API_KEY for this unit, that doc is describing
+# a version of the app that no longer has /api/marine.
 #
-#   systemctl edit openmannin     # and add it under [Service]
+# To change the port:
+#   systemctl edit openmannin     # and add Environment=PORT=8080 under [Service]
 #   systemctl restart openmannin
-#
-# Put it in an EnvironmentFile= instead if you would rather not have it in the
-# unit: chmod 600 that file, owned by root.
 
-# Next's own entry point, invoked through node directly rather than via npm.
+# The file server itself, invoked through node directly rather than via npm.
 # `npm run start` would work but adds a shell wrapper and a package.json lookup
 # for no benefit, and a wrong npm path fails far more confusingly than a missing
-# node does. systemd-analyze verify checks this resolves.
-ExecStart=/usr/bin/env node /opt/openmannin/node_modules/next/dist/bin/next start
+# node does.
+ExecStart=/usr/bin/env node /opt/openmannin/scripts/serve.mjs
 Restart=always
 RestartSec=5
 
 # ---- hardening ------------------------------------------------------------
-# The app only ever needs to read its own directory and reach the network.
+# The unit only reads its own directory; nothing writes, and no outbound
+# requests are made from this host at all (tiles and client feeds are fetched
+# by the browser of whoever is looking at the map).
 NoNewPrivileges=true
 PrivateTmp=true
 PrivateDevices=true
@@ -56,16 +63,12 @@ ProtectHome=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
-ReadWritePaths=/opt/openmannin
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 RestrictNamespaces=true
 LockPersonality=true
+# False on purpose: V8's JIT needs writable+executable pages, and setting this
+# to true makes node die on startup with a SIGSEGV rather than fail a check.
 MemoryDenyWriteExecute=false
-
-# The tile proxy makes outbound requests, so egress must NOT be blocked.
-# Note the cost: every basemap switch pulls ~20 OpenTopoMap tiles through this
-# host. Cached a week client-side, so steady-state is low, but a cold cache on a
-# busy page is not.
 
 StandardOutput=journal
 StandardError=journal
@@ -79,14 +82,22 @@ WantedBy=multi-user.target
 #   sudo -u openmannin git clone <repo> /opt/openmannin
 #   cd /opt/openmannin
 #   sudo -u openmannin npm ci
-#   sudo -u openmannin npm run ingest:all      # no map data is committed
-#   sudo -u openmannin npm run build
+#   sudo -u openmannin npm run ingest:all      # only if public/data is empty
+#   sudo -u openmannin npm run build           # writes out/, incl. health.json
 #   sudo cp deploy/openmannin.service /etc/systemd/system/
 #   sudo systemctl daemon-reload && sudo systemctl enable --now openmannin
-#   curl -s localhost:3000/api/health | python3 -m json.tool
+#   curl -s localhost:3000/health.json | python3 -m json.tool
 #
 # The ingest step is the fragile one: it calls Overpass, CelesTrak and gov.im,
 # all of which rate-limit. If it fails, re-run it rather than deploying.
 #
+# systemd-analyze verify checks this unit resolves - run it on your target host:
+#   systemd-analyze verify /etc/systemd/system/openmannin.service
+#
 # Upgrading: repeat the npm ci / ingest / build steps, then
 #   sudo systemctl restart openmannin
+#
+# NOTE: deploy/nginx.conf sits in front of this on a VPS and serves out/
+# directly with its own root - it does NOT proxy to this unit. Point root at
+# /opt/openmannin/out there, and you may stop this service entirely; the unit
+# is for hosts without nginx.

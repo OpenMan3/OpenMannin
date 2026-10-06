@@ -19,25 +19,30 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      NODE_ENV: production
-      # Deliberately NOT set. AISStream is graded NO-LICENCE and publishes no
-      # terms document; /api/marine returns 503 until you have permission and
-      # set this deliberately.
-      # AISSTREAM_API_KEY: ""
+    # No environment variables, deliberately. Nothing in this deployment reads
+    # one: the export is static, weather and satellite passes run in the
+    # browser, and the three feeds that would need a server (OpenSky, AISStream,
+    # FindMyBus) are ON HOLD in code - see SERVER_SIDE_FEEDS in
+    # src/lib/feeds/index.ts. They make no requests at all and need no key, so
+    # there is nothing to inject here. If you are looking for AISSTREAM_API_KEY,
+    # the answer is that /api/marine no longer exists.
+    #
+    # The one thing that does depend on the environment is the port: PORT is
+    # read by scripts/serve.mjs and defaults to 3000.
     healthcheck:
       test:
         - CMD
         - node
         - -e
-        - "fetch('http://127.0.0.1:3000/api/health').then(r=>r.json()).then(j=>process.exit(j.ok?0:1)).catch(()=>process.exit(1))"
+        - "fetch('http://127.0.0.1:3000/health.json').then(r=>r.json()).then(j=>process.exit(j.ok?0:1)).catch(()=>process.exit(1))"
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 20s
-    # The tile proxy and the pass predictor both make outbound requests. No
-    # egress restriction is needed, but note the tile proxy bills bandwidth to
-    # whatever host this runs on.
+      start_period: 5s
+    # Tiles are fetched by the browser straight from OpenTopoMap and ArcGIS, and
+    # the client feeds run from the browser too, so no request ever originates
+    # from this container. There is no egress to restrict and no bandwidth bill
+    # on this host.
     logging:
       driver: json-file
       options:

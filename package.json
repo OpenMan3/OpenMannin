@@ -6,13 +6,13 @@
   "type": "module",
   "scripts": {
     "copy:worker": "node scripts/copy-maplibre-worker.mjs",
-    "dev": "npm run copy:worker && next dev",
-    "build": "npm run copy:worker && next build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "npm run copy:worker && npm run build:passes-worker && next dev",
+    "build": "npm run copy:worker && npm run build:passes-worker && npm run build:headers && npm run build:health && next build",
+    "start": "node scripts/serve.mjs",
+    "build:headers": "node scripts/static-headers.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "node --test scripts/lib/*.test.mjs",
-    "ingest:manngis": "node scripts/ingest-manngis.mjs",
+    "test": "node --experimental-strip-types --no-warnings --test scripts/lib/*.test.mjs",
+    "ingest:manngis": "node --experimental-strip-types --no-warnings scripts/ingest-manngis.mjs",
     "ingest:airports": "node scripts/ingest-airports.mjs",
     "ingest:cables": "node scripts/ingest-cables.mjs",
     "ingest:tidestations": "node scripts/ingest-tidestations.mjs",
@@ -30,7 +30,10 @@
     "verify:render": "node scripts/verify-render.mjs",
     "verify:basemap": "node scripts/verify-basemap.mjs",
     "build:manifest": "node --experimental-strip-types --no-warnings scripts/build-manifest.mjs",
-    "smoke": "node scripts/smoke.mjs"
+    "build:health": "node scripts/build-health.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "smoke:live": "node scripts/smoke-live.mjs",
+    "build:passes-worker": "node scripts/build-passes-worker.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^6.12.0",
@@ -44,6 +47,7 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "esbuild": "^0.28.2",
     "proj4": "^2.22.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0"

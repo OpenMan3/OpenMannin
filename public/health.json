@@ -1,0 +1,30 @@
+{
+  "ok": true,
+  "worker": true,
+  "layers": 39,
+  "features": 38456,
+  "absent": [],
+  "check": "static-build",
+  "generated": "2026-10-06T13:27:38.893Z",
+  "hosting": {
+    "static": true,
+    "clientFeeds": [
+      "weather",
+      "satellite-passes"
+    ],
+    "onHold": [
+      "live-flights",
+      "live-vessels",
+      "live-transit"
+    ]
+  },
+  "problems": [],
+  "warnings": [
+    "This is a BUILD-TIME report. It says the map is structurally complete, not that any upstream is reachable.",
+    "Live-feed state is observed in the browser, not here: weather and satellite passes are fetched client-side. The three feeds under hosting.onHold make no request anywhere - see SERVER_SIDE_FEEDS in src/lib/feeds/index.ts for why.",
+    "Satellite passes need public/passes-worker.mjs, bundled from src/lib/feeds/passes-worker.ts by scripts/build-passes-worker.mjs before next build. If that file is missing or stale, the layer is silently empty - there is no console error to see. (Its presence is checked above; staleness is checked by scripts/lib/passes-worker-build.test.mjs.)",
+    "Open-Meteo's free tier is NON-COMMERCIAL: subscriptions or advertising both count as commercial use.",
+    "AISStream and the FindMyBus.im feed are graded NO-LICENCE. Absence of a prohibition is not a grant.",
+    "OpenSky requires a previous written agreement for operational use, including internal and non-profit use."
+  ]
+}

@@ -2,18 +2,25 @@
 #
 #   fly launch --no-deploy        (first time, to create the app)
 #   fly deploy
-#   fly secrets set AISSTREAM_API_KEY=...    # only once permission exists
+#   fly status
+#   fly ssh console -C "wget -qO- http://127.0.0.1:3000/health.json"
 #
-# WHY FLY AND NOT A PAAS. The AIS route holds one upstream WebSocket to
-# AISStream and fans it out in-process. That needs a long-lived process, which
-# serverless-style platforms do not give you. Everything else on this app works
-# fine on Vercel; AIS is the deciding factor.
+# WHAT RUNS HERE. A static export (out/) plus scripts/serve.mjs, a
+# zero-dependency file server - the same thing `npm start` runs locally. Fly is
+# a file host in this design, not an application server: there are no routes,
+# no secrets and no environment variables to configure. The image build is a
+# Docker build (see Dockerfile), so ingest runs inside the image.
 #
-# NOTE ON DATA. public/data/*.geojson is gitignored, so a Fly build starts with
-# no map data. The Dockerfile generates it inside the image. Fly builds Docker,
-# so this file works as-is - but that means EVERY deploy re-runs ingest against
-# Overpass, CelesTrak and gov.im, all of which rate-limit. If deploys start
-# failing for no code reason, that is why. See "Bake the data in" in DEPLOY.md.
+# WHY FLY AT ALL, THEN. Two reasons to prefer it over a pure static host: the
+# image build runs the ingest step (no other platform in this repo does that
+# for you), and it gives you a box to exec into when something is wrong. If you
+# want the zero-ops version, deploy out/ to Cloudflare Pages instead - it is
+# the same bytes.
+#
+# NOTE ON DATA. If public/data is absent from your clone, the Docker build
+# generates it (npm run ingest:all runs inside the image and rate-limited
+# upstreams can fail that build). If it is present, SKIP_INGEST=1 bakes the
+# copy in the context instead - see "Ingest is the fragile step" in DEPLOY.md.
 
 app = "openmannin"
 primary_region = "lhr"
@@ -22,22 +29,21 @@ primary_region = "lhr"
   dockerfile = "Dockerfile"
 
 [env]
-  NODE_ENV = "production"
-  NEXT_TELEMETRY_DISABLED = "1"
+  # scripts/serve.mjs reads PORT; everything else it takes from defaults.
   PORT = "3000"
 
-# AISSTREAM_API_KEY is intentionally NOT set here.
-#
-# AISStream is graded NO-LICENCE and publishes no terms document, so /api/marine
-# returns 503 until a key exists. Setting it is the deliberate act of asserting
-# that permission has been granted - do not set it to silence a warning.
+# No secrets exist for this deployment. Weather and satellite passes are
+# fetched from the browser (their upstreams send Access-Control-Allow-Origin: *
+# and need no credential), and the three feeds that would need a server -
+# OpenSky, AISStream, FindMyBus - are ON HOLD in src/lib/feeds/index.ts: no
+# requests are made, no permission flag is read, nothing to inject here.
 
 [http_service]
   internal_port = 3000
   force_https = true
-  # Never let a deploy idle out: cold starts mean the MapLibre worker and the
-  # CelesTrak TLE fetch both have to happen on the first request, and the tile
-  # proxy has no cache in front of it.
+  # One machine always up. There is no expensive cold start any more (the map's
+  # data is on disk), so this is purely about not answering the first request
+  # of the day with a connection refused while a machine starts.
   auto_stop_machines = "off"
   auto_start_machines = true
   min_machines_running = 1
@@ -47,20 +53,23 @@ primary_region = "lhr"
     soft_limit = 25
     hard_limit = 50
 
-  # The map is useless without its worker and its data, and both are generated.
-  # Failing the health check pulls the machine out of rotation rather than
+  # /health.json is a build-time report: worker present, 39 layers with data.
+  # It cannot see the running process, but a container whose export came out
+  # incomplete answers ok:false here and is pulled from rotation instead of
   # serving a blank island.
   [[http_service.checks]]
     interval = "30s"
     timeout = "5s"
-    grace_period = "20s"
+    grace_period = "5s"
     method = "GET"
-    path = "/api/health"
+    path = "/health.json"
 
 [[vm]]
   size = "shared-cpu-1x"
   memory = "512mb"
 
-# Data volume: not needed, public/data is baked into the image rather than
-# persisted. A volume would be wrong here - the data is regenerated wholesale on
-# each build, not mutated in place.
+# No data volume: out/ is baked into the image at build time and read-only at
+# runtime. A volume would be wrong here - the data is regenerated wholesale on
+# each build, not mutated in place. 512 MB is the file server plus the
+# gzip-buffering headroom for the large GeoJSON layers; raise it only if you
+# watch RSS do so.

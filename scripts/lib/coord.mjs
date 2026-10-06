@@ -157,4 +157,45 @@ export function dms(degPart, minPart, secPart, { western = false } = {}) {
   return western ? -v : v;
 }
 
+/**
+ * Great-circle distance between two lon/lat points, in kilometres.
+ * Haversine on a mean-Earth radius. Fine at the tens-of-km scale this is used
+ * at (picking the nearest named place); it is not surveying-grade, and nothing
+ * here claims it is.
+ */
+export function kmBetween(aLon, aLat, bLon, bLat) {
+  const R = 6371;
+  const dLat = ((bLat - aLat) * Math.PI) / 180;
+  const dLon = ((bLon - aLon) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+
+const COMPASS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+
+/**
+ * Initial great-circle bearing from a to b, degrees 0-360 from true north.
+ *
+ * This used to live in ingest-power.mjs with a unit error - atan2 returns
+ * radians, and the expression multiplied by 180/360 instead of 180/pi. That
+ * sent the "x km NNE of Y" locators anywhere in a roughly 0.5x-scale band
+ * around the compass instead of where they pointed, with no failure visible
+ * anywhere: the numbers looked like bearings and the map did not complain.
+ */
+export function bearing(aLon, aLat, bLon, bLat) {
+  const p1 = (aLat * Math.PI) / 180;
+  const p2 = (bLat * Math.PI) / 180;
+  const dl = ((bLon - aLon) * Math.PI) / 180;
+  const y = Math.sin(dl) * Math.cos(p2);
+  const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
+/** The 16-point compass label for a bearing in degrees. */
+export function compassLabel(deg) {
+  return COMPASS[Math.round(deg / 22.5) % 16];
+}
+
 export { proj4 };

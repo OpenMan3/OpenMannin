@@ -30,6 +30,7 @@
 
 import fs from "node:fs";
 import { get, writeJSON, roundCoords } from "./lib/fetch.mjs";
+import { kmBetween, bearing, compassLabel } from "./lib/coord.mjs";
 
 const OUT = "public/data/power.geojson";
 const MEA_CH6 = "https://www.gov.im/media/1363407/ch-61-cables-pipelines.pdf";
@@ -153,29 +154,7 @@ function firstPoint(geometry) {
   return null;
 }
 
-/** Great-circle distance in km. */
-function kmBetween(aLon, aLat, bLon, bLat) {
-  const R = 6371;
-  const dLat = ((bLat - aLat) * Math.PI) / 180;
-  const dLon = ((bLon - aLon) * Math.PI) / 180;
-  const s =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
-}
-
-const COMPASS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-
 /** Compass bearing from a to b, degrees 0-360. */
-function bearing(aLon, aLat, bLon, bLat) {
-  const p1 = (aLat * Math.PI) / 180;
-  const p2 = (bLat * Math.PI) / 180;
-  const dl = ((bLon - aLon) * Math.PI) / 180;
-  const y = Math.sin(dl) * Math.cos(p2);
-  const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
-  return (Math.atan2(y, x) * 180 / 360 + 360) % 360;
-}
-
 function nearestPlace(lon, lat, toponyms) {
   let best = null;
   let bestKm = Infinity;
@@ -193,7 +172,7 @@ function nearestPlace(lon, lat, toponyms) {
     name: best.name,
     distanceKm: Math.round(bestKm * 10) / 10,
     bearingDeg: Math.round(bestBearing),
-    compass: COMPASS[Math.round(bestBearing / 22.5) % 16],
+    compass: compassLabel(bestBearing),
   };
 }
 

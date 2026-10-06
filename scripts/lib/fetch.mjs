@@ -10,7 +10,7 @@
  *     silently truncates. Every fetch here loops.
  */
 
-import { writeFileSync } from "node:fs";
+import { writeFileSync, renameSync } from "node:fs";
 
 export const UA =
   "OpenMannin/0.1 (Isle of Man open infrastructure map; +https://github.com/openmannin) node-fetch";
@@ -37,7 +37,7 @@ export const BROWSER_UA =
 
 export async function get(
   url,
-  { headers = {}, timeoutMs = 60_000, retries = 3, method = "GET", body } = {},
+  { headers = {}, timeoutMs = 60_000, retries = 3, method = "GET", body, backoffBaseMs = 2000 } = {},
 ) {
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -51,16 +51,27 @@ export async function get(
         signal: ctrl.signal,
         redirect: "follow",
       });
-      if (!res.ok) {
-        // 4xx will not improve on retry. 5xx and 429 might.
-        if (res.status < 500 && res.status !== 429) {
-          const body = await res.text().catch(() => "");
-          throw new Error(`HTTP ${res.status} ${url}\n${body.slice(0, 400)}`);
+      if (res.ok) return res;
+
+      const status = res.status;
+      // 408 and 429 are honest retries; every other 4xx is a permanent refusal
+      // (bad query, wrong key, gated host) that a second identical request will
+      // not fix. The previous code built the "no point retrying a 4xx" error
+      // by throwing inside the loop's own try, which the catch below swallowed -
+      // so the comment described a policy the code did not implement, and a
+      // rejected request quietly hammered the host three more times.
+      const terminal = status >= 400 && status < 500 && status !== 408 && status !== 429;
+      let detail = "";
+      try {
+        if (terminal) {
+          detail = `\n${(await res.text()).slice(0, 400)}`;
+        } else {
+          // Drain-and-ditch so the connection is not held open across retries.
+          await res.body?.cancel();
         }
-        lastErr = new Error(`HTTP ${res.status} ${url}`);
-      } else {
-        return res;
-      }
+      } catch {}
+      lastErr = new Error(`HTTP ${status} ${url}${detail}`);
+      if (terminal) break;
     } catch (err) {
       lastErr = err;
     } finally {
@@ -69,7 +80,7 @@ export async function get(
     if (attempt < retries) {
       // Back off. Overpass docs say wait 30s on 429/406; that is too slow for
       // ingest, but we are polite backoff for a different host so 2-8s is fine.
-      await sleep(2000 * (attempt + 1));
+      await sleep(backoffBaseMs * (attempt + 1));
     }
   }
   throw lastErr;
@@ -253,11 +264,24 @@ function simplifyCoords(coords, tol) {
   const out = [];
   for (const part of coords) {
     const s = simplifyCoords(part, tol);
-    // Rings need 4 positions to be a valid polygon; lines need 2. Anything
-    // shorter collapsed to nothing and is dropped.
-    if (Array.isArray(s) && s.length >= 2) out.push(s);
+    // Push anything that still has at least one descendant. The caller decides
+    // whether one ring is enough (Polygon yes, LineString no): this level
+    // cannot tell a single-ring Polygon (parts: 1 ring) from a single-point
+    // LineString, and `s.length >= 2` here used to throw away every
+    // single-ring Polygon - the historic MultiPolygon feature-loss bug.
+    if (Array.isArray(s) && s.length >= 1) out.push(s);
   }
   return out;
+}
+
+/**
+ * Drop the rings a Douglas-Peucker pass has collapsed below Polygon validity
+ * (a ring needs at least 4 coordinates). Returns the surviving rings, or null
+ * if nothing is left.
+ */
+function pruneRings(rings) {
+  const pruned = rings.filter((r) => Array.isArray(r) && r.length >= 4);
+  return pruned.length ? pruned : null;
 }
 
 export function simplifyGeometry(geom, tol) {
@@ -266,23 +290,28 @@ export function simplifyGeometry(geom, tol) {
     return { ...geom, geometries: geom.geometries.map((g) => simplifyGeometry(g, tol)) };
   }
   const simplified = simplifyCoords(geom.coordinates, tol);
-  if (geom.type === "Polygon" || geom.type === "MultiPolygon") {
-    const pruned = dropDegenerate(simplified, geom.type === "Polygon" ? 1 : 1);
-    if (!pruned || (Array.isArray(pruned) && pruned.length === 0)) return null;
-    return { type: geom.type, coordinates: pruned };
+
+  // Polygon vs MultiPolygon must be handled separately. The old code treated a
+  // MultiPolygon's coordinates - a LIST of polygons each holding rings - as a
+  // list of rings, so every single-ring member polygon failed the `length >= 4`
+  // ring test and the whole feature came back null: simplification silently
+  // deleted any MultiPolygon whose parts were ordinary one-ring shapes.
+  if (geom.type === "Polygon") {
+    const pruned = pruneRings(simplified);
+    if (!pruned) return null;
+    return { type: "Polygon", coordinates: pruned };
   }
+  if (geom.type === "MultiPolygon") {
+    const polygons = simplified.map(pruneRings).filter((p) => p !== null);
+    if (!polygons.length) return null;
+    return { type: "MultiPolygon", coordinates: polygons };
+  }
+
   const empties =
     (geom.type === "LineString" && simplified.length < 2) ||
     (geom.type === "MultiLineString" && simplified.length === 0);
   if (empties) return null;
   return { type: geom.type, coordinates: simplified };
-}
-
-/** Remove rings that simplification collapsed below validity. */
-function dropDegenerate(coords, minRings) {
-  const rings = coords.filter((r) => Array.isArray(r) && r.length >= 4);
-  if (rings.length < minRings) return null;
-  return rings;
 }
 
 /**
@@ -391,8 +420,21 @@ export function project(fc, keep, defaults = {}, opts = {}) {
   return { type: "FeatureCollection", features: out };
 }
 
-export function writeJSON(path, obj, { pretty = false } = {}) {
-  const body = pretty ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
-  writeFileSync(path, body);
+/**
+ * Write a JSON file atomically: write a temp sibling, then rename over the
+ * target.
+ *
+ * Renaming on the same filesystem is atomic, so a crash or Ctrl-C mid-write
+ * leaves either the old file or the new one - never a truncated layer that
+ * parses as valid enough to pass next build's manifest check and then fails
+ * MapLibre's GeoJSON parse, which is the exact failure mode of a direct
+ * writeFileSync that dies halfway through 4 MB of roads.
+ */
+export function writeJSON(path, obj, { pretty = false, trailingNewline = false } = {}) {
+  const body =
+    (pretty ? JSON.stringify(obj, null, 2) : JSON.stringify(obj)) + (trailingNewline ? "\n" : "");
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, body);
+  renameSync(tmp, path);
   return Buffer.byteLength(body);
 }

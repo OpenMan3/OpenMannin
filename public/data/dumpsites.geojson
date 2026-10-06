@@ -1,0 +1,123 @@
+{
+  "type": "FeatureCollection",
+  "name": "dumpsites",
+  "properties": {
+    "generated": "2026-10-04T13:56:29.409Z",
+    "source": "https://www.ospar.org/documents?v=7021",
+    "secondarySource": "https://qsr2010.ospar.org/media/assessments/p00365_Munitions_assessment.pdf",
+    "sourceVerified": "2026-10-04",
+    "licence": "PUBLIC-DOMAIN",
+    "caveats": [
+      "THIS POLYGON IS AN INDICATIVE CORRIDOR, NOT A SURVEYED DISPOSAL BOUNDARY. It is reconstructed from two OSPAR inventory points, the published 50 km x 3.5 km dimensions and the cited centre point. It must NOT be used to determine whether a location is safe to fish, dredge, anchor or lay cable.",
+      "Extent is deliberately coarse. The 1996 Aberdeen Marine Laboratory survey (FRS 1996) found munitions and munitions-related materials at high densities OUTSIDE the charted dumpsite, so the real distribution is wider than any published boundary can express.",
+      "The OSPAR inventory itself flags dumpsite locations as uncertain: 'one of the major difficulties in managing the risk associated with dumpsites is the uncertainty associated with their location'.",
+      "The UK MoD lost most disposal records, disclosed April 2020. Completeness is therefore unestablished rather than disproved.",
+      "Operation Buffalo and Hurricane were AUSTRALIAN nuclear weapons tests, not British, and not at this site. Beaufort's Dyke received ordnance and chemical-agent DUMPING. Do not attribute weapons testing here.",
+      "A 1996 survey found no chemical agent or munitions-derived contaminants adjacent to the dyke in sediment, fish or shellfish. That is reassuring, not exculpatory, given the record loss."
+    ]
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "dumpsite/beauforts-dyke",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -5.39121,
+              54.94499
+            ],
+            [
+              -5.43911,
+              54.93002
+            ],
+            [
+              -5.06879,
+              54.53501
+            ],
+            [
+              -5.02089,
+              54.54998
+            ],
+            [
+              -5.39121,
+              54.94499
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Beaufort's Dyke",
+        "kind": "chemical-ordnance-dumpsite",
+        "status": "discontinued",
+        "reconstructedFrom": "OSPAR inventory entries 16 and 19, extended to the published 50 km length and widened to the published 3.5 km width.",
+        "axisLengthFromOsparPointsM": 40505,
+        "axisBearingDeg": -61.6,
+        "centreLat": 54.785,
+        "centreLon": -5.42,
+        "publishedLengthM": 50000,
+        "publishedWidthM": 3500,
+        "depthRangeM": [
+          200,
+          312
+        ],
+        "munitionsTonnage": "over 1 million tonnes conventional and chemical munitions (MoD estimate, OSPAR); some sources cite up to 2 million tonnes including short-dumped material",
+        "chemicalAgents": "ca 14,500 t of 5-inch artillery rockets filled with phosgene dumped July 1945; a further ca 14,000 t of phosgene loose-dumped 1946-47",
+        "radioactiveWaste": "ca 2 tonnes of low-level radioactive waste in concrete-encased drums, authorised in the 1950s-60s",
+        "dumpingClosed": "Under the London and Oslo Conventions, 1972; last dumping ca 1976",
+        "coordGrade": "C",
+        "coordSource": "Reconstructed corridor from two OSPAR dumpsite inventory coordinates plus published dimensions. Not a survey.",
+        "source": "https://www.ospar.org/documents?v=7021",
+        "secondarySource": "https://qsr2010.ospar.org/media/assessments/p00365_Munitions_assessment.pdf",
+        "licence": "PUBLIC-DOMAIN",
+        "sourceVerified": "2026-10-04",
+        "caveats": [
+          "THIS POLYGON IS AN INDICATIVE CORRIDOR, NOT A SURVEYED DISPOSAL BOUNDARY. It is reconstructed from two OSPAR inventory points, the published 50 km x 3.5 km dimensions and the cited centre point. It must NOT be used to determine whether a location is safe to fish, dredge, anchor or lay cable.",
+          "Extent is deliberately coarse. The 1996 Aberdeen Marine Laboratory survey (FRS 1996) found munitions and munitions-related materials at high densities OUTSIDE the charted dumpsite, so the real distribution is wider than any published boundary can express.",
+          "The OSPAR inventory itself flags dumpsite locations as uncertain: 'one of the major difficulties in managing the risk associated with dumpsites is the uncertainty associated with their location'.",
+          "The UK MoD lost most disposal records, disclosed April 2020. Completeness is therefore unestablished rather than disproved.",
+          "Operation Buffalo and Hurricane were AUSTRALIAN nuclear weapons tests, not British, and not at this site. Beaufort's Dyke received ordnance and chemical-agent DUMPING. Do not attribute weapons testing here.",
+          "A 1996 survey found no chemical agent or munitions-derived contaminants adjacent to the dyke in sediment, fish or shellfish. That is reassuring, not exculpatory, given the record loss."
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "dumpsite/beauforts-dyke-axis",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -5.38,
+            54.9
+          ],
+          [
+            -5.08,
+            54.58
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Beaufort's Dyke disposal axis",
+        "kind": "dumpsite-axis",
+        "description": "The two OSPAR inventory coordinates that define the disposal axis of the dyke. Shown as a line because it is the only part of the reconstruction that rests on published point data rather than derived geometry.",
+        "fromOsparEntry": "16 (54.9 N, 5.38 W)",
+        "toOsparEntry": "19 (54.58 N, 5.08 W)",
+        "coordGrade": "B",
+        "coordSource": "Directly from the OSPAR dumpsite inventory table.",
+        "source": "https://www.ospar.org/documents?v=7021",
+        "licence": "PUBLIC-DOMAIN",
+        "sourceVerified": "2026-10-04",
+        "caveats": [
+          "THIS POLYGON IS AN INDICATIVE CORRIDOR, NOT A SURVEYED DISPOSAL BOUNDARY. It is reconstructed from two OSPAR inventory points, the published 50 km x 3.5 km dimensions and the cited centre point. It must NOT be used to determine whether a location is safe to fish, dredge, anchor or lay cable.",
+          "Extent is deliberately coarse. The 1996 Aberdeen Marine Laboratory survey (FRS 1996) found munitions and munitions-related materials at high densities OUTSIDE the charted dumpsite, so the real distribution is wider than any published boundary can express.",
+          "The OSPAR inventory itself flags dumpsite locations as uncertain: 'one of the major difficulties in managing the risk associated with dumpsites is the uncertainty associated with their location'.",
+          "The UK MoD lost most disposal records, disclosed April 2020. Completeness is therefore unestablished rather than disproved.",
+          "Operation Buffalo and Hurricane were AUSTRALIAN nuclear weapons tests, not British, and not at this site. Beaufort's Dyke received ordnance and chemical-agent DUMPING. Do not attribute weapons testing here.",
+          "A 1996 survey found no chemical agent or munitions-derived contaminants adjacent to the dyke in sediment, fish or shellfish. That is reassuring, not exculpatory, given the record loss."
+        ]
+      }
+    }
+  ]
+}

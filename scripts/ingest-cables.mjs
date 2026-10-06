@@ -264,7 +264,7 @@ async function main() {
         coordSource:
           "OSM seamark geometry (ODbL), clipped to the IoM territorial-water envelope. Clipping is a bounding-box test, so the line ends at the box edge rather than at a surveyed landing point.",
         source: "https://www.openstreetmap.org/",
-        licence: "ODbL-1.0",
+licence: "ODbL; MEA-derived landfalls under OGL-IoM",
       },
     });
   }
@@ -317,7 +317,7 @@ async function main() {
         coordSource: `Nominatim (OSM) place centroid for "${l.name}, Isle of Man". This is the named shore-end settlement, not a surveyed cable position.`,
         geocoderDisplayName: hit.displayName,
         source: MEA_CH6,
-        licence: "ODbL-1.0",
+        licence: "ODbL; MEA-derived landfalls under OGL-IoM",
         sourceVerified: new Date().toISOString().slice(0, 10),
       },
     });

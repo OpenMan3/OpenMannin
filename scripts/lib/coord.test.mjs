@@ -12,7 +12,7 @@
 
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseNgr, ngrLetters, ngrToLatLon, latLonToNgr, dms } from "./coord.mjs";
+import { parseNgr, ngrLetters, ngrToLatLon, latLonToNgr, dms, bearing, kmBetween, compassLabel } from "./coord.mjs";
 
 test("100 km square letters for known eastings/northings", () => {
   // False origin of the grid is square SV.
@@ -118,4 +118,37 @@ test("dms handles degrees/minutes/seconds with hemisphere", () => {
   assert.equal(dms(54, 8, 50), 54 + 8 / 60 + 50 / 3600);
   assert.ok(dms(4, 28, 21, { western: true }) < 0);
   assert.ok(Math.abs(dms(4, 28, 21, { western: true }) + 4.4725) < 1e-4);
+});
+
+test("bearing points north/east/south/west from the origin", () => {
+  assert.ok(Math.abs(bearing(0, 0, 0, 1)) < 1e-6, `${bearing(0, 0, 0, 1)} != 0`);
+  assert.ok(Math.abs(bearing(0, 0, 1, 0) - 90) < 1e-6);
+  assert.ok(Math.abs(bearing(0, 0, 0, -1) - 180) < 1e-6);
+  assert.ok(Math.abs(bearing(0, 0, -1, 0) - 270) < 1e-6);
+});
+
+test("bearing is degrees, not half-radians (the bug that shipped)", () => {
+  // London -> Edinburgh is 339 degrees. The old code multiplied the atan2
+  // result by 180/360 instead of 180/pi, which reports between 337 and 359 as
+  // roughly 57 degrees - a completely different direction.
+  const b = bearing(-0.1276, 51.5072, -3.1883, 55.9533);
+  assert.ok(Math.abs(b - 339.07) < 0.5, `London->Edinburgh bearing ${b} is not ~339`);
+  // And a near-cardinal still lands on its own quadrant.
+  assert.ok(Math.abs(bearing(-4.4765, 54.1506, -4.3810, 54.3135) - 18.9) < 0.3);
+});
+
+test("kmBetween is in kilometres, usable for nearest-place", () => {
+  const d = kmBetween(-4.4765, 54.1506, -4.3810, 54.3135); // Douglas -> Ramsey
+  assert.ok(Math.abs(d - 19.15) < 0.3, `Douglas->Ramsey ${d} km not ~19.1`);
+});
+
+test("compassLabel buckets 16 directions", () => {
+  assert.equal(compassLabel(0), "N");
+  assert.equal(compassLabel(11), "N");
+  assert.equal(compassLabel(12), "NNE");
+  assert.equal(compassLabel(90), "E");
+  assert.equal(compassLabel(180), "S");
+  assert.equal(compassLabel(270), "W");
+  assert.equal(compassLabel(349), "N");
+  assert.equal(compassLabel(360), "N");
 });

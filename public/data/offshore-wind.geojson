@@ -1,0 +1,59 @@
+{
+  "type": "FeatureCollection",
+  "name": "offshore-wind",
+  "properties": {
+    "generated": "2026-10-04T13:56:29.542Z",
+    "source": "https://www.gov.im/departments/isle-of-man-infrastructure-marine-planning-authority/",
+    "sourceVerified": "2026-10-04",
+    "licence": "PUBLIC-DOMAIN",
+    "caveats": [
+      "GRADE D POSITION. Mooir Vannin's point is an indicative centroid derived from the published bearing and distance ('6-12 nautical miles off Maughold Head') projected north-east into the Irish Sea. It is NOT a lease area, a consent boundary or a turbine position.",
+      "THE CONSENT WAS REFUSED. The Marine Infrastructure Consent application closed unconsented on 9 September 2026. Nothing here is operating or consented.",
+      "The Crown Estate's Morgan site is NOT PLOTTED. Its development was discontinued in January 2026 and retendered in July 2026, but no citable footprint position could be established.",
+      "The Mooir Vannin Agreement for Lease dates from November 2015 and predates the refusal by a decade. A historic Agreement for Lease is not evidence of a live lease.",
+      "Do not use for navigation, fisheries, seabed tenure or any siting analysis. If a live proposal is needed, the Marine Institute's current consent register is the only authoritative source."
+    ]
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "offshore-wind/mooir-vannin",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.13037,
+          54.40374
+        ]
+      },
+      "properties": {
+        "name": "Mooir Vannin",
+        "operator": "Ørsted",
+        "status": "consent-refused",
+        "statusDetail": "Marine Infrastructure Consent application examined and closed unconsented on 9 September 2026.",
+        "capacityMW": 1400,
+        "turbineCount": "up to 100",
+        "agreementForLease": "November 2015",
+        "derivation": "Indicative centroid: 9 nm (16.7 km) on a 045° bearing from Maughold Head (54.2978804, -4.3124657). The published range is 6-12 nm; the midpoint is used because no lease polygon has been published.",
+        "publishedDistanceRangeNm": [
+          6,
+          12
+        ],
+        "publishedBearing": "off Maughold Head, IoM territorial seas",
+        "coordGrade": "D",
+        "coordSource": "Derived from a published distance-and-bearing description against a geocoded headland. Indicative area centroid, NOT a lease boundary.",
+        "referencePoint": "Maughold Head via Nominatim (OSM)",
+        "source": "https://www.gov.im/departments/isle-of-man-infrastructure-marine-planning-authority/",
+        "secondarySource": "https://www.orsted.com/",
+        "licence": "PUBLIC-DOMAIN",
+        "sourceVerified": "2026-10-04",
+        "caveats": [
+          "GRADE D POSITION. Mooir Vannin's point is an indicative centroid derived from the published bearing and distance ('6-12 nautical miles off Maughold Head') projected north-east into the Irish Sea. It is NOT a lease area, a consent boundary or a turbine position.",
+          "THE CONSENT WAS REFUSED. The Marine Infrastructure Consent application closed unconsented on 9 September 2026. Nothing here is operating or consented.",
+          "The Crown Estate's Morgan site is NOT PLOTTED. Its development was discontinued in January 2026 and retendered in July 2026, but no citable footprint position could be established.",
+          "The Mooir Vannin Agreement for Lease dates from November 2015 and predates the refusal by a decade. A historic Agreement for Lease is not evidence of a live lease.",
+          "Do not use for navigation, fisheries, seabed tenure or any siting analysis. If a live proposal is needed, the Marine Institute's current consent register is the only authoritative source."
+        ]
+      }
+    }
+  ]
+}

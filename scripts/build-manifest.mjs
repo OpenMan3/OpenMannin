@@ -12,6 +12,8 @@
  * Run with:  node --experimental-strip-types scripts/build-manifest.mjs
  */
 
+import { writeJSON } from "./lib/fetch.mjs";
+
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -77,7 +79,7 @@ const manifest = {
   layers,
 };
 
-fs.writeFileSync(OUT, JSON.stringify(manifest, null, 2) + "\n");
+writeJSON(OUT, manifest, { pretty: true, trailingNewline: true });
 
 const kb = (fs.statSync(OUT).size / 1024).toFixed(1);
 console.log(`manifest.json: ${ok} layers with data, ${absent.length} without (${kb} kB)`);

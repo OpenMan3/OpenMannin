@@ -126,7 +126,14 @@ async function overpass() {
         body: new URLSearchParams({ data: QUERY }),
       });
       const json = await res.json();
-      const els = (json.elements ?? []).filter((e) => e.tags && e.geometry);
+      // Nodes answer with lat/lon, never `geometry` - the query uses
+      // `out tags geom`, which gives coordinates to nodes and geometry to ways.
+      // Filtering on `geometry` alone therefore drops every named pier, jetty,
+      // groin and harbour point that OSM keeps as a node. The main loop below
+      // already has a node branch; it simply never saw any input.
+      const els = (json.elements ?? []).filter(
+        (e) => e.tags && (e.geometry || (e.lat != null && e.lon != null)),
+      );
       if (els.length) return { els, endpoint: ep };
       console.warn(`  ! ${ep} returned no geometry`);
     } catch (e) {

@@ -1,0 +1,124 @@
+{
+  "type": "FeatureCollection",
+  "name": "historic-cables",
+  "properties": {
+    "generated": "2026-10-04T13:56:29.270Z",
+    "source": "https://atlantic-cable.com/",
+    "sourceVerified": "2026-10-04",
+    "licence": "UNKNOWN",
+    "licenceWarning": "Atlantic-Cable.com publishes no explicit licence. Coordinates are OSM/Nominatim derived under ODbL; the historical narrative is UNKNOWN-licensed and is included as public record only.",
+    "caveats": [
+      "THESE ARE PLACES, NOT CABLE POSITIONS. Each point is a Nominatim centroid for the named landing settlement or feature, not a surveyed cable landing or a recovered wreck.",
+      "No route geometry is published here. The alignments of the 1859 and 1942 systems are not available in any reusable machine-readable form, and inferring a line between two landing points would assert a survey nobody has made.",
+      "The Atlantic-Cable.com source carries no explicit licence and is graded UNKNOWN in the registry. Treat the history as public record, not as a grant to republish.",
+      "The two cables in The Sound are described in the source as 'possibly linking to the Calf of Man'. That attribution is uncertain and is flagged rather than resolved.",
+      "Wreck positions and seabed debris for these systems are not included; they would need a hydrographic or archaeological source and are a separate question from where the cable landed."
+    ]
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "historic-cable/1859-point-cranstal-st-bees-cable-relocated",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.344501,
+          54.262429
+        ]
+      },
+      "properties": {
+        "name": "Port Cornaa",
+        "kind": "historic-cable-landing",
+        "system": "1859 Point Cranstal - St Bees cable, relocated",
+        "year": 1859,
+        "detail": "The first submarine cable to the Isle of Man, 36 miles from Point Cranstal to St Bees in Cumbria, and the first use of outer servings on a submarine cable. It suffered tidal damage at its original landing and was relocated to Port Cornaa.",
+        "notable": true,
+        "attributionUncertain": false,
+        "coordGrade": "C",
+        "coordSource": "Nominatim (OSM) centroid for Port Cornaa, Isle of Man. This is the named landing place, not a surveyed cable landing.",
+        "geocoderDisplayName": "Port Cornaa, Isle of Man",
+        "source": "https://atlantic-cable.com/",
+        "licence": "UNKNOWN",
+        "sourceVerified": "2026-10-04"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "historic-cable/1859-point-cranstal-st-bees-cable-original-landi",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.37156,
+          54.39264
+        ]
+      },
+      "properties": {
+        "name": "Cranstal",
+        "kind": "historic-cable-landing",
+        "system": "1859 Point Cranstal - St Bees cable, original landing",
+        "year": 1859,
+        "detail": "The original Manx end of the first cable to the island, at Point Cranstal in the parish of Bride, before the tidal damage that forced relocation to Port Cornaa.",
+        "notable": true,
+        "attributionUncertain": false,
+        "coordGrade": "C",
+        "coordSource": "Nominatim (OSM) centroid for Cranstal, Isle of Man. This is the named landing place, not a surveyed cable landing.",
+        "geocoderDisplayName": "Cranstal, Bride, Ayre, IM7 4BP, Isle of Man",
+        "source": "https://atlantic-cable.com/",
+        "licence": "UNKNOWN",
+        "sourceVerified": "2026-10-04"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "historic-cable/recorded-cable-remnant",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.577425,
+          54.103377
+        ]
+      },
+      "properties": {
+        "name": "Port Grenaugh",
+        "kind": "historic-cable-landing",
+        "system": "Recorded cable remnant",
+        "year": null,
+        "detail": "A remnant of historic cable recorded at Port Grenaugh. Port Grenaugh is also a live cable landing for the LANIS-1 system, so the same shore-end area carries both generations.",
+        "notable": false,
+        "attributionUncertain": false,
+        "coordGrade": "C",
+        "coordSource": "Nominatim (OSM) centroid for Port Grenaugh, Isle of Man. This is the named landing place, not a surveyed cable landing.",
+        "geocoderDisplayName": "Port Grenaugh, Santon, Middle, IM4 1HF, Isle of Man",
+        "source": "https://atlantic-cable.com/",
+        "licence": "UNKNOWN",
+        "sourceVerified": "2026-10-04"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "historic-cable/recorded-cable-remnants-two-short-cables-",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.798064,
+          54.060455
+        ]
+      },
+      "properties": {
+        "name": "The Sound",
+        "kind": "historic-cable-landing",
+        "system": "Recorded cable remnants (two short cables)",
+        "year": null,
+        "detail": "Two short lengths of historic cable recorded in The Sound, the channel between the Isle of Man and the Calf of Man. Some sources suggest these may link the island to the Calf of Man rather than crossing to a far shore.",
+        "notable": false,
+        "attributionUncertain": true,
+        "coordGrade": "C",
+        "coordSource": "Nominatim (OSM) centroid for The Sound, Isle of Man. This is the named landing place, not a surveyed cable landing.",
+        "geocoderDisplayName": "Calf Sound, IM9 5PZ, Isle of Man",
+        "source": "https://atlantic-cable.com/",
+        "licence": "UNKNOWN",
+        "sourceVerified": "2026-10-04"
+      }
+    }
+  ]
+}

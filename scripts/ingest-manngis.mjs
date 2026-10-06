@@ -25,6 +25,7 @@ import {
   sleep,
   emptyFC,
 } from "./lib/fetch.mjs";
+import { registryProvenance } from "./lib/registry-provenance.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const OUT = join(ROOT, "public", "data");
@@ -333,7 +334,14 @@ async function run() {
     for (const ds of datasets) {
       try {
         const fc = await fetchArcGISLayer(ds.url, { label: ds.name });
-        for (const f of fc.features) merged.features.push(f);
+        for (const f of fc.features) {
+          // Tag BEFORE projecting. project() keeps only the fields named in
+          // `keep` and may drop features entirely, so tagging afterwards by
+          // feature index mislabels everything downstream of the first drop -
+          // and simplification drops features unpredictably.
+          f.properties = { ...(f.properties ?? {}), dataset: ds.name };
+          merged.features.push(f);
+        }
         perDataset.push({ name: ds.name, count: fc.features.length });
       } catch (err) {
         warned++;
@@ -342,37 +350,24 @@ async function run() {
       await sleep(250);
     }
 
-    // Tag every feature with which dataset it came from, then project.
-    for (const ds of perDataset) {
-      if (ds.error) continue;
-      // project() handles this via defaults; but we want per-feature source,
-      // so re-tag using a synthetic marker we set during the loop.
-    }
-    const tagged = {
-      type: "FeatureCollection",
-      features: merged.features.map((f) => ({
-        ...f,
-        properties: { ...f.properties },
-      })),
-    };
+    const out = project(
+      merged,
+      // dataset is tagged per feature above; this line carries it through
+      // project(), which otherwise keeps only entry.keep/defaults.
+      { ...(entry.keep ?? {}), dataset: "dataset" },
+      entry.defaults ?? {},
+      {
+        simplify: entry.simplify ?? 0,
+        points: entry.asPoints === true,
+        minVertices: entry.minVertices,
+      },
+    );
 
-    const out = project(tagged, entry.keep ?? {}, entry.defaults ?? {}, {
-      simplify: entry.simplify ?? 0,
-      points: entry.asPoints === true,
-      minVertices: entry.minVertices,
-    });
-    // Stash dataset provenance per feature for merged layers.
-    if (datasets.length > 1) {
-      let i = 0;
-      for (const ds of perDataset) {
-        for (let n = 0; n < ds.count; n++) {
-          const f = out.features[i++];
-          if (f) f.properties.dataset = ds.name;
-        }
-      }
-    } else if (out.features.length && !out.features[0].properties.dataset) {
-      for (const f of out.features) f.properties.dataset = datasets[0].name;
-    }
+    // Provenance block, resolved from the same registers the UI renders, so the
+    // file does not depend on the app to explain itself. See registry-provenance.mjs.
+    const provenance = registryProvenance(entry.out);
+    if (provenance) out.properties = provenance;
+    else console.warn(`  WARNING no registered layer claims ${entry.out}; no provenance stamped`);
 
     const path = join(OUT, entry.out);
     const bytes = writeJSON(path, out);

@@ -1,0 +1,231 @@
+{
+  "type": "FeatureCollection",
+  "name": "webcams",
+  "properties": {
+    "generated": "2026-10-04T14:02:48.026Z",
+    "source": "https://www.gov.im/webcams/",
+    "sourceVerified": "2026-10-04",
+    "licence": "OGL-IoM",
+    "caveats": [
+      "SNAPSHOT JPEG ONLY. No MJPEG, HLS or RTSP stream is published. You get a still image, not video.",
+      "NO COORDINATES ARE PUBLISHED by the government. Four pins are matched to same-typed OSM features (grade B); six are approximate landmark positions (grade C) and may be tens of metres out.",
+      "images.gov.im answers non-browser clients with an AWS WAF proof-of-work challenge and HTTP 200, so the URLs could not be machine-verified. They were read from each camera's gov.im detail page. In a real browser they return JPEG.",
+      "No CORS headers, so <img> works but canvas pixel readback is blocked. Cache-Control is no-cache, so cache-bust yourself.",
+      "Hotlinking works and there is no referrer check, but the OGL covers the TEXT. There is no published grant for third-party reuse of the IMAGES specifically. Email harbours@gov.im before shipping.",
+      "Cameras are published for public interest in traffic and conditions. Do not attempt to geolocate private premises from them."
+    ],
+    "imagesNotMachineVerified": "AWS WAF returns an HTTP 200 HTML challenge to non-browser clients; these scripts cannot confirm the JPEGs resolve."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "bungalow-a18-north",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.458,
+          54.2577
+        ]
+      },
+      "properties": {
+        "id": "bungalow-a18-north",
+        "name": "The Bungalow — A18 north",
+        "image": "https://images.gov.im/webcams/bungalow3.jpg",
+        "page": "https://www.gov.im/webcams/bungalow-a18-north/",
+        "coordGrade": "C",
+        "coordSource": "Approximate: A18 summit area at the Bungalow.",
+        "note": "1920x1080 infrared. Northward view over the Snaefell summit road.",
+        "kind": "snapshot-jpeg"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "bungalow-a18-south",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.458,
+          54.2577
+        ]
+      },
+      "properties": {
+        "id": "bungalow-a18-south",
+        "name": "The Bungalow — A18 south",
+        "image": "https://images.gov.im/webcams/bungalow1.jpg",
+        "page": "https://www.gov.im/webcams/bungalow-a18-south/",
+        "coordGrade": "C",
+        "coordSource": "Approximate: A18 summit area at the Bungalow.",
+        "note": "1920x1080 infrared. Southward view down the mountain.",
+        "kind": "snapshot-jpeg"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "bungalow-laxey-valley",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.458,
+          54.2577
+        ]
+      },
+      "properties": {
+        "id": "bungalow-laxey-valley",
+        "name": "The Bungalow — Laxey valley",
+        "image": "https://images.gov.im/webcams/bungalow2.jpg",
+        "page": "https://www.gov.im/webcams/bungalow-laxey-valley/",
+        "coordGrade": "C",
+        "coordSource": "Approximate: A18 summit area at the Bungalow.",
+        "note": "1920x1080 infrared. Looking down the Laxey valley.",
+        "kind": "snapshot-jpeg"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "castletown-bay",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.64079,
+          54.06703
+        ]
+      },
+      "properties": {
+        "id": "castletown-bay",
+        "name": "Castletown Bay",
+        "image": "https://images.gov.im/webcams/Castletown_Bay.jpg",
+        "page": "https://www.gov.im/webcams/castletown-bay/",
+        "coordGrade": "B",
+        "coordSource": "OSM natural=bay 'Castletown Bay'.",
+        "note": "",
+        "kind": "snapshot-jpeg"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "douglas-marina",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.48041,
+          54.14735
+        ]
+      },
+      "properties": {
+        "id": "douglas-marina",
+        "name": "Douglas Marina",
+        "image": "https://images.gov.im/webcams/douglas_00001.jpg",
+        "page": "https://www.gov.im/webcams/douglas-marina/",
+        "coordGrade": "B",
+        "coordSource": "OSM leisure=marina 'Douglas Marina'.",
+        "note": "",
+        "kind": "snapshot-jpeg"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "douglas-outer-harbour",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.47225,
+          54.14675
+        ]
+      },
+      "properties": {
+        "id": "douglas-outer-harbour",
+        "name": "Douglas Outer Harbour (King Edward VIII Pier)",
+        "image": "https://images.gov.im/webcams/ed_tower.jpg",
+        "page": "https://www.gov.im/webcams/douglas-outer-harbour/",
+        "coordGrade": "B",
+        "coordSource": "OSM man_made=pier 'King Edward VIII Pier'.",
+        "note": "File is named ed_tower.jpg after the pier's tower.",
+        "kind": "snapshot-jpeg"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "douglas-promenade",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.46813,
+          54.16432
+        ]
+      },
+      "properties": {
+        "id": "douglas-promenade",
+        "name": "Douglas Promenade",
+        "image": "https://images.gov.im/webcams/DTL_00001.jpg",
+        "page": "https://www.gov.im/webcams/douglas-promenade/",
+        "coordGrade": "C",
+        "coordSource": "Approximate: Nominatim resolved this query to a tram node on the promenade, not the promenade itself.",
+        "note": "",
+        "kind": "snapshot-jpeg"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "peel-breakwater",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.69622,
+          54.22768
+        ]
+      },
+      "properties": {
+        "id": "peel-breakwater",
+        "name": "Peel Breakwater",
+        "image": "https://images.gov.im/webcams/peel_00001.jpg",
+        "page": "https://www.gov.im/webcams/peel-breakwater/",
+        "coordGrade": "B",
+        "coordSource": "OSM man_made=breakwater at Peel (unnamed in OSM).",
+        "note": "",
+        "kind": "snapshot-jpeg"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port-erin-bay",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.7185,
+          54.0846
+        ]
+      },
+      "properties": {
+        "id": "port-erin-bay",
+        "name": "Port Erin Bay",
+        "image": "https://images.gov.im/webcams/PortErin.jpg",
+        "page": "https://www.gov.im/webcams/port-erin-bay/",
+        "coordGrade": "C",
+        "coordSource": "Approximate: Port Erin harbour and bay.",
+        "note": "",
+        "kind": "snapshot-jpeg"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ramsey",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.3815,
+          54.3215
+        ]
+      },
+      "properties": {
+        "id": "ramsey",
+        "name": "Ramsey Harbour",
+        "image": "https://images.gov.im/webcams/Ramsey_00001.jpg",
+        "page": "https://www.gov.im/webcams/ramsey/",
+        "coordGrade": "C",
+        "coordSource": "Approximate: Ramsey harbour, north-east town.",
+        "note": "",
+        "kind": "snapshot-jpeg"
+      }
+    }
+  ]
+}

@@ -2,7 +2,7 @@
  * Assert the OpenTopoMap basemap actually paints, and that the live satellite
  * pass layer renders, by driving the real UI rather than trusting the config.
  *
- * The tile proxy can return 200 with a valid PNG while the map still shows
+ * Tiles can return 200 with a valid PNG while the map still shows
  * nothing, if the style never picks up the source. So this switches the basemap
  * through the actual <select>, screenshots the result, and measures how much of
  * the canvas is non-basemap colour.
@@ -12,16 +12,23 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 
 const PORT = process.env.PORT ?? "3000";
+const CDP_PORT = process.env.CDP_PORT ?? "9232";
 const BASE = `http://localhost:${PORT}`;
+
+// A fresh profile each run: with a reused cache every tile arrives as a
+// HTTP-cache hit, transferSize reports 0, and the "really fetched tiles from
+// the network" assertion below becomes meaningless.
+const PROFILE = "/tmp/opencode/chrome-tile";
+fs.rmSync(PROFILE, { recursive: true, force: true });
 
 const chrome = spawn("chromium", [
   "--headless=new",
-  "--remote-debugging-port=9223",
+  `--remote-debugging-port=${CDP_PORT}`,
   "--no-sandbox",
   "--use-gl=swiftshader",
   "--enable-unsafe-swiftshader",
   "--window-size=1280,900",
-  "--user-data-dir=/tmp/opencode/chrome-tile",
+  `--user-data-dir=${PROFILE}`,
   "about:blank",
 ], { stdio: "ignore" });
 
@@ -45,10 +52,11 @@ async function evaluate(expression, sessionId) {
 }
 
 const fails = [];
+const tileResponses = [];
 try {
   let wsUrl = null;
   for (let i = 0; i < 60 && !wsUrl; i++) {
-    try { wsUrl = (await (await fetch("http://localhost:9223/json/version")).json()).webSocketDebuggerUrl; } catch {}
+    try { wsUrl = (await (await fetch(`http://localhost:${CDP_PORT}/json/version`)).json()).webSocketDebuggerUrl; } catch {}
     if (!wsUrl) await sleep(250);
   }
   ws = new WebSocket(wsUrl);
@@ -64,11 +72,18 @@ try {
     if (msg.method === "Runtime.consoleAPICalled" && msg.params.type === "error") {
       errors.push(msg.params.args.map((a) => a.value ?? a.description ?? "").join(" "));
     }
+    // Cross-origin tiles omit Timing-Allow-Origin, so performance entries
+    // report transferSize 0 and duration 0 even for a healthy network fetch.
+    // The response themselves are the only trustworthy signal.
+    if (msg.method === "Network.responseReceived" && /tile\.opentopomap\.org/.test(msg.params.response.url)) {
+      tileResponses.push(msg.params.response.status);
+    }
   };
 
   const { targetId } = await send("Target.createTarget", { url: "about:blank" });
   const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
   await send("Runtime.enable", {}, sessionId);
+  await send("Network.enable", {}, sessionId);
   await send("Page.enable", {}, sessionId);
   await send("Page.navigate", { url: BASE }, sessionId);
   await sleep(12000);
@@ -86,7 +101,9 @@ try {
   if (switched !== "ok") fails.push(`could not switch basemap: ${switched}`);
   await sleep(9000);
 
-  const tileErrors = errors.filter((e) => /api\/tiles\/opentopo/i.test(e));
+  // Direct from OpenTopoMap now, so assert on the upstream host rather than our
+  // own path. If their CORS header goes away this fires, which is the point.
+  const tileErrors = errors.filter((e) => /tile\.opentopomap\.org/i.test(e));
   if (tileErrors.length) fails.push(`${tileErrors.length} opentopo tile error(s): ${tileErrors[0].slice(0, 140)}`);
 
   // LAYER ORDER, not layer existence.
@@ -151,12 +168,26 @@ try {
   })()`, sessionId);
   await sleep(6000);
 
-  // Count proxied tile requests that the browser actually made.
+  // Count the tile requests the browser actually made.
+  //
+  // These are direct to OpenTopoMap, not through our origin. That is the whole
+  // point of the change: it sends `access-control-allow-origin: *`, so the proxy
+  // had nothing left to do, and going direct removes a hop and a bandwidth bill.
+  // The status of each response is captured by the Network listener above,
+  // because performance.getEntriesByType("resource") cannot be used here:
+  // OpenTopoMap sends no Timing-Allow-Origin, so entry transferSize/duration
+  // are 0 even for a healthy fetch. If OpenTopoMap ever stops sending the CORS
+  // header, MapLibre fails to read the pixels and the canvas assertion in
+  // verify-render catches it; here we catch the narrower HTTP failure.
   const perf = await evaluate(`(() => performance.getEntriesByType("resource")
-     .filter(e => e.name.includes("/api/tiles/opentopo/"))
-     .map(e => ({ name: e.name, size: e.transferSize, dur: Math.round(e.duration) })) )()`, sessionId);
-  const okTiles = (perf ?? []).filter((t) => t.size > 0);
-  if (!okTiles.length) fails.push("browser requested no proxied opentopo tiles with a non-zero body");
+     .filter(e => /tile\\.opentopomap\\.org/.test(e.name))
+     .map(e => ({ name: e.name, size: e.transferSize })) )()`, sessionId);
+  const tile200 = tileResponses.filter((s) => s === 200);
+  if (!tile200.length) {
+    fails.push(
+      `no opentopo tile came back 200 (${tileResponses.length} responses: ${[...new Set(tileResponses)].join(", ") || "none recorded"})`,
+    );
+  }
 
   // The attribution control must credit whoever actually served the tiles.
   // OpenTopoMap is CC-BY-SA, so leaving Esri credited on screen is a licence
@@ -177,12 +208,11 @@ try {
   fs.writeFileSync("/tmp/opencode/opentopo-basemap.png", Buffer.from(shot.data, "base64"));
 
   console.log("\nOpenTopoMap basemap check");
-  console.log(`  proxied tile requests ${(perf ?? []).length} (${okTiles.length} with body)`);
+  console.log(`  direct tile requests  ${(perf ?? []).length} (${tile200.length} HTTP 200)`);
   console.log(`  tile request errors   ${tileErrors.length}`);
   console.log(`  basemap layer index   ${orderAfterSwitch.basemapIndex} (first data layer ${orderAfterSwitch.firstDataIndex}, ${orderAfterSwitch.dataCount} data layers)`);
   console.log(`  below data, both ways ${orderAfterSwitch.basemapBelowAllData && orderAfterBack.basemapBelowAllData ? "yes" : "NO"}`);
   console.log(`  attribution          ${(attribution ?? "(none)").slice(0, 90)}`);
-  console.log(`  slowest tile          ${Math.max(0, ...okTiles.map((t) => t.dur))} ms`);
   console.log("  screenshot            /tmp/opencode/opentopo-basemap.png");
   console.log(fails.length ? `\nFAIL:\n  ${fails.join("\n  ")}` : "\nOK");
   process.exitCode = fails.length ? 1 : 0;

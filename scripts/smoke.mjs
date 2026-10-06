@@ -15,7 +15,9 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { decodePng, analyse } from "./lib/png.mjs";
 
 const URL_UNDER_TEST = process.argv[2] ?? "http://localhost:3111/";
-const PORT = 9222;
+// chrome remote debugging port. verify-render and verify-basemap each use a
+// different default so the three headless checks can run concurrently.
+const PORT = process.env.CDP_PORT ?? "9222";
 
 const chrome = spawn("chromium", [
   "--headless=new",
@@ -71,6 +73,21 @@ await send("Emulation.setDeviceMetricsOverride",
   { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false }, sessionId);
 
 const consoleErrors = [];
+/**
+ * 503s from live routes that are gated behind an unset permission.
+ *
+ * These are expected, and they are Chromium's own network log rather than
+ * anything the app logs, so no amount of care in the client code stops them:
+ * asking for a route that has been correctly configured to refuse service
+ * produces a real HTTP 503, and the browser records it. The live layers report
+ * the same condition in the layer panel as a "feed offline" badge, which is
+ * where a user should be told. So they are collected separately, printed, and
+ * asserted to come only from the routes that are allowed to refuse - rather
+ * than blanket-filtered, which would hide a genuine outage behind the same text.
+ */
+const gated503s = [];
+const GATED_ROUTES = [/\/api\/flights/, /\/api\/transit/, /\/api\/marine/];
+
 ws.addEventListener("message", (m) => {
   const msg = JSON.parse(m.data);
   if (msg.method === "Runtime.consoleAPICalled" && ["error", "warning"].includes(msg.params.type)) {
@@ -82,7 +99,13 @@ ws.addEventListener("message", (m) => {
       ?? msg.params.exceptionDetails.text));
   }
   if (msg.method === "Log.entryAdded" && msg.params.entry.level === "error") {
-    consoleErrors.push("log: " + msg.params.entry.text);
+    const e = msg.params.entry;
+    if (e.source === "network" && /status of 503/.test(e.text ?? "")
+        && GATED_ROUTES.some((re) => re.test(e.url ?? ""))) {
+      gated503s.push(e.url.replace(/^https?:\/\/[^/]+/, ""));
+      return;
+    }
+    consoleErrors.push("log: " + e.text);
   }
 });
 
@@ -217,21 +240,38 @@ const reg = await evaluate(`(() => {
   return {
     hasLink: !!a,
     byNumber: /company number/i.test(document.body.innerText),
-    // An invalid number must be flagged, not silently linked.
-    warnsInvalid: true,
   };
 })()`);
 if (!reg.hasLink) fails.push("Companies panel produced no Registry search link");
 
+// A number WITHOUT its suffix letter must be flagged, not silently linked: the
+// official registry will return nothing and the panel is the only place that
+// can say so. "005629V" is well-formed; "12345" is not.
+await evaluate(`(() => {
+  const i = document.querySelector('input[aria-label="Company name or number"]');
+  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+  setter.call(i, "12345");
+  i.dispatchEvent(new Event("input", { bubbles: true }));
+})()`);
+await clickByText("Search");
+await sleep(500);
+const regWarns = await evaluate(`(() => {
+  const el = [...document.querySelectorAll("div")].find(d =>
+    d.textContent.includes("that is not a valid IoM company number"));
+  return !!el;
+})()`);
+if (!regWarns) fails.push("Companies panel did not flag an invalid number (12345)");
+
 // --- Gaps ---
 await tab("Gaps");
 const gaps = await evaluate(`(() => {
-  const d = document.querySelectorAll("details");
-  return { count: d.length, first: d[0]?.querySelector("summary")?.innerText?.trim() ?? null };
+  const ds = document.querySelectorAll("details[data-gap]");
+  return { count: ds.length, first: ds[0]?.querySelector("summary")?.innerText?.trim() ?? null };
 })()`);
-if (gaps.count !== manifest.absent.length + 0 && gaps.count < 10) {
+if (gaps.count !== GAPS_COUNT) {
   fails.push(`gaps panel showed ${gaps.count} entries, registry declares ${GAPS_COUNT}`);
 }
+if (!gaps.first) fails.push("gaps panel produced no titled entry");
 
 // --- feature popup on map click ---
 await tab("Layers");
@@ -294,6 +334,9 @@ console.log("layer rows:  ", dom.layerRows, `(${dom.checked} checked)`);
 console.log("no-data tags:", dom.missingBadges);
 console.log("attribution: ", dom.attribution);
 console.log("geojson reqs:", dataReqs.length, badData.length ? `(BAD: ${badData.length})` : "(all 200)");
+console.log("gated feeds: ", gated503s.length
+  ? `${[...new Set(gated503s)].join(", ")} (refusing to run until permitted - expected)`
+  : "none refused");
 for (const [u] of dataReqs) console.log("   200", u);
 if (consoleErrors.length) {
   console.log("console:");
@@ -304,6 +347,7 @@ console.log("ip lookup:   ", ipPanel.operator && ipPanel.asn && ipPanel.cidr
   : "FAILED");
 console.log("ip negative: ", ipNegative ? "8.8.8.8 correctly rejected" : "FAILED");
 console.log("registry:    ", reg.hasLink ? "link built" + (reg.byNumber ? ", number mode" : "") : "FAILED");
+console.log("registry invalid:", regWarns ? "12345 correctly flagged" : "FAILED");
 console.log("gaps panel:  ", `${gaps.count} entries`);
 console.log("feature popup:", popup ? (popup.hasProvenance ? "opened with provenance" : "OPENED BUT NO PROVENANCE") : "NEVER OPENED");
 console.log("screenshot:  /tmp/opencode/smoke.png");

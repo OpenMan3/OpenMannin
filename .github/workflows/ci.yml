@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The built worker artifact is gitignored, so a fresh checkout has none.
+      # Every test that exercises the worker expects it to exist; the full
+      # `npm run build` below rebuilds it too, but the tests run first.
+      - name: Build the pass worker
+        run: npm run build:passes-worker
+
+      - name: Unit and integration tests
+        run: npm test
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Registry and data integrity
+        run: npm run verify:registry
+
+      - name: Full static build (worker, headers, health, next export)
+        run: npm run build
+
+      - name: Install headless Chromium
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends chromium
+
+      - name: Serve the export and headless-verify it
+        env:
+          PORT: "3111"
+        run: |
+          PORT=3111 node scripts/serve.mjs &
+          SERVE_PID=$!
+          trap "kill $SERVE_PID" EXIT
+          sleep 2
+          node scripts/smoke.mjs http://localhost:3111/
+          node scripts/verify-render.mjs
+          node scripts/verify-basemap.mjs

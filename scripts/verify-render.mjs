@@ -11,17 +11,21 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 
 const PORT = process.env.PORT ?? "3000";
+const CDP_PORT = process.env.CDP_PORT ?? "9231";
 const URL_BASE = `http://localhost:${PORT}`;
+
+const PROFILE = "/tmp/opencode/chrome-verify";
+fs.rmSync(PROFILE, { recursive: true, force: true });
 
 const chrome = spawn("chromium", [
   "--headless=new",
-  "--remote-debugging-port=9222",
+  `--remote-debugging-port=${CDP_PORT}`,
   "--no-sandbox",
   "--disable-gpu-sandbox",
   "--use-gl=swiftshader",
   "--enable-unsafe-swiftshader",
   "--window-size=1280,900",
-  "--user-data-dir=/tmp/opencode/chrome-verify",
+  `--user-data-dir=${PROFILE}`,
   "about:blank",
 ], { stdio: ["ignore", "pipe", "pipe"] });
 
@@ -30,7 +34,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function wsUrl() {
   for (let i = 0; i < 60; i++) {
     try {
-      const r = await fetch("http://localhost:9222/json/version");
+      const r = await fetch(`http://localhost:${CDP_PORT}/json/version`);
       const j = await r.json();
       if (j.webSocketDebuggerUrl) return j.webSocketDebuggerUrl;
     } catch {}

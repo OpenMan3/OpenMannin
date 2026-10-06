@@ -28,7 +28,6 @@ const GROUP_LABELS: Record<LayerGroup, string> = {
   energy: "Energy",
   environment: "Environment",
   aviation: "Aviation",
-  marine: "Marine",
   surveillance: "Surveillance & environment",
   live: "Live feeds",
   gaps: "Documented gaps",
@@ -44,7 +43,6 @@ const GROUP_ORDER: LayerGroup[] = [
   "environment",
   "surveillance",
   "aviation",
-  "marine",
   "live",
 ];
 
@@ -59,11 +57,18 @@ export function LayerPanel({
   layers,
   enabled,
   missing,
+  feedErrors,
   onToggle,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
   missing: Set<string>;
+  /**
+   * Live layers that are switched on but failing, keyed by layer id. Shown as a
+   * badge because a live feed that cannot run is completely invisible on the
+   * map: an empty layer and a working one are the same picture.
+   */
+  feedErrors: Record<string, string>;
   onToggle: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -111,6 +116,7 @@ export function LayerPanel({
             {grouped.get(group)!.map((layer) => {
               const isMissing = missing.has(layer.id);
               const isLive = layer.kind === "live";
+              const feedError = isLive ? feedErrors[layer.id] : undefined;
               const isOn = enabled.has(layer.id) && !isMissing;
               const src = SOURCES[layer.sourceId];
               const lic = src ? LICENCES[src.licence] : undefined;
@@ -137,7 +143,7 @@ export function LayerPanel({
                           aria-hidden
                         />
                         <span
-                          className={`truncate text-[13px] ${isMissing ? "text-[#55636e] line-through" : "text-[#d7e3ec]"}`}
+                          className={`truncate text-[13px] ${isMissing ? "text-[#6b7f8c] line-through" : "text-[#d7e3ec]"}`}
                         >
                           {layer.label}
                         </span>
@@ -163,6 +169,14 @@ export function LayerPanel({
                             live route
                           </span>
                         )}
+                        {feedError && (
+                          <span
+                            className="rounded bg-[#3a1414] px-1 text-[#f87171]"
+                            title={feedError}
+                          >
+                            feed offline
+                          </span>
+                        )}
                         {isMissing && (
                           <span className="rounded bg-[#3a1414] px-1 text-[#f87171]">no data</span>
                         )}
@@ -173,7 +187,7 @@ export function LayerPanel({
                       type="button"
                       onClick={() => toggleDetail(layer.id)}
                       aria-label={`Details for ${layer.label}`}
-                      className="shrink-0 px-1 text-xs text-[#55636e] hover:text-[#d7e3ec]"
+                      className="shrink-0 px-1 text-xs text-[#6b7f8c] hover:text-[#d7e3ec]"
                     >
                       {isOpen ? "−" : "i"}
                     </button>
@@ -182,6 +196,15 @@ export function LayerPanel({
                   {isOpen && (
                     <div className="space-y-2 px-3 pb-3 pl-8 text-[11px] leading-relaxed text-[#9fb0bd]">
                       <p>{layer.description}</p>
+
+                      {feedError && (
+                        <div className="rounded border border-[#3a1414] bg-[#1a0c0c] p-2">
+                          <div className="mb-1 font-semibold text-[#f87171]">
+                            This live feed is not running
+                          </div>
+                          <p className="break-words">{feedError}</p>
+                        </div>
+                      )}
 
                       {layer.caveats && layer.caveats.length > 0 && (
                         <div className="rounded border border-[#3a2a12] bg-[#1a1408] p-2">

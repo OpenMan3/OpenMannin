@@ -64,7 +64,6 @@ export type LayerGroup =
   | "energy"
   | "environment"
   | "aviation"
-  | "marine"
   | "surveillance"
   | "live"
   | "gaps";

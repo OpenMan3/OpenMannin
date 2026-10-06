@@ -22,7 +22,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { LayerDef } from "@/lib/types";
-import { geometryKindOf, loadLayer, type GeometryKind } from "@/lib/layer-data";
+import {
+  geometryKindsOf,
+  loadLayer,
+  type FeatureCollection,
+  type GeometryKind,
+} from "@/lib/layer-data";
+import { fetchFeed, FEEDS_ON_HOLD, ON_HOLD_REASON } from "@/lib/feeds";
+import { nextPollDelayMs } from "@/lib/feeds/backoff";
+import { installPbfGuard } from "@/lib/pbf-guard";
 
 export interface PickedFeature {
   layer: LayerDef;
@@ -59,13 +67,22 @@ const BASEMAPS: Record<BasemapId, { tiles: string[]; attribution: string; maxzoo
     maxzoom: 19,
   },
   opentopo: {
-    // Proxied, not direct. OpenTopoMap sends no Access-Control-Allow-Origin
-    // header, so MapLibre loading it cross-origin is blocked by the browser
-    // with nothing the client can set to fix it. Going through our own origin
-    // removes the cross-origin step entirely. See src/app/api/tiles/opentopo.
-    tiles: ["/api/tiles/opentopo/{z}/{x}/{y}"],
+    // Direct, not proxied. OpenTopoMap serves `access-control-allow-origin: *`
+    // on its raster tiles - verified by request against a.tile.opentopomap.org
+    // with a foreign Origin header - so MapLibre can load it cross-origin and
+    // the tile proxy has nothing left to do.
+    //
+    // The proxy existed to work around a CORS header that is in fact present.
+    // That was a wrong reading of an earlier probe, and it cost a server route,
+    // a bandwidth bill and a class of silent failure. Subdomains are cycled
+    // because OpenTopoMap rate-limits per host.
+    tiles: [
+      "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+      "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
+      "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
+    ],
     attribution:
-      "Map data &copy; OpenStreetMap contributors, SRTM | Map style &copy; OpenTopoMap (CC-BY-SA), proxied",
+      "Map data &copy; OpenStreetMap contributors, SRTM | Map style &copy; OpenTopoMap (CC-BY-SA)",
     maxzoom: 17,
   },
 }
@@ -90,6 +107,7 @@ export function MapView({
   basemap,
   onPick,
   onMissing,
+  onFeedErrors,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
@@ -97,35 +115,95 @@ export function MapView({
   onPick: (picked: PickedFeature | null) => void;
   /** Reports layers the registry lists but public/data does not have. */
   onMissing?: (missing: Set<string>) => void;
+  /**
+   * Reports live layers that are failing, keyed by layer id. A feed that
+   * requires a licence you do not have is the single most confusing thing this
+   * app can do, and it is invisible on the map: an empty layer and a working
+   * one look identical.
+   */
+  onFeedErrors?: (errors: Record<string, string>) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import("maplibre-gl").Map | null>(null);
   const readyRef = useRef(false);
   const [status, setStatus] = useState<string>("loading map…");
   const [missing, setMissing] = useState<Set<string>>(new Set());
+  const [feedErrors, setFeedErrors] = useState<Record<string, string>>({});
+
+  /**
+   * Set or clear one layer's badge, returning the SAME object when nothing
+   * changed.
+   *
+   * These run every 30 s per live layer, and the previous `{ ...prev, [id] }`
+   * pattern allocated a fresh object even for an identical message - which
+   * re-rendered MapView, the page and the layer panel in a chain, forever, for
+   * a badge that had not moved.
+   */
+  const setFeedError = (id: string, message: string | null): void => {
+    setFeedErrors((prev) => {
+      const current = prev[id];
+      if (message === null) {
+        if (current === undefined) return prev;
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      }
+      if (current === message) return prev;
+      return { ...prev, [id]: message };
+    });
+  };
+  /**
+   * Bumped once the map finishes loading. The live-layer effect below must not
+   * run before the map exists, but it also cannot depend on `readyRef` (a ref
+   * change does not re-render), so this counter is the signal that makes the
+   * effect re-run at exactly the right moment.
+   */
+  const [liveReady, setLiveReady] = useState(0);
 
   // Keep the latest values reachable from the map event handlers without
   // re-registering listeners on every render.
+  //
+  // Assigned in an EFFECT, not in the render body. Writing a ref during render
+  // publishes state from a render that React may later discard (concurrent
+  // rendering, StrictMode double-invoke), which means the map's handlers can
+  // read a value belonging to a version of the UI that never happened. The
+  // effect runs before any user event can fire, so the ref is never stale when
+  // it is read.
   const enabledRef = useRef(enabled);
-  enabledRef.current = enabled;
   const layersRef = useRef(layers);
-  layersRef.current = layers;
   const onPickRef = useRef(onPick);
-  onPickRef.current = onPick;
+  useEffect(() => {
+    enabledRef.current = enabled;
+    layersRef.current = layers;
+    onPickRef.current = onPick;
+  }, [enabled, layers, onPick]);
+
+  /** The maplibre-gl module, captured at map creation for the live effect. */
+  const libRef = useRef<typeof import("maplibre-gl") | null>(null);
+  /** Poller interval per live layer id. Presence in this map == "running". */
+  const liveRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const pollFailuresRef = useRef<Map<string, number>>(new Map());
+  /** Layer ids with a request already in flight, to stop requests stacking. */
+  const inFlightRef = useRef<Set<string>>(new Set());
 
   // Populated by the mount effect, called by the effects that react to
   // visibility and basemap changes. A ref rather than a map property so the
   // map object is never cast to an anonymous shape.
   const syncRef = useRef<(() => Promise<void>) | null>(null);
+  /** The `openmannin:fly-to` listener, held so cleanup can detach it. */
+  const flyToRef = useRef<((e: Event) => void) | null>(null);
+  /** Which basemap the current map object was last built or switched to. */
+  const appliedBasemapRef = useRef<string | null>(null);
 
   // ---- create the map once -------------------------------------------------
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     let cancelled = false;
-    /** Polling handles for live layers, cleared on unmount. */
-    const liveTimers: ReturnType<typeof setInterval>[] = [];
 
     (async () => {
+      // Defence-in-depth for the tile pipeline: validate protobuf responses
+      // before MapLibre's decoder loop ever sees their bytes.
+      installPbfGuard();
       const maplibregl = (await import("maplibre-gl")) as typeof import("maplibre-gl");
       if (cancelled || !containerRef.current) return;
       await import("maplibre-gl/dist/maplibre-gl.css");
@@ -164,16 +242,37 @@ export function MapView({
         },
       });
 
+      // The initial style already carries this basemap, so the switch effect
+      // must not tear it down and rebuild it the moment the map reports ready.
+      appliedBasemapRef.current = basemap;
+
       map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
       map.addControl(
         new maplibregl.ScaleControl({ maxWidth: 110, unit: "metric" }),
         "bottom-left",
       );
 
+      // Tile, glyph and worker failures surface here rather than as thrown
+      // exceptions, so without this listener they are invisible to the UI and
+      // only ever seen in a console nobody has open. Logged, not fatal: a
+      // single bad tile must not stop the map.
+      map.on("error", (e) => {
+        console.warn("[map]", e?.error?.message ?? e);
+      });
+
       map.on("load", () => {
         readyRef.current = true;
         setStatus("ready");
         void syncLayers();
+        // Re-render so the live-layer effect below re-runs now that the map is
+        // genuinely usable. It has to happen HERE, on the load event, and not
+        // where the Map is constructed: constructing the Map object and the map
+        // being ready are different moments, and readyRef is still false when
+        // the constructor returns. Signalling from the constructor therefore
+        // made the live effect run once, early-return on `!readyRef.current`,
+        // and never run again - so no default-on live layer ever started
+        // polling and the page made no feed requests at all.
+        setLiveReady((n) => n + 1);
       });
 
 
@@ -194,10 +293,25 @@ export function MapView({
       });
 
       // Show the cursor only over something we actually drew.
+      //
+      // Throttled to one query per animation frame. `queryRenderedFeatures`
+      // walks every rendered feature layer - `roads` alone is 3,391 features -
+      // and pointermove fires many times per frame during a pan, so running it
+      // unthrottled was a measurable cost paid purely to toggle a cursor.
+      let cursorFrame = 0;
       map.on("mousemove", (e: import("maplibre-gl").MapMouseEvent) => {
-        const hits = map.queryRenderedFeatures(e.point);
-        const ours = hits.some((h) => layerByMapLayerId(h.layer.id, layersRef.current) !== undefined);
-        map.getCanvas().style.cursor = ours ? "pointer" : "";
+        if (cursorFrame) return;
+        const { point } = e;
+        cursorFrame = requestAnimationFrame(() => {
+          cursorFrame = 0;
+          // The map may have been torn down while the frame was pending.
+          if (mapRef.current !== map) return;
+          const hits = map.queryRenderedFeatures(point);
+          const ours = hits.some(
+            (h) => layerByMapLayerId(h.layer.id, layersRef.current) !== undefined,
+          );
+          map.getCanvas().style.cursor = ours ? "pointer" : "";
+        });
       });
 
       mapRef.current = map;
@@ -224,6 +338,10 @@ export function MapView({
         });
       };
       window.addEventListener("openmannin:fly-to", onFlyTo);
+      // Detached in cleanup. An orphaned listener outlives the map it closes
+      // over, so a dispatch after unmount - including React StrictMode's
+      // double-mount in dev - called `flyTo` on a removed Map.
+      flyToRef.current = onFlyTo;
 
       // ---- add or remove our layers to match `enabled` ----------------------
       async function syncLayers() {
@@ -248,10 +366,25 @@ export function MapView({
 
           try {
             const fc = await loadLayer(def.file);
-            if (!mapRef.current?.getSource(`om-${def.id}`)) {
-              map.addSource(`om-${def.id}`, { type: "geojson", data: fc as never });
-              addPaintLayers(maplibregl, map, def, geometryKindOf(fc));
+            // The fetch can outlast a toggle. Without this re-check a layer
+            // switched off mid-load still gets added, and nothing removes it
+            // until the user toggles it on and off again - so the map paints a
+            // layer the panel is simultaneously reporting as off.
+            if (!enabledRef.current.has(def.id)) continue;
+            const m = mapRef.current;
+            if (m && !m.getSource(`om-${def.id}`)) {
+              m.addSource(`om-${def.id}`, { type: "geojson", data: fc as never });
+              addPaintLayers(maplibregl, m, def, geometryKindsOf(fc));
             }
+            // Success clears an earlier failure. `missing` is otherwise
+            // append-only, so one blip kept a layer greyed out as "no data"
+            // for the rest of the session even after it loaded fine.
+            setMissing((prev) => {
+              if (!prev.has(def.id)) return prev;
+              const next = new Set(prev);
+              next.delete(def.id);
+              return next;
+            });
           } catch {
             // A layer the registry lists but public/data does not have must not
             // take the map down. Record it and let the panel grey it out.
@@ -262,80 +395,249 @@ export function MapView({
       syncRef.current = syncLayers;
       void syncLayers();
 
-      // ---- live layers ----------------------------------------------------
-      // Static layers are fetched once. Live layers are polled, because a
-      // vessel or a satellite moves and a snapshot would be a lie within the
-      // minute. The registry's `endpoint` is always same-origin, so no CORS
-      // handling is needed here and no provider token reaches the browser.
-      const liveEnabled = layersRef.current.filter(
-        (d) => d.kind === "live" && enabledRef.current.has(d.id) && d.endpoint,
-      );
-
-      if (liveEnabled.length) {
-        const added = new Set<string>();
-        for (const def of liveEnabled) {
-          const poll = async () => {
-            const map = mapRef.current;
-            if (!map || !readyRef.current || !enabledRef.current.has(def.id)) return;
-            try {
-              const res = await fetch(def.endpoint!, { cache: "no-store" });
-              // A route that refuses to run (no credentials, upstream down)
-              // answers with a JSON error, not a FeatureCollection. Say so in
-              // the console rather than painting an empty source that looks
-              // like "nothing is happening right now".
-              if (!res.ok) {
-                const body = await res.json().catch(() => null);
-                console.warn(
-                  `[live] ${def.id} unavailable (${res.status}):`,
-                  body?.reason ?? body?.error ?? "unknown",
-                );
-                return;
-              }
-              const fc = await res.json();
-              if (!fc?.features) return;
-
-              const sourceId = `om-${def.id}`;
-              const existing = map.getSource(sourceId) as
-                | import("maplibre-gl").GeoJSONSource
-                | undefined;
-              if (existing) {
-                existing.setData(fc as never);
-                return;
-              }
-              if (map.getLayer(`${sourceId}-circle`)) return;
-              map.addSource(sourceId, { type: "geojson", data: fc as never });
-              addPaintLayers(maplibregl, map, def, geometryKindOf(fc));
-              added.add(def.id);
-            } catch (e) {
-              console.warn(`[live] ${def.id} poll failed:`, (e as Error).message);
-            }
-          };
-
-          await poll();
-          // 30 s is a sensible compromise: fast enough to feel live, slow
-          // enough not to hammer the route or the upstream provider.
-          const timer = setInterval(poll, 30_000);
-          liveTimers.push(timer);
-        }
-      }
-    })();
+      // Live layers are NOT started here. They are driven by the reactive
+      // effect below, which is keyed on `enabled`, so that toggling one on
+      // after load actually starts it. See the note on that effect.
+      //
+      // Note there is deliberately no setLiveReady() call here: the map is not
+      // usable yet. The signal is raised from the "load" handler instead.
+      libRef.current = maplibregl;
+    })().catch((e: unknown) => {
+      // Without this, a failure anywhere in initialisation - the pbf guard, the
+      // dynamic import, the CSS import, the constructor - surfaced as an
+      // unhandled rejection and the status badge sat on "loading map…"
+      // forever, which is indistinguishable from a slow network.
+      console.error("[map] failed to initialise:", e);
+      if (!cancelled) setStatus(`map failed: ${(e as Error)?.message ?? "unknown error"}`);
+    });
 
     return () => {
       cancelled = true;
-      for (const t of liveTimers) clearInterval(t);
+      for (const [, timer] of liveRef.current) clearTimeout(timer);
+      liveRef.current.clear();
+      pollFailuresRef.current.clear();
       syncRef.current = null;
+      if (flyToRef.current) window.removeEventListener("openmannin:fly-to", flyToRef.current);
+      flyToRef.current = null;
+      appliedBasemapRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
+      libRef.current = null;
       readyRef.current = false;
     };
-    // Intentionally mount-only: layer changes are handled by the effect below.
+    // Intentionally mount-only: layer changes are handled by the effects below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ---- live layers ---------------------------------------------------------
+  // Static layers are fetched once. Live layers are POLLED, because a bus, a
+  // vessel or an aircraft moves and a snapshot would be a lie within the
+  // minute. Where each feed runs - browser or server - is resolved inside
+  // fetchFeed (see src/lib/feeds); this component only cares about the answer.
+  //
+  // WHY THIS IS A REACTIVE EFFECT AND NOT PART OF THE MOUNT EFFECT. It used to
+  // live inside the mount-only effect above, which read the enabled set once at
+  // mount and registered a timer per already-enabled live layer. Two things
+  // followed from that, and both look like "the live layers are broken":
+  //
+  //   1. A live layer switched on AFTER load never started polling, and
+  //      syncLayers() skips it too (it only handles kind === "geojson"), so it
+  //      was never added to the map at all. Permanently invisible.
+  //   2. A live layer switched OFF kept its timer running and kept painting,
+  //      because nothing ever cleared it. The checkbox and the map disagreed.
+  //
+  // Driving it from `enabled` fixes both, and makes the poller's lifetime match
+  // the layer's visibility rather than the component's.
+  useEffect(() => {
+    const map = mapRef.current;
+    const maplibregl = libRef.current;
+    if (!map || !maplibregl || !readyRef.current) return;
+
+    // Feeds on hold are stripped out of the poll set: no interval, no
+    // request, no console noise. They still show up in the panel as badged
+    // (feedErrors below) so a switched-on held layer says "on hold" rather
+    // than looking like an empty live feed.
+    const wanted = new Set(
+      layers
+        .filter((d) => d.kind === "live" && d.endpoint && enabled.has(d.id) && !FEEDS_ON_HOLD.has(d.id))
+        .map((d) => d.id),
+    );
+
+    // Seed (and prune) the on-hold entries in feedErrors, using the latest
+    // enabled set. This runs in the same effect as the pollers, so the badge
+    // appears for a held layer the moment it is switched on.
+    setFeedErrors((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const id of FEEDS_ON_HOLD) {
+        const isLiveHere = layersRef.current.some((l) => l.id === id && l.kind === "live");
+        const on = isLiveHere && enabled.has(id);
+        const want = on ? `503: ${ON_HOLD_REASON}` : undefined;
+        if (want && next[id] !== want) {
+          next[id] = want;
+          changed = true;
+        } else if (!want && id in next) {
+          delete next[id];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+
+    // Retire pollers for layers that are no longer wanted, and take their
+    // source off the map. Leaving the source behind would keep the last set of
+    // positions frozen on screen, which is the worst possible outcome: it looks
+    // live and is not.
+    for (const [id, timer] of [...liveRef.current]) {
+      if (wanted.has(id)) continue;
+      clearTimeout(timer);
+      liveRef.current.delete(id);
+      inFlightRef.current.delete(id);
+      pollFailuresRef.current.delete(id);
+
+      // Drop the badge with the poller. Nothing else will: polling has stopped,
+      // so the success path that normally clears a stale error never runs again,
+      // and the panel badges a layer the user switched OFF as "feed offline"
+      // until the page is reloaded. Only ids that had a poller are here, so the
+      // on-hold badges seeded above are untouched.
+      setFeedError(id, null);
+
+      const sourceId = `om-${id}`;
+      for (const suffix of ["fill", "line", "circle", "symbol"]) {
+        const layerId = layerIdFor(id, suffix);
+        if (map.getLayer(layerId)) map.removeLayer(layerId);
+      }
+      if (map.getSource(sourceId)) map.removeSource(sourceId);
+    }
+
+    // Start a poller for each newly wanted layer. The registry guarantees one
+    // poller per id, so this cannot double up across re-renders.
+    for (const id of wanted) {
+      if (liveRef.current.has(id)) continue;
+      const def = layers.find((d) => d.id === id);
+      // `endpoint` marks this as a live feed. It is no longer the URL to fetch:
+      // where a feed runs - browser or server - is resolved inside fetchFeed.
+      // See src/lib/feeds.
+      if (!def?.endpoint) continue;
+
+      const poll = async (id: string) => {
+        const current = mapRef.current;
+        if (!current || !readyRef.current || !enabledRef.current.has(id)) return;
+
+        // One request in flight per layer. The satellite pass computation runs
+        // SGP4 over a 48-hour window for every crewed TLE and can outlast the
+        // poll interval; without
+        // this guard a slow response stacks requests until the tab falls over.
+        if (inFlightRef.current.has(id)) return;
+        inFlightRef.current.add(id);
+
+        // A poll that returns healthy resets the failure streak; anything else
+        // counts one against this feed and the next attempt is scheduled further
+        // out (see backoff.ts). A 429 or an outage therefore stops hurting the
+        // upstream after a few rounds, and self-heals the moment one call works.
+        let healthy = true;
+
+        try {
+          // fetchFeed hides where this runs. The map does not care; the panel
+          // reports the outcome.
+          const result = await fetchFeed(id);
+
+          // The layer may have been switched off while the request was in the
+          // air. Painting anyway would put positions on the map that the panel
+          // says are hidden - and the retire loop has already run, so no later
+          // pass would remove them. Bail before touching the map or the badge.
+          if (!enabledRef.current.has(id)) return;
+
+          // A feed that refuses to run (no credentials, upstream down, function
+          // not deployed) answers with a typed failure, not a FeatureCollection.
+          // Say so rather than painting an empty source that looks like "nothing
+          // is happening right now".
+          if (!result.ok) {
+            healthy = false;
+            setFeedError(id, `${result.status}: ${result.reason}`);
+            // `not-enabled` is a CONFIGURATION state, not a fault: the feed is
+            // refusing to run because a permission has not been granted, which
+            // is the correct behaviour until someone grants it. The layer panel
+            // badges it. Warning about it here would put four lines in the
+            // console every 30 seconds for a deploy that is working exactly as
+            // designed, and would drown the warnings that matter. Anything else
+            // - an upstream outage, a bad token, a missing function - is a real
+            // fault and gets logged.
+            if (result.error !== "not-enabled") {
+              console.warn(`[live] ${id} unavailable (${result.status}):`, result.reason);
+            }
+            return;
+          }
+          // fetchFeed returns whatever the upstream produced, so the shape is only
+          // known at runtime; the `features` guard above is what makes it usable.
+          const fc = result.fc as FeatureCollection;
+          if (!fc?.features) {
+            // A malformed collection is a failure, not "nothing overhead".
+            // Returning silently here is what made an upstream schema change
+            // indistinguishable from a quiet sky.
+            healthy = false;
+            setFeedError(id, "502: upstream returned an unusable collection");
+            console.warn(`[live] ${id} returned an unusable collection`);
+            return;
+          }
+
+          // A stale answer is still worth showing, but it must be visible: the
+          // feed served a cache because the network failed.
+          if (result.stale) {
+            setFeedError(id, "stale: cached copy, upstream unreachable");
+          } else {
+            setFeedError(id, null);
+          }
+
+          const sourceId = `om-${id}`;
+          // Test for the SOURCE, not for a `-circle` layer. The old check only
+          // matched point layers, so a live layer that came back as a line or a
+          // polygon re-ran addSource on every poll and threw "source already
+          // exists" into the console forever.
+          const existing = current.getSource(sourceId) as
+            | import("maplibre-gl").GeoJSONSource
+            | undefined;
+          if (existing) {
+            existing.setData(fc as never);
+            return;
+          }
+          current.addSource(sourceId, { type: "geojson", data: fc as never });
+          addPaintLayers(maplibregl, current, def, geometryKindsOf(fc));
+        } catch (e) {
+          healthy = false;
+          if (enabledRef.current.has(id)) {
+            setFeedError(id, (e as Error).message);
+          }
+          console.warn(`[live] ${id} poll failed:`, (e as Error).message);
+        } finally {
+          inFlightRef.current.delete(id);
+          // Retired while the request was in the air: the retire loop has
+          // already cleared what it needs to, so no new timer for this layer.
+          if (!enabledRef.current.has(id)) return;
+          pollFailuresRef.current.set(
+            id,
+            healthy ? 0 : (pollFailuresRef.current.get(id) ?? 0) + 1,
+          );
+          const delay = nextPollDelayMs(pollFailuresRef.current.get(id) ?? 0);
+          liveRef.current.set(id, setTimeout(() => void poll(id), delay));
+        }
+      };
+
+      pollFailuresRef.current.set(id, 0);
+      void poll(id);
+    }
+  }, [enabled, layers, liveReady]);
 
   // Hand the missing set up so the layer panel can grey those rows out.
   useEffect(() => {
     onMissing?.(missing);
   }, [missing, onMissing]);
+
+  // Same idea for live feeds: a layer that is switched on but failing must say
+  // so in the panel, because nothing about it is visible on the map.
+  useEffect(() => {
+    onFeedErrors?.(feedErrors);
+  }, [feedErrors, onFeedErrors]);
 
   // ---- react to layer visibility changes -----------------------------------
   useEffect(() => {
@@ -343,10 +645,18 @@ export function MapView({
   }, [enabled]);
 
   // ---- react to basemap changes --------------------------------------------
+  // `liveReady` is in the deps deliberately. The first run of this effect
+  // happens before the map finishes loading and bails out, so a switch made in
+  // that first second was silently dropped - the selector said OpenTopoMap
+  // while Esri imagery stayed on screen, and no later run ever corrected it
+  // because `basemap` had not changed again. Re-running on load picks the
+  // current value up; `appliedBasemapRef` keeps that re-run from tearing down
+  // and rebuilding an already-correct source.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
     const bm = BASEMAPS[basemap];
+    if (appliedBasemapRef.current === basemap && map.getLayer("basemap")) return;
 
     // The raster source has to be REPLACED, not retargeted. Attribution in
     // MapLibre is a property of the source in the style, and setTiles() keeps
@@ -380,8 +690,9 @@ export function MapView({
     );
 
     map.setMaxZoom(bm.maxzoom);
+    appliedBasemapRef.current = basemap;
     void syncRef.current?.();
-  }, [basemap]);
+  }, [basemap, liveReady]);
 
   // ---- load the data manifest ----------------------------------------------
   // The manifest is written by scripts/build-manifest.mjs at ingest time. Asking
@@ -401,7 +712,16 @@ export function MapView({
           if (l.kind !== "geojson" || !l.file) continue;
           if (!manifest.layers[l.id]?.present) absent.add(l.id);
         }
-        setMissing(absent);
+        // MERGE, do not replace. `setMissing(absent)` overwrote whatever had
+        // accumulated, and a load failure recorded by syncLayers between the
+        // fetch starting and this line landing was erased - so a layer whose
+        // file genuinely failed to load stopped being greyed out.
+        setMissing((prev) => {
+          if (absent.size === 0) return prev;
+          const next = new Set(prev);
+          for (const id of absent) next.add(id);
+          return next;
+        });
       } catch (err) {
         // Without a manifest we cannot grey anything out, but the map must still
         // work: individual load failures below already degrade gracefully.
@@ -428,20 +748,27 @@ export function MapView({
 /**
  * Translate a LayerDef into MapLibre paint layers.
  *
- * Polygons get a fill and an outline, everything else one layer. `minZoom` is
- * pushed onto the layer so the registry's zoom guidance is enforced by the
- * renderer rather than by convention.
+ * ONE PAINT LAYER PER GEOMETRY KIND PRESENT IN THE COLLECTION. The previous
+ * version picked a single kind from the first feature and registered only
+ * that, so in a mixed collection everything else was dropped on the floor:
+ * `circle` draws no polygons, `fill` draws no points. A layer may legitimately
+ * mix kinds (the TT course is points, lines and polygons in one file), so all
+ * present kinds are registered and MapLibre itself skips features that do not
+ * match a layer's type.
+ *
+ * `minZoom` is pushed onto each layer so the registry's zoom guidance is
+ * enforced by the renderer rather than by convention.
  */
 function addPaintLayers(
   maplibregl: typeof import("maplibre-gl"),
   map: import("maplibre-gl").Map,
   def: LayerDef,
-  kind: GeometryKind,
+  kinds: ReadonlySet<GeometryKind>,
 ) {
   const id = `om-${def.id}`;
   const minzoom = def.minZoom ?? 0;
 
-  if (kind === "polygon") {
+  if (kinds.has("polygon")) {
     map.addLayer({
       id: `${id}-fill`,
       type: "fill",
@@ -449,32 +776,44 @@ function addPaintLayers(
       minzoom,
       paint: { "fill-color": def.color, "fill-opacity": 0.22 },
     });
-    map.addLayer({
-      id: `${id}-line`,
-      type: "line",
-      source: id,
-      minzoom,
-      paint: { "line-color": def.color, "line-width": 1.2, "line-opacity": 0.85 },
-    });
-    return;
   }
 
-  if (kind === "line") {
+  // Exactly ONE line layer, covering both jobs: outlining polygon features and
+  // drawing LineStrings. Two layers would need two ids, which would break the
+  // id grammar the click handler and the retire loop parse. When the
+  // collection has real lines the richer paint is used (it reads well as an
+  // outline too); a polygon-only collection keeps the flat 1.2px outline it
+  // has always had.
+  if (kinds.has("polygon") || kinds.has("line")) {
+    const outlineOnly = !kinds.has("line");
     map.addLayer({
       id: `${id}-line`,
       type: "line",
       source: id,
       minzoom,
-      layout: { "line-cap": "round", "line-join": "round" },
-      paint: {
-        "line-color": def.color,
-        "line-width": ["interpolate", ["linear"], ["zoom"], minzoom, 1.2, 16, 3.5],
-        "line-opacity": 0.9,
-        ...(def.dashed ? { "line-dasharray": [3, 2] } : {}),
-      },
+      ...(outlineOnly
+        ? {}
+        : { layout: { "line-cap": "round" as const, "line-join": "round" as const } }),
+      paint: outlineOnly
+        ? { "line-color": def.color, "line-width": 1.2, "line-opacity": 0.85 }
+        : {
+            "line-color": def.color,
+            "line-width": ["interpolate", ["linear"], ["zoom"], minzoom, 1.2, 16, 3.5] as [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              number,
+              number,
+              number,
+              number,
+            ],
+            "line-opacity": 0.9,
+            ...(def.dashed ? { "line-dasharray": [3, 2] } : {}),
+          },
     });
-    return;
   }
+
+  if (!kinds.has("point")) return;
 
   // Points. Label the toponyms, because a gazetteer with no labels is just dots.
   const isLabels = def.id === "toponyms";

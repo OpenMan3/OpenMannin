@@ -284,6 +284,26 @@ export const LAYERS: LayerDef[] = [
     featureCount: 732,
   },
   {
+    id: "postcodes",
+    label: "Postcodes",
+    group: "transport",
+    kind: "geojson",
+    file: "postcodes.geojson",
+    color: "#a78bfa",
+    defaultOn: false,
+    minZoom: 10,
+    description:
+      "1,414 postcode centroids derived from OSM addr:postcode tags. Each point is the mean of all addresses sharing that postcode.",
+    caveats: [
+      "Postcode centroids are approximate — a postcode covers a street or block, not a point.",
+      "Coverage depends on OSM mapping activity. Rural and newly-built areas may be missing postcodes.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
+    ],
+    confidence: "C",
+    sourceId: "osmIOM",
+    featureCount: 1414,
+  },
+  {
     id: "bus-routes",
     label: "Bus route alignments",
     group: "transport",

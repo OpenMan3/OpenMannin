@@ -204,7 +204,7 @@ console.log("   restored:", passesBack, "| features:", await featureCount("om-sa
 // ---- 5. static layers survived all of that ---------------------------------
 // Ids are the registry's, not the filenames': hydrography.geojson is layer "hydro".
 s = await probe();
-const statics = ["om-toponyms", "om-roads", "om-hydro", "om-ramblage"]
+const statics = ["om-toponyms", "om-roads", "om-hydro", "om-bus-stops"]
   .filter((x) => s.sources.includes(x));
 console.log("\n5. static layers still present:", statics.join(", "));
 if (statics.length !== 4) fails.push("static layers were disturbed by live-layer toggling");

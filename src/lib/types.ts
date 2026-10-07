@@ -13,6 +13,7 @@ export type LicenceId =
   | "CC-BY-4.0"
   | "CC-BY-NC-4.0"
   | "PUBLIC-DOMAIN"
+  | "CC0-1.0"
   | "PD-OURAIRPORTS"
   | "COPERNICUS"
   | "OS-TM-POLICY"

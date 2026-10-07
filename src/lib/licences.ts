@@ -56,6 +56,14 @@ export const LICENCES: Record<LicenceId, Licence> = {
     requiresPermission: false,
     obligation: "Attribution appreciated, not required.",
   },
+  "CC0-1.0": {
+    id: "CC0-1.0",
+    name: "Creative Commons CC0 1.0 (public domain dedication)",
+    url: "https://creativecommons.org/publicdomain/zero/1.0/",
+    commercial: true,
+    requiresPermission: false,
+    obligation: "No rights reserved. Attribution optional.",
+  },
   "PD-OURAIRPORTS": {
     id: "PD-OURAIRPORTS",
     name: "OurAirports public domain dedication",

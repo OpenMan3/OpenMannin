@@ -6,16 +6,6 @@ import type { Source } from "./types";
  * about when a human actually read the page.
  */
 export const SOURCES: Record<string, Source> = {
-  manngis: {
-    id: "manngis",
-    name: "MANNGIS (Manx National Mapping and GIS) ArcGIS REST services",
-    publisher: "Isle of Man Government — Department of Infrastructure",
-    url: "https://manngis.maps.arcgis.com/",
-    licence: "OGL-IoM-DERIVED",
-    lastChecked: "2026-10-04",
-    notes:
-      "MANNGIS IS NOT OPEN SOURCE. It is a pan-government system established in 1992, running on proprietary Esri ArcGIS. IMPORTANT LICENCE SPLIT: the Crown copyright applies to the DERIVED feature services published through the open data portal (what we consume), but the Isle of Man Survey BASE CARTOGRAPHY is explicitly EXCLUDED from the Open Government Licence and sold as a commercial product — the high-resolution vector and digital map data, DTM, LiDAR, contour and raster series all require specific licensing. Never composite our MANNGIS vectors over their base tiles without a licence. No API key needed for the derived services. 564 public items, 51 feature services. Undocumented on the gov.im open data pages — this is the real open-data goldmine.",
-  },
   iomsurvey: {
     id: "iomsurvey",
     name: "Isle of Man Survey — Digital Map Data",
@@ -26,16 +16,6 @@ export const SOURCES: Record<string, Source> = {
     notes:
       "NOT OPEN. Commercial products: 1:1,250 and 1:2,500 DXF/GIS, 1:10,000 raster TIFF/DXF, 1:25,000-1:100,000 raster TIFF, contour DXF/NTF, 20 m and 50 m ASCII DTM, and LiDAR (purchase only). The complete set is free ONLY to a researcher or student at an eligible higher education institution under a Digital Map Data agreement. Contact mapping@gov.im.",
   },
-  manngisPortal: {
-    id: "manngisPortal",
-    name: "MANNGIS Open Data Portal",
-    publisher: "Isle of Man Government",
-    url: "https://manngis.maps.arcgis.com/",
-    licence: "OGL-IoM-DERIVED",
-    lastChecked: "2026-10-04",
-    notes:
-      "The government's public platform for analysing, combining and downloading selected open datasets to build web or mobile applications. This is the sanctioned front door for what we consume via REST.",
-  },
   osmIOM: {
     id: "osmIOM",
     name: "OpenStreetMap — WikiProject Isle of Man",
@@ -44,7 +24,17 @@ export const SOURCES: Record<string, Source> = {
     licence: "ODbL",
     lastChecked: "2026-10-04",
     notes:
-      "Highly detailed and genuinely open. Historically the Isle of Man Government has supported this community by occasionally donating small-scale maps and historic aerial imagery. This is our route to seamarks and the partial mine features that MANNGIS lacks.",
+      "Highly detailed and genuinely open. Historically the Isle of Man Government has supported this community by occasionally donating small-scale maps and historic aerial imagery. This is the route to roads, railways, watercourses, protected areas and sealife features used across the map.",
+  },
+  wikidata: {
+    id: "wikidata",
+    name: "Wikidata",
+    publisher: "Wikimedia Foundation / Wikidata community",
+    url: "https://www.wikidata.org/",
+    licence: "CC0-1.0",
+    lastChecked: "2026-10-06",
+    notes:
+      "Structured data released under CC0. Queried via the Wikidata Query Service (WDQS) SPARQL endpoint for Isle of Man (Q9676) items with a heritage designation (P1435) and a coordinate (P625). Community-maintained and incomplete; the authoritative statutory registers are held by government and are not open.",
   },
   govim: {
     id: "govim",

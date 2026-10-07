@@ -1,22 +1,21 @@
 /**
- * OpenStreetMap ingest for the layers MANNGIS does not publish.
+ * OpenStreetMap ingest for the place-name and seamark layers.
  *
  * Why this file exists
  * --------------------
  * The layer previously called "toponyms / Field Gazetteer (place names)" was
- * wrong. MANNGIS layer DEFA/0 "Field Gazetteer" contains 19,848 features and
+ * wrong. The government "Field Gazetteer" layer contains 19,848 features and
  * not one of them has a name. Its fields are PLOT, START, ACRES3D, CATEGORY,
  * OCCUP_CURR and USECOD_CURR — it is an agricultural field parcel dataset, not
  * a gazetteer. Rendered as a point layer it was 3 MB of coordinates with
- * nothing to label.
+ * nothing to label. That layer is not openly licensed and has been removed.
  *
- * There is no place-name gazetteer in either MANNGIS production service
- * (DEFA has 43 layers, DOI has 18; neither has one). So this file pulls real
- * toponyms from OpenStreetMap under the ODbL, and does not pretend MANNGIS
- * supplies them. See the MANNGIS-GAZETTEER gap entry for how that is disclosed.
+ * No official place-name gazetteer is published as open data, so this file
+ * pulls real toponyms from OpenStreetMap under the ODbL. See the gazetteer gap
+ * entry for how that is disclosed.
  *
- * It also fills seamarks, which MANNGIS lacks entirely and which the layers
- * register already expected at seamarks.geojson.
+ * It also fills seamarks, for which no official layer is published, and which
+ * the layers register already expected at seamarks.geojson.
  *
  * Overpass etiquette: one query at a time, bounded to the Isle of Man, honest
  * User-Agent. The endpoint returns 504 under load, so each query is retried
@@ -185,7 +184,7 @@ out center 3000;`;
       source: "OpenStreetMap contributors",
       licence: "ODbL",
       note:
-        "REPLACES the mislabelled MANNGIS 'Field Gazetteer'. MANNGIS DEFA/0 has no name field at all; it is agricultural field parcels.",
+        "Replaces a mislabelled government 'Field Gazetteer' that had no name field at all — it was agricultural field parcels, not place names.",
       caveats: [
         "OSM names, not an official national gazetteer. Coverage and spelling vary with local mapping activity.",
         "Attribution required: (c) OpenStreetMap contributors, ODbL.",

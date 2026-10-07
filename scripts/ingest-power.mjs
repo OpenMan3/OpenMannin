@@ -105,8 +105,8 @@ out tags geom;`;
  * Nearest named place for context on features OSM leaves unnamed.
  *
  * There is no authoritative naming source for the island's 53 unnamed
- * substations: MANNGIS publishes no substation layer and OSM has no `name` tag
- * on them. Inventing one would be fabrication, so instead each gets the
+ * substations: no official substation layer is published and OSM has no `name`
+ * tag on them. Inventing one would be fabrication, so instead each gets the
  * nearest settlement from the project's own toponyms layer. That is DERIVED
  * CONTEXT, NOT IDENTITY - "400 m NNE of Ballabeg" tells you where to look on a
  * map, it does not tell you what the substation is called, and the field name

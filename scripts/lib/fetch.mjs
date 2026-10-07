@@ -2,10 +2,10 @@
  * Shared helpers for OpenMannin ingest scripts.
  *
  * Two things matter here:
- *  1. We send a distinctive User-Agent. MANNGIS and Overpass both ask for it,
- *     and it is the polite thing to do when you are consuming a Crown
- *     Dependency's public services.
- *  2. Paging. The ArcGIS services cap maxRecordCount at 1000 and return
+ *  1. We send a distinctive User-Agent. Overpass and other public services ask
+ *     for it, and it is the polite thing to do when you are a guest on someone
+ *     else's infrastructure.
+ *  2. Paging. ArcGIS-compatible services cap maxRecordCount at 1000 and return
  *     exceededTransferLimit rather than an error, so a naive single-shot query
  *     silently truncates. Every fetch here loops.
  */
@@ -14,17 +14,6 @@ import { writeFileSync, renameSync } from "node:fs";
 
 export const UA =
   "OpenMannin/0.1 (Isle of Man open infrastructure map; +https://github.com/openmannin) node-fetch";
-
-const MANNGIS_HOSTS = [
-  "services3.arcgis.com",
-  "utility.arcgis.com",
-  "maps.gov.im",
-  "images.gov.im",
-];
-
-export function isProtectedHost(hostname) {
-  return MANNGIS_HOSTS.some((h) => hostname === h || hostname.endsWith(`.${h}`));
-}
 
 /**
  * gov.im and images.gov.im both sit behind an F5 BIG-IP ASM that rejects
@@ -96,10 +85,10 @@ export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 /**
  * Read a whole ArcGIS FeatureServer layer (or MapServer layer) as GeoJSON.
  *
- * Uses the service's own f=geojson output so ArcGIS does the reprojection to
- * WGS84 — which matters, because some MANNGIS services are published in EPSG:27700
- * and silently returning Irish Grid coordinates labelled as lat/lon is the
- * single easiest way to put a map in the sea.
+ * Uses the service's own f=geojson output so the server does the reprojection
+ * to WGS84 — which matters, because ArcGIS services may be published in
+ * EPSG:27700 and silently returning Irish Grid coordinates labelled as lat/lon
+ * is the single easiest way to put a map in the sea.
  */
 export async function fetchArcGISLayer(layerUrl, { where = "1=1", label = "" } = {}) {
   const base = layerUrl.split("?")[0].replace(/\/$/, "");
@@ -203,11 +192,11 @@ export function roundCoords(geom, dp = 5) {
 // ---------------------------------------------------------------------------
 // Simplification
 //
-// Why this exists: the pilgrimage-walks layer ships 23 features carrying
-// 1,446,209 coordinates — about 63,000 vertices per walk. Rendered as-is that
-// is 28 MB of GeoJSON for alignments that are accurate to the metre and need
-// to be accurate to about ten. Douglas-Peucker gets us a 30x reduction with no
-// visible difference at any zoom this app reaches.
+// Why this exists: detailed line and polygon layers ship many vertices per
+// feature. Rendered as-is that is tens of MB of GeoJSON for alignment that is
+// accurate to the metre and needs to be accurate to about ten. Douglas-Peucker
+// gets a large reduction with no visible difference at any zoom this app
+// reaches.
 // ---------------------------------------------------------------------------
 
 /** Perpendicular distance from p to the segment ab, in degrees. */

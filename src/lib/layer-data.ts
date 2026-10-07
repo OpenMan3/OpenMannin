@@ -2,9 +2,9 @@
  * Client-side layer data loading.
  *
  * Everything here runs in the browser. The static layers live in public/data
- * (~11 MB across 38 files) and are fetched on demand and cached for the
+ * (a few MB across the registry) and are fetched on demand and cached for the
  * session rather than bundled or proxied. Sizes are not uniform: most are
- * tens of KB, but `roads` is ~1.1 MB and `field-parcels` ~3.8 MB, both parsed
+ * tens of KB, but `roads` and `house-numbers` run to hundreds of KB, parsed
  * on the main thread, so heavy layers are the cost of this arrangement rather
  * than an accident of it. MapLibre is then handed the parsed object directly
  * instead of a URL, which keeps the layer list the single source of truth for
@@ -77,9 +77,7 @@ export async function layerExists(file: string): Promise<boolean> {
  * of a mixed collection. MapLibre's `circle` layer draws nothing for a
  * LineString, and a `fill` draws nothing for a Point, so whichever kind came
  * first won and the others were never rendered. Measured against the shipped
- * data: `tt-course` opens with a Point, so the 435 line and polygon features
- * - the course itself - were invisible while the layer was on by default;
- * `power` opens with a Polygon, so none of its 20 substations drew; `ports`
+ * data: `power` opens with a Polygon, so none of its 20 substations drew; `ports`
  * lost 2 points. A collection may legitimately mix kinds, so the renderer has
  * to be told about all of them.
  *

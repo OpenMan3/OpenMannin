@@ -1,11 +1,5 @@
 import type { Gap, LayerDef } from "./types";
 
-const MANNGIS = "https://services3.arcgis.com/dBlcVWoJgxxpCttN/ArcGIS/rest/services";
-const PROD_DEFA =
-  "https://utility.arcgis.com/usrsvcs/servers/741cd72e54164c3c92d8a944346109e7/rest/services/CorporateDynamicServices/ProdDEFA/MapServer";
-const PROD_DOI =
-  "https://utility.arcgis.com/usrsvcs/servers/1d5a1493ee7a45ffa8d1f6558dff2fdc/rest/services/CorporateDynamicServices/ProdDOI/MapServer";
-
 /**
  * The layer registry.
  *
@@ -33,7 +27,7 @@ export const LAYERS: LayerDef[] = [
     description:
       "1,253 distinct named places from OpenStreetMap: towns, villages, hamlets, localities and suburbs. Ordered by significance (OSM place_rank where mapped, otherwise derived from the place type) so a label renderer can drop the least significant first. Includes wikidata IDs where mapped.",
     caveats: [
-      "NOT an official national gazetteer. MANNGIS does not publish one — see the gazetteer gap entry. These are OSM names, so coverage and preferred spelling vary with local mapping activity.",
+      "NOT an official national gazetteer. No official gazetteer is published as open data — see the gazetteer gap entry. These are OSM names, so coverage and preferred spelling vary with local mapping activity.",
       "Includes historic and alternative spellings (Manx, Irish and English variants) where mappers recorded them.",
       "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
@@ -42,205 +36,66 @@ export const LAYERS: LayerDef[] = [
     featureCount: 1253,
   },
   {
-    id: "field-parcels",
-    label: "Agricultural field parcels",
+    id: "heritage",
+    label: "Heritage-designated places",
     group: "geography",
     kind: "geojson",
-    file: "field-parcels.geojson",
-    color: "#a3a380",
-    defaultOn: false,
-    minZoom: 13,
-    description:
-      "19,848 field parcels with land-use category, current occupation and acreage. Despite being called 'Field Gazetteer' in MANNGIS, this layer contains no names at all.",
-    caveats: [
-      "UNNAMED. This is agricultural parcel data, not a gazetteer. It was previously published here mislabelled as place names, which was wrong; it now has its own entry and the place-name layer comes from OSM.",
-      "Rendered as anchor points only. The parcel boundaries are not carried, so this is a density/hint layer, not a cadastral layer.",
-      "Occupation and usage codes are live land management, so they change without notice.",
-    ],
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 19848,
-  },
-  {
-    id: "glens",
-    label: "Glens",
-    group: "geography",
-    kind: "geojson",
-    file: "glens.geojson",
-    color: "#5f7a4a",
-    defaultOn: false,
-    description: "Officially mapped glen boundaries. 22 polygons.",
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 22,
-  },
-  {
-    id: "ramblage",
-    label: "Public land open to rambling",
-    group: "geography",
-    kind: "geojson",
-    file: "ramblage.geojson",
-    color: "#6b8e5a",
-    defaultOn: true,
-    description:
-      "Land where the public has a statutory right to roam. 7 records. This is the CGMRA land, not the full PROW network.",
-    caveats: [
-      "Right to roam is a land classification, NOT a path network. There is no guaranteed route across these polygons.",
-      "The definitive Public Rights of Way map is maintained by DoI in Central Registry and is NOT open. See the PROW layer for what is published.",
-    ],
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 7,
-  },
-  {
-    id: "builtings",
-    label: "Registered buildings",
-    group: "geography",
-    kind: "geojson",
-    file: "registered-buildings.geojson",
+    file: "heritage.geojson",
     color: "#a6785a",
     defaultOn: false,
     minZoom: 14,
     description:
-      "338 buildings on the statutory building list, with registration number, date registered, address, grade, case reference and a hyperlink to the certificate.",
-    caveats: ["Register entry is not a statement of structural condition."],
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 338,
+      "Places on the Isle of Man that carry a heritage designation in Wikidata (heritage designation P1435, country P17 = Isle of Man Q9676) and a published coordinate. Predominantly 'registered building' entries, plus scheduled monuments and Manx National Heritage records.",
+    caveats: [
+      "WIKIDATA, NOT THE OFFICIAL REGISTER. This is a community-maintained, georeferenced subset. The authoritative statutory register of registered buildings is held by the Department of Infrastructure/DEFA and is not published as open data. Wikidata lags and is incomplete.",
+      "A heritage listing is a legal status, not a statement of structural condition.",
+      "Wikidata structured data is CC0 — no attribution or share-alike obligation.",
+    ],
+    confidence: "C",
+    sourceId: "wikidata",
+    featureCount: 319,
   },
-  {
-    id: "trees",
-    label: "Registered trees",
-    group: "geography",
-    kind: "geojson",
-    file: "registered-trees.geojson",
-    color: "#3f7d3f",
-    defaultOn: false,
-    minZoom: 15,
-    description: "1,199 individually registered trees and tree areas.",
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 1199,
-  },
-
   // ==========================================================================
   // TRAILS AND ROADS
   // ==========================================================================
   {
     id: "roads",
-    label: "Road hierarchy",
+    label: "Road network",
     group: "trails",
     kind: "geojson",
     file: "roads.geojson",
     color: "#8d8577",
     defaultOn: true,
     description:
-      "3,391 road segments with the publisher's own hierarchy and UK road-class attributes.",
+      "The island's road network from OpenStreetMap: motorway, trunk, primary, secondary, tertiary, unclassified, residential, service and track. Each segment carries its OSM highway class and route reference where mapped.",
     caveats: [
-      "The `RoadNo` field is noisy: 1,909 distinct values across 3,391 segments, of which only 50 begin with 'A' (A1-A47 plus A1t, A3t, A18e) and 82 with 'B'. 203 segments have a blank RoadNo.",
-      "The `USRN` field is 100% null across every record. It is unusable.",
-      "Do not filter on RoadNo alone to build an A-road network — the field is reference fragments, not a clean classification. Use the publisher's `Hierarchy` / `RoadClass` fields instead.",
+      "OpenStreetMap, not the Department of Infrastructure road hierarchy. It does not carry the government's own road classification, USRNs, or maintenance responsibility.",
+      "Not every road is named, and some service roads and tracks are mapped inconsistently.",
       "There are NO published traffic-count or A18 volume datasets. That requires an FOI request to Highway Services.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 3391,
-  },
-  {
-    id: "prow",
-    label: "Public Rights of Way (published subset)",
-    group: "trails",
-    kind: "geojson",
-    file: "prow.geojson",
-    color: "#c2410c",
-    defaultOn: true,
-    description:
-      "365 records with a definitive-map reference and a numeric length. Rights of way under the Road Traffic (Registration, Licensing) framework.",
-    caveats: [
-      "This is NOT the definitive PROW map. The layer's own description states the definitive map is maintained by DoI and made available via Central Registry — it is gated, not open.",
-      "32 PROW_No values are duplicated (333 distinct across 365 rows), so row count overstates unique rights.",
-    ],
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 365,
-  },
-  {
-    id: "footpaths",
-    label: "Footpaths (DEFA)",
-    group: "trails",
-    kind: "geojson",
-    file: "footpaths.geojson",
-    color: "#d97706",
-    defaultOn: false,
-    minZoom: 13,
-    description: "476 footpath records held by the Environment, Food and Agriculture Directorate.",
-    caveats: [
-      "Overlaps with PROW and with the MANNGIS footpath inspection layer. There is no single reconciled national path graph.",
-      "The publisher's own description warns this is not the definitive PROW layer.",
-    ],
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 476,
-  },
-  {
-    id: "walking",
-    label: "Promoted walking routes",
-    group: "trails",
-    kind: "geojson",
-    file: "walking-routes.geojson",
-    featureCount: 90,
-    color: "#16a34a",
-    defaultOn: true,
-    description:
-      "Raad ny Foillan (5 stages, Douglas-Port St Mary-Dalby-Sartfield-Maughold-Douglas), Bayr ny Skeddan, Millennium Way, 9 Manx Electric Railway Walks, 11 Railway Station Walks and the Wardens Walks.",
-    caveats: ["The service is labelled 'TEST' and was last edited July 2022."],
-    confidence: "A",
-    sourceId: "manngis",
-  },
-  {
-    id: "cycling",
-    label: "Cycle routes (5 + 7 MTB)",
-    group: "trails",
-    kind: "geojson",
-    file: "cycling-routes.geojson",
-    featureCount: 13,
-    color: "#0891b2",
-    defaultOn: false,
-    description:
-      "Five numbered road routes (1 Ramsey, 2 Douglas, 3 Peel, 4 Castletown, 5 Port Erin) and seven MTB routes (A Grand Day Out, Southern Comfort, Witches Barrel, St Lukes & Windy Corner, Hell's 8, The Camel's Back, South Barrule Trails).",
-    caveats: [
-      "There is NO National Cycle Network and no Sustrans route on the Isle of Man. Earlier claims of an 'NCN Loop' are incorrect.",
-      "This dataset was created in September 2015 and contains withdrawn routes.",
-    ],
-    confidence: "A",
-    sourceId: "manngis",
-  },
-  {
-    id: "pilgrimage",
-    label: "Pilgrimage walks",
-    group: "trails",
-    kind: "geojson",
-    file: "pilgrimage-walks.geojson",
-    featureCount: 23,
-    color: "#7c3aed",
-    defaultOn: false,
-    description: "Published pilgrimage walk alignments.",
-    confidence: "A",
-    sourceId: "manngis",
+    confidence: "B",
+    sourceId: "osmIOM",
+    featureCount: 21239,
   },
   {
     id: "bridges",
-    label: "Highway bridges",
+    label: "Bridges",
     group: "trails",
     kind: "geojson",
     file: "bridges.geojson",
     color: "#78716c",
     defaultOn: false,
     minZoom: 12,
-    description: "190 highway structures maintained for the road network.",
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 190,
+    description:
+      "Road, rail and foot bridges mapped in OpenStreetMap as ways tagged bridge=*.",
+    caveats: [
+      "Community-mapped; culverts and small crossings are inconsistently tagged. Presence is not a bridge condition assessment.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
+    ],
+    confidence: "C",
+    sourceId: "osmIOM",
+    featureCount: 557,
   },
   {
     id: "speedlimits",
@@ -251,13 +106,15 @@ export const LAYERS: LayerDef[] = [
     color: "#dc2626",
     defaultOn: false,
     minZoom: 12,
-    description: "7,142 posted speed limit segments.",
+    description: "Road segments carrying a posted maxspeed tag in OpenStreetMap.",
     caveats: [
-      "This is the posted-limit dataset. It is NOT the IoM Safety Camera Scheme — no speed-camera scheme is evidenced anywhere in official sources. The Constabulary 'speed restrictions' page covers vehicle limits only.",
+      "OpenStreetMap maxspeed values, not the Department of Infrastructure's posted-limit dataset. 'national'/'NSL' and missing values are common; coverage is partial.",
+      "This is NOT the IoM Safety Camera Scheme — no speed-camera scheme is evidenced in official sources.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 7142,
+    confidence: "C",
+    sourceId: "osmIOM",
+    featureCount: 4207,
   },
 
   // ==========================================================================
@@ -273,13 +130,13 @@ export const LAYERS: LayerDef[] = [
     defaultOn: true,
     minZoom: 13,
     description:
-      "732 bus stops from OpenStreetMap with per-stop services. Official MANNGIS stop numbers and NaPTAN codes are matched where they exist.",
+      "Bus stops from OpenStreetMap (highway=bus_stop and public_transport=platform), with per-stop services taken from OSM bus route relations where the stop is a member.",
     caveats: [
-      "Per-stop services are a best-effort merge: OSM route relations where they exist (current but partial — only 44 stops are members), otherwise a spatial join against the site's own bus-routes layer, which is a DOCUMENTED 2015 network. Route numbers change less often than timetables, but VERIFY against current timetables (iombusandrail.im) before relying on services.",
-      "Official stop numbers and NaPTAN codes are matched from the MANNGIS Bus Stops layer (© IoM Government, OGL — derived) where a stop carries the same ref or is within 150 m; stops beyond that carry only OSM identifiers.",
+      "Per-stop services come only from OSM route relations, which are current but partial: most stops carry no service list rather than a guessed one. VERIFY against current timetables (iombusandrail.im) before relying on services.",
+      "No official stop numbers or NaPTAN codes are shown; those identifiers come from government data that is not openly licensed and is not used here.",
       "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
-    confidence: "B",
+    confidence: "C",
     sourceId: "osmIOM",
     featureCount: 732,
   },
@@ -323,41 +180,6 @@ export const LAYERS: LayerDef[] = [
     featureCount: 6949,
   },
   {
-    id: "parish-boundaries",
-    label: "Parish boundaries",
-    group: "transport",
-    kind: "geojson",
-    file: "parish-boundaries.geojson",
-    color: "#f59e0b",
-    defaultOn: false,
-    minZoom: 8,
-    description:
-      "Parish boundaries from OSM admin_level=8 relations. The Isle of Man has 17 ancient parishes.",
-    caveats: [
-      "Parish boundaries are from OSM (admin_level=8). They are community-mapped and may not match exact legal boundaries.",
-      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
-    ],
-    confidence: "C",
-    sourceId: "osmIOM",
-    featureCount: 17,
-  },
-  {
-    id: "bus-routes",
-    label: "Bus route alignments",
-    group: "transport",
-    kind: "geojson",
-    file: "bus-routes.geojson",
-    color: "#60a5fa",
-    defaultOn: false,
-    minZoom: 11,
-    description:
-      "92 route/direction features across the publisher's six regions (North, South, East, West, West/North, South/West).",
-    caveats: ["Stale (October 2015) and should not be presented as the current network."],
-    confidence: "C",
-    sourceId: "manngis",
-    featureCount: 92,
-  },
-  {
     id: "railways",
     label: "Railways & tramways",
     group: "transport",
@@ -366,33 +188,16 @@ export const LAYERS: LayerDef[] = [
     color: "#111827",
     defaultOn: true,
     description:
-      "Official track geometry with lengths. Every railway on the Isle of Man is HERITAGE and seasonal — there is no mainline rail. Manx Electric Railway 58,775 m; Isle of Man Steam Railway 28,086 m; Snaefell Mountain Railway 15,780 m; Horse Trams 5,637 m; Groudle Glen Railway 1,165 m; Queens Pier Track 677 m; Great Laxey Mine Railway 304 m across two segments.",
+      "Rail and tram alignments from OpenStreetMap (railway=rail, light_rail, tram, narrow_gauge). Every railway on the Isle of Man is HERITAGE and seasonal — there is no mainline rail: Manx Electric Railway, Isle of Man Steam Railway, Snaefell Mountain Railway, Horse Trams, Groudle Glen Railway and the Great Laxey Mine Railway.",
     caveats: [
+      "OpenStreetMap alignments, not the operators' surveyed track geometry. Lengths are as mapped and will differ from official figures.",
       "Opening dates: Manx Electric Railway 1893, Snaefell Mountain Railway 1895, Isle of Man Steam Railway 1873. The commonly repeated claim that the Snaefell railway opened in 1893 is wrong — 1893 is the Manx Electric Railway.",
-      "The government dataset misspells Groudle Glen as 'Groudel'. The operator uses 'Groudle'.",
-      "The dataset omits gauge. Commonly cited figures (3 ft 6 in for the Steam Railway, 3 ft for the Electric) are NOT verified against a primary source.",
-      "Groudle Glen Railway and the Great Laxey Mine Railway are ABSENT from the live vehicle feed — they are not part of Bus Vannin.",
+      "Gauge is taken from OSM tags only where mapped; commonly cited figures (3 ft 6 in Steam, 3 ft Electric) are NOT verified against a primary source.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 8,
-  },
-  {
-    id: "tt-course",
-    label: "TT course",
-    group: "transport",
-    kind: "geojson",
-    file: "tt-course.geojson",
-    featureCount: 749,
-    color: "#dc2626",
-    defaultOn: true,
-    minZoom: 11,
-    description: "The Isle of Man TT mountain course, published as 'MotorCourse (TT/Billown) Course Infrastructure'.",
-    caveats: [
-      "The widely quoted 37.73 mile / 60.72 km length is Wikipedia-only. No official linear referencing (LGL) has been published, so mileages on this layer are absent rather than estimated.",
-    ],
-    confidence: "A",
-    sourceId: "manngis",
+    confidence: "B",
+    sourceId: "osmIOM",
+    featureCount: 284,
   },
   {
     id: "ev",
@@ -404,13 +209,14 @@ export const LAYERS: LayerDef[] = [
     defaultOn: true,
     minZoom: 12,
     description:
-      "15 public sites, 35 sockets, all owned by Manx Utilities. Mostly Pod Point Type 2 at 7 kW; the Bungalow (on the TT course) is 22 kW 3-phase. Includes Manx Utilities HQ, police HQ, Market Square Ramsey and Market Square Peel.",
+      "Electric-vehicle charging points mapped in OpenStreetMap (amenity=charging_station), with operator, socket and capacity tags where present.",
     caveats: [
-      "Created November 2020, last edited August 2021. Re-verify against Manx Utilities before publishing as current.",
+      "OpenStreetMap, not Manx Utilities' own asset register. Some sites and sockets will be missing or out of date; check the operator before relying on a charge point.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 15,
+    confidence: "C",
+    sourceId: "osmIOM",
+    featureCount: 60,
   },
   {
     id: "traffic-signals",
@@ -418,31 +224,19 @@ export const LAYERS: LayerDef[] = [
     group: "transport",
     kind: "geojson",
     file: "traffic-signals.geojson",
-    featureCount: 4,
     color: "#f59e0b",
     defaultOn: false,
     minZoom: 13,
-    description: "Traffic signals, speed signs, zebra crossings and variable-message matrix signs.",
+    description:
+      "Traffic signals (highway=traffic_signals) and marked crossings (highway=crossing) mapped in OpenStreetMap.",
     caveats: [
-      "The published signal layer returns only 2 features, which is anomalously low. The real inventory is likely in the maintenance tables.",
-      "The gov.im 'Live Road Information' open-data entry is BROKEN — it is bare text with no href. What it actually points at is a variable-message-sign STATUS page (12 signs, 'no message' or 'OFFLINE'), containing no congestion, speed, flow or vehicle data whatsoever. Three of twelve signs were offline during testing.",
+      "Community-mapped and believed to be partial; the full signals inventory is held in the Department of Infrastructure's maintenance tables and is not published as open data.",
+      "The gov.im 'Live Road Information' open-data entry is BROKEN — it is bare text with no href. What it actually points at is a variable-message-sign STATUS page (12 signs, 'no message' or 'OFFLINE'), containing no congestion, speed, flow or vehicle data whatsoever.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
-    confidence: "A",
-    sourceId: "manngis",
-  },
-  {
-    id: "coastal-access",
-    label: "Coastal access points",
-    group: "transport",
-    kind: "geojson",
-    file: "coastal-access.geojson",
-    featureCount: 40,
-    color: "#0ea5e9",
-    defaultOn: false,
-    minZoom: 12,
-    description: "Published access points to the coastline.",
-    confidence: "A",
-    sourceId: "manngis",
+    confidence: "C",
+    sourceId: "osmIOM",
+    featureCount: 155,
   },
 
   // ==========================================================================
@@ -605,7 +399,7 @@ export const LAYERS: LayerDef[] = [
     description:
       "106 lights, light-vessels, beacons and buoys from OpenStreetMap, including Chicken Rock, Calf of Man, Point of Ayre and Bradda Head. Unnamed beacons are kept and flagged rather than discarded.",
     caveats: [
-      "OpenStreetMap geometry, not a UKHO or Northern Lighthouse Board publication. MANNGIS has no seamark layer at all, so OSM is the only open route.",
+      "OpenStreetMap geometry, not a UKHO or Northern Lighthouse Board publication. No official seamark layer is published as open data, so OSM is the only open route.",
       "Characteristics (range, colour, period) are frequently absent or simply wrong in OSM. Do not present them as authoritative for navigation.",
       "Northern Lighthouse Board publishes NO live webcam for any Manx light. Several 'Chicken Rock webcam' results are a content-farm aggregator with invented coordinates.",
       "Attribution required: (c) OpenStreetMap contributors, ODbL.",
@@ -668,18 +462,18 @@ export const LAYERS: LayerDef[] = [
     group: "energy",
     kind: "geojson",
     file: "reservoirs.geojson",
-    featureCount: 7,
     color: "#0d9488",
     defaultOn: false,
     minZoom: 10,
     description:
-      "Four operational impounding reservoirs: West Baldwin, Sulby (largest and newest, completed 1982), Clypse and Kerrowdhoo. Water treatment works at Douglas and Sulby. Seven reservoirs owned in total.",
+      "Reservoirs and impounding water bodies mapped in OpenStreetMap (landuse=reservoir / water=reservoir). Manx Utilities' operational reservoirs include West Baldwin, Sulby, Clypse and Kerrowdhoo.",
     caveats: [
-      "Reservoir positions are approximate. 'Glen Vinna' appears in no official or reliable secondary source and is probably a garbled transmission-line name — excluded.",
-      "1,166 salt bins are published as a separate layer; useful for winter operations, not for OSINT.",
+      "OpenStreetMap water polygons, not Manx Utilities' asset register. Outlines are as mapped and may be incomplete or approximate.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
-    confidence: "B",
-    sourceId: "manxutilities",
+    confidence: "C",
+    sourceId: "osmIOM",
+    featureCount: 17,
   },
   {
     id: "power",
@@ -717,16 +511,18 @@ export const LAYERS: LayerDef[] = [
     group: "environment",
     kind: "geojson",
     file: "protected-areas.geojson",
-    featureCount: 102,
     color: "#22c55e",
     defaultOn: true,
     description:
-      "26 ASSIs, 10 Manx Marine Nature Reserves, 2 National Nature Reserves, 1 Special Protection Area, 6 Manx National Trust land parcels, 22 glens, 94 designated wildlife sites, 51 registered heathlands.",
+      "Protected areas from OpenStreetMap: boundary=protected_area and leisure=nature_reserve polygons, with protection_title / designation / operator tags where mapped (ASSIs, nature reserves and similar).",
     caveats: [
-      "The whole-island UNESCO Biosphere designation (2016, 572 km2 land + >4,000 km2 sea, the world's first whole-jurisdiction reserve) is on biosphere.im but is not published here as a machine-readable polygon.",
+      "OpenStreetMap, not the official DEFA designation register. Many designated sites (ASSIs, Marine Nature Reserves, registered heathlands) are only partially mapped or missing entirely; absence here is not absence of designation.",
+      "The whole-island UNESCO Biosphere designation (2016, 572 km2 land + >4,000 km2 sea) is on biosphere.im and is not published here as a machine-readable polygon.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
-    confidence: "A",
-    sourceId: "manngis",
+    confidence: "C",
+    sourceId: "osmIOM",
+    featureCount: 13,
   },
   {
     id: "hydro",
@@ -738,32 +534,14 @@ export const LAYERS: LayerDef[] = [
     defaultOn: true,
     minZoom: 11,
     description:
-      "2,693 watercourse features, plus 25 designated watercourse extents totalling 87.00 km across all codes (including GEW, 2.96 km, which is easy to miss).",
+      "Watercourses from OpenStreetMap (waterway=river, stream, canal, drain, ditch), each carrying its name and waterway class where mapped.",
     caveats: [
-      "Every watercourse feature is a single undifferentiated class: DESCRIPTIVE_TERM is a space and FEATURE_CODE is 9013001 throughout. The layer does NOT distinguish river from stream from drain, and does not carry a name. You cannot tell the River Dhoo from a field drain using this data.",
-      "Cross-reference the Field Gazetteer for watercourse names.",
+      "OpenStreetMap watercourses, not the DEFA designated-watercourse dataset. Names and classes vary with local mapping activity; small drains are inconsistently mapped.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
-    confidence: "A",
-    sourceId: "manngis",
-    featureCount: 2125,
-  },
-  {
-    id: "marine-env",
-    label: "Marine habitats & closures",
-    group: "environment",
-    kind: "geojson",
-    file: "marine-habitats.geojson",
-    featureCount: 434,
-    color: "#2dd4bf",
-    defaultOn: false,
-    minZoom: 8,
-    description:
-      "Eelgrass, kelp, maerl and Modiolus bed extents, eelgrass conservation zones, saltmarsh, sublittoral mud, 12 sea fisheries closed or restricted areas, Ramsey Marine Nature Reserve, and the three offshore MPAs proposed between the IoM and Northern Ireland (Pisces Reef Complex SAC, South Rigg MCZ, Queenie Corner MCZ — 298 km2 combined, targeting Nephrops trawl).",
-    caveats: [
-      "The three offshore MPAs are a PROPOSAL under DAERA consultation (1 June - 24 August 2026), not designated. No commercial aquaculture site inventory could be found anywhere — that needs DEFA Environment Directorate or Marine Plan records.",
-    ],
-    confidence: "A",
-    sourceId: "manngis",
+    confidence: "C",
+    sourceId: "osmIOM",
+    featureCount: 1430,
   },
 
   // ==========================================================================
@@ -783,7 +561,7 @@ export const LAYERS: LayerDef[] = [
       "Seven aerodromes, from OurAirports: Isle of Man Airport (EGNS/IOM, the only field with scheduled service), the ex-RAF fields at Andreas and Jurby, two private airstrips, Noble's Hospital heliport, and the closed Hall Caine Airport. EGNS carries three asphalt runways: 08/26 at 2,110 x 46 m, 03/21 at 1,255 x 46 m, and 17/35 at 903 x 27 m which OurAirports marks closed.",
     caveats: [
       "OurAirports is crowd-maintained. Positions are aerodrome reference points and are not independently audited; expect survey-grade accuracy on paper but no published verification.",
-      "MANNGIS contains ZERO airport or runway datasets — an earlier draft of this layer claimed SKYbrary and OSM geometry, which was not what the layer actually contained.",
+      "No official airport or runway dataset is published as open data — an earlier draft of this layer claimed SKYbrary and OSM geometry, which was not what the layer actually contained.",
       "Closed aerodromes are retained and flagged rather than filtered out. 'Closed' means no scheduled or general aviation; private and emergency use may still occur, so do not read these as abandoned.",
       "Runway `closed` flags come from OurAirports and can lag reality. Only the runway endpoints are published, not the strip boundary or displaced-threshold geometry as mapped.",
       "Neither Ryanair nor Aero Iom operates. Manx2 ceased 31 December 2012 and Citywing in 2017.",
@@ -981,9 +759,9 @@ export const GAPS: Gap[] = [
     title: "Official national place-name gazetteer",
     wanted: "An authoritative Isle of Man gazetteer of settlements, streets and named places, with official spellings.",
     whyUnavailable:
-      "MANNGIS has no gazetteer layer. DEFA/0 is called 'Field Gazetteer' but contains no name field at all — its fields are PLOT, START, ACRES3D, CATEGORY, OCCUP_CURR and USECOD_CURR, making it agricultural field parcels. All 43 DEFA layers and all 18 DOI layers were enumerated and none is a place-name index. This was previously mislabelled in OpenMannin as a 19,848-record toponymic gazetteer; the error is corrected and the parcels now have their own layer.",
+      "No official gazetteer is published as open data. A government layer named 'Field Gazetteer' contains no name field at all — its fields are PLOT, START, ACRES3D, CATEGORY, OCCUP_CURR and USECOD_CURR, making it agricultural field parcels, not a place-name index. That layer is not openly licensed and has been removed. This was previously mislabelled in OpenMannin as a 19,848-record toponymic gazetteer; the error is corrected.",
     whatWeWouldNeed:
-      "A published MANNGIS gazetteer service, or the Isle of Man Survey's place-name data if it is released under the OGL. Meanwhile the place-name layer is built from OpenStreetMap (1,253 distinct named places after dropping 152 node/way duplicates, ODbL), which is open and usable but is a community dataset rather than an official one.",
+      "A published official gazetteer service, or the Isle of Man Survey's place-name data if it is released under the OGL. Meanwhile the place-name layer is built from OpenStreetMap (1,253 distinct named places after dropping 152 node/way duplicates, ODbL), which is open and usable but is a community dataset rather than an official one.",
     contact: "mapping@gov.im",
     severity: "medium",
   },
@@ -992,9 +770,9 @@ export const GAPS: Gap[] = [
     title: "House numbers",
     wanted: "Isle of Man house numbers and full street addresses as map points.",
     whyUnavailable:
-      "The MANNGIS LLPG address geocoder returns HTTP 403 with error GWM_0003 to anonymous callers and has no copyrightText — it is an authorised-access service. The only complete address source is OS AddressBase Islands, which is a commercial product (three-month free Data Exploration Licence). A second LLPG geocoder is exposed on the pre-production host ppmaps.gov.im. Planning-application data carries 81,232 non-null addresses but those are application sites, not a national address register.",
+      "The government LLPG address geocoder returns HTTP 403 with error GWM_0003 to anonymous callers and has no copyrightText — it is an authorised-access service. The only complete address source is OS AddressBase Islands, which is a commercial product (three-month free Data Exploration Licence). A second LLPG geocoder is exposed on the pre-production host ppmaps.gov.im. Planning-application data carries 81,232 non-null addresses but those are application sites, not a national address register.",
     whatWeWouldNeed:
-      "Either a MANNGIS authorised-access account, or an OS AddressBase Islands subscription. Until then: the 19,848-record Field Gazetteer and the Planning layer's 35,158 postcode-bearing addresses are the closest available substitutes.",
+      "Either authorised access to the LLPG geocoder, or an OS AddressBase Islands subscription. Until then: the Planning layer's 35,158 postcode-bearing addresses are the closest available substitute.",
     contact: "mapping@gov.im",
     severity: "high",
   },
@@ -1004,7 +782,7 @@ export const GAPS: Gap[] = [
     wanted:
       "Lead and copper mine sites, adits, shafts, spoil heaps and processing plants — the Isle of Man's signature industrial heritage.",
     whyUnavailable:
-      "MANNGIS has NO mining layer. Searches of all 564 items for 'mine', 'mining', 'mineral', 'spoil' and 'shaft' return zero results, and the ProdDEFA service has no mining layer among its 40 layers. Manx National Heritage holds the authoritative archaeological record but its HER API returns 404 on every conventional path and it operates an Access and Charging Policy, so some reuse may be chargeable.",
+      "No official mining layer is published. Searches of the government's 564 open items for 'mine', 'mining', 'mineral', 'spoil' and 'shaft' return zero results. Manx National Heritage holds the authoritative archaeological record but its HER API returns 404 on every conventional path and it operates an Access and Charging Policy, so some reuse may be chargeable.",
     whatWeWouldNeed:
       "The Manx National Heritage HER under licence, or a scoped build-time pull from OSM (which does carry a partial scatter of mine features). Contact iomher@mnh.im. We have attempted the OSM fallback.",
     contact: "iomher@mnh.im",
@@ -1028,7 +806,7 @@ export const GAPS: Gap[] = [
     whyUnavailable:
       "The IoM publishes no authoritative open boundary dataset. The official local authority map is a PDF (cartography, not GIS). The 17-parish / 6-sheading model is standard and well attested, but not published as open data.",
     whatWeWouldNeed:
-      "MANNGIS authorisation, or a Central Registry land-boundary extract.",
+      "Government authorisation, or a Central Registry land-boundary extract.",
     contact: "mapping@gov.im",
     severity: "medium",
   },
@@ -1127,7 +905,7 @@ export const GAPS: Gap[] = [
     whyUnavailable:
       "The harbour list is not in doubt — Douglas, Peel, Port Erin, Port St Mary, Ramsey, Laxey, Castletown and Derbyhaven — and the Marine Operations Centre on the second floor of the Sea Terminal in Douglas is the authority. What is missing is a published, machine-readable, licensed set of positions. OSM does carry harbour and pier features, but they are community-mapped and an earlier Overpass query for waste-site features returned nothing usable, so OSM coverage of IoM harbour infrastructure has not been verified as sufficient. The IoM does not publish a harbours GeoJSON or point service, and MMEA's harbour material is descriptive text plus restricted Admiralty chart extracts.",
     whatWeWouldNeed:
-      "Either a MANNGIS harbours layer, or the Marine Operations Centre's own published positions under the OGL. OSM is a reasonable fallback provided each point is graded honestly as a community-derived harbour centroid rather than a surveyed pier head.",
+      "Either an official harbours layer, or the Marine Operations Centre's own published positions under the OGL. OSM is a reasonable fallback provided each point is graded honestly as a community-derived harbour centroid rather than a surveyed pier head.",
     contact: "harbours@gov.im",
     severity: "medium",
   },
@@ -1140,6 +918,89 @@ export const GAPS: Gap[] = [
     whatWeWouldNeed:
       "Manx Utilities would need to publish substation and generation coordinates, either as a GeoJSON or as a table under the OGL. A single email to their asset records team would likely resolve it; this is the most tractable of the remaining infrastructure gaps.",
     contact: "info@manxutilities.im",
+    severity: "medium",
+  },
+
+  // --------------------------------------------------------------------------
+  // Coverage that could not be independently licensed. Government map-derived
+  // data is not open (the IoM OGL excludes maps and map-derived products), so
+  // where a usable open source was not found the layer is recorded here rather
+  // than silently dropped or relicensed.
+  // --------------------------------------------------------------------------
+  {
+    id: "field-parcels",
+    title: "Agricultural field parcels",
+    wanted: "The island's agricultural field parcels with land-use category and acreage.",
+    whyUnavailable:
+      "The previous source was a government 'Field Gazetteer' layer (19,848 parcels). Government map-derived data is not openly licensed and has been removed. No independently licensed, complete parcel dataset was found.",
+    whatWeWouldNeed:
+      "DEFA to release the parcel boundaries under the OGL, or an open agricultural land-cover dataset for the island.",
+    contact: "agriculture@gov.im",
+    severity: "medium",
+  },
+  {
+    id: "glens-and-trees",
+    title: "Glens, registered trees and ramblage land",
+    wanted: "Glen boundaries, individually registered trees and public rambling land.",
+    whyUnavailable:
+      "These were government map layers (22 glens, 1,199 registered trees, 7 ramblage records) and are removed because that data is not openly licensed. Partial coverage may exist in OpenStreetMap or as National Trust land but was not sufficient to rebuild the official datasets.",
+    whatWeWouldNeed:
+      "DEFA to release the glen, tree-register and CGMRA ramblage layers under the OGL, or a licensed data exchange.",
+    contact: "mapping@gov.im",
+    severity: "medium",
+  },
+  {
+    id: "prow-network",
+    title: "Public rights of way and footpaths",
+    wanted: "The definitive Public Rights of Way map and the DEFA footpath network.",
+    whyUnavailable:
+      "The PROW, footpath, promoted-walking, cycle and pilgrimage route layers were all government mapping services and are removed. The definitive PROW map is maintained by the Department of Infrastructure in Central Registry and is not open in any reusable form.",
+    whatWeWouldNeed:
+      "DoI to publish the definitive PROW map under the OGL. OSM carries partial path coverage but is not the definitive map.",
+    contact: "infrastructure@gov.im",
+    severity: "high",
+  },
+  {
+    id: "bus-route-alignments",
+    title: "Bus route alignments",
+    wanted: "Current Bus Vannin route alignments as polylines.",
+    whyUnavailable:
+      "The previous bus-routes layer was a 2015 government network and is removed. OSM bus route relations exist but only a fraction of stops are members, and the alignments were not extracted into a comparable layer.",
+    whatWeWouldNeed:
+      "Bus Vannin / Public Transport to release current route alignments under the OGL, or a complete set of OSM route relations.",
+    contact: "buses@gov.im",
+    severity: "medium",
+  },
+  {
+    id: "tt-course",
+    title: "TT and Billown course infrastructure",
+    wanted: "The TT Mountain Course and Billown circuit alignments and infrastructure.",
+    whyUnavailable:
+      "The previous layer was a government 'MotorCourse' service and is removed. No open, licensed alignment is published; the widely quoted 37.73 mile length is Wikipedia-only with no official linear referencing.",
+    whatWeWouldNeed:
+      "The Department for Enterprise / Motorsport to release the course alignment under the OGL.",
+    contact: "motorsport@gov.im",
+    severity: "low",
+  },
+  {
+    id: "coastal-access",
+    title: "Coastal access points",
+    wanted: "Published access points to the Isle of Man coastline.",
+    whyUnavailable:
+      "This was a government map layer (40 points) and is removed because it is not openly licensed. No independently licensed equivalent was found.",
+    whatWeWouldNeed: "DEFA or the Marine Plan to release coastal access points under the OGL.",
+    contact: "EnvironmentalProtection@gov.im",
+    severity: "low",
+  },
+  {
+    id: "marine-habitats",
+    title: "Marine habitats and fishery closures",
+    wanted: "Eelgrass, kelp, maerl and Modiolus bed extents, saltmarsh and fishery closure areas.",
+    whyUnavailable:
+      "This was a government map layer (434 features) and is removed because it is not openly licensed. Some layers of this type exist in EMODnet (CC-BY 4.0) but no ingest has been built for them yet.",
+    whatWeWouldNeed:
+      "DEFA marine habitat layers under the OGL, or an EMODnet seabed-habitat ingest with per-product attribution.",
+    contact: "EnvironmentalProtection@gov.im",
     severity: "medium",
   },
 ];

@@ -49,8 +49,8 @@
     "house-numbers": {
       "file": "house-numbers.geojson",
       "present": true,
-      "features": 6949,
-      "bytes": 1577114
+      "features": 8395,
+      "bytes": 2445392
     },
     "railways": {
       "file": "railways.geojson",

@@ -170,14 +170,15 @@ export const LAYERS: LayerDef[] = [
     defaultOn: false,
     minZoom: 14,
     description:
-      "6,949 address points from OSM addr:housenumber tags. Each point is a building or entrance with a house number and street name.",
+      "8,395 address points from OpenStreetMap: 6,949 with addr:housenumber (numbered street addresses) and 1,446 named rural/heritage properties mapped with addr:housename instead of a number. Each point is a building, entrance or standalone address node.",
     caveats: [
       "Coverage depends on OSM mapping activity. Rural and newly-built areas may be incomplete.",
+      "addr:interpolation ways are not expanded — intermediate house numbers are not invented.",
       "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 6949,
+    featureCount: 8395,
   },
   {
     id: "railways",

@@ -84,7 +84,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | --- | --- | --- | --- | --- |
 | Bus stops (`bus-stops`) | osmIOM | ODbL | C | 732 |
 | Postcodes (`postcodes`) | osmIOM | ODbL | C | 1414 |
-| House numbers (`house-numbers`) | osmIOM | ODbL | C | 6949 |
+| House numbers (`house-numbers`) | osmIOM | ODbL | C | 8395 |
 | Railways & tramways (`railways`) | osmIOM | ODbL | B | 284 |
 | EV charging sites (`ev`) | osmIOM | ODbL | C | 60 |
 | Traffic signals & crossings (`traffic-signals`) | osmIOM | ODbL | C | 155 |

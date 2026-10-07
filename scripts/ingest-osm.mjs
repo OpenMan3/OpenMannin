@@ -210,7 +210,10 @@ out center 1000;`;
   for (const el of body.elements ?? []) {
     const t = el.tags ?? {};
     const name = t.name ?? null;
-    // A beacon with no name is still real; keep it but say so.
+    // A beacon with no name is still real: keep it, leave `name` null and let
+    // the UI render "Beacon"/"Lighthouse" from `kind`. Do not write the string
+    // "(unnamed)" into a name field - that is a placeholder, not a name, and it
+    // is what made anonymous beacons read as "(unnamed)" twice.
     const lon = el.lon ?? el.center?.lon;
     const lat = el.lat ?? el.center?.lat;
     if (lon === undefined || lat === undefined) continue;
@@ -221,7 +224,7 @@ out center 1000;`;
       geometry: roundCoords({ type: "Point", coordinates: [lon, lat] }, 5),
       properties: {
         id: `${el.type}/${el.id}`,
-        name: name ?? "(unnamed)",
+        name,
         named: name !== null,
         kind: t.man_made ?? t["seamark:type"] ?? null,
         seamarkType: t["seamark:type"] ?? null,

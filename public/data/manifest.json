@@ -110,7 +110,7 @@
       "file": "seamarks.geojson",
       "present": true,
       "features": 106,
-      "bytes": 29157
+      "bytes": 28815
     },
     "networks": {
       "file": "networks.geojson",

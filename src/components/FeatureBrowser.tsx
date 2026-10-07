@@ -65,7 +65,7 @@ export function FeatureBrowser({
     if (!entries) return [];
     const q = query.trim().toLowerCase();
     if (!q) return entries;
-    return entries.filter((e) => e.label.toLowerCase().includes(q));
+    return entries.filter((e) => e.search.includes(q));
   }, [entries, query]);
 
   const selected = list.length > 0 ? list[Math.min(pos, list.length - 1)] : null;
@@ -165,7 +165,7 @@ export function FeatureBrowser({
                 setQuery(e.target.value);
                 setPos(0);
               }}
-              placeholder="Filter by name or location…"
+              placeholder="Filter by name, street, ref…"
               aria-label="Filter features"
               className="min-w-0 flex-1 rounded border border-[#1e2a35] bg-[#0b0f14] px-2 py-1 text-xs text-[#d7e3ec] placeholder:text-[#6b7f8c] focus:border-[#35c9d4] focus:outline-none"
             />

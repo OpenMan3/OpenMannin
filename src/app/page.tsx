@@ -7,6 +7,7 @@ import { LayerPanel } from "@/components/LayerPanel";
 import { FeaturePopup } from "@/components/FeaturePopup";
 import { FeatureBrowser } from "@/components/FeatureBrowser";
 import { GapsPanel } from "@/components/GapsPanel";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { PostcodeLookup } from "@/components/PostcodeLookup";
 
 type Tab = "layers" | "browse" | "postcodes" | "gaps";
@@ -65,6 +66,16 @@ export default function Page() {
     );
   }, []);
 
+  // A global-search hit turns its layer on before flying, so the thing you
+  // searched for is actually visible when you arrive.
+  const searchSelect = useCallback(
+    (layerId: string, lon: number, lat: number) => {
+      ensureEnabled(layerId);
+      centreOn(lon, lat);
+    },
+    [ensureEnabled, centreOn],
+  );
+
   return (
     <main className="flex h-dvh w-full overflow-hidden bg-[#0b0f14]">
       {/* ---- sidebar ---- */}
@@ -96,6 +107,10 @@ export default function Page() {
 
         {panelOpen && (
           <>
+            <div className="shrink-0 border-b border-[#1e2a35] px-3 py-2">
+              <GlobalSearch onSelect={searchSelect} />
+            </div>
+
             <nav className="flex shrink-0 border-b border-[#1e2a35]">
               {TABS.map((t) => (
                 <button

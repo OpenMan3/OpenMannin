@@ -54,7 +54,30 @@ test("indexFeatures keeps order, labels and geometry, skipping the uncentred", (
   };
   const entries = indexFeatures(fc);
   assert.equal(entries.length, 2);
-  assert.deepEqual(entries[0], { index: 0, label: "A", lon: 1, lat: 2, properties: { label: "A" }, geometry: { type: "Point", coordinates: [1, 2] } });
+  assert.deepEqual(entries[0], {
+    index: 0,
+    label: "A",
+    search: "a a",
+    lon: 1,
+    lat: 2,
+    properties: { label: "A" },
+    geometry: { type: "Point", coordinates: [1, 2] },
+  });
   assert.equal(entries[1].label, "Oak");
   assert.equal(entries[1].index, 2);
+});
+
+test("indexFeatures builds a search blob from every scalar property", () => {
+  const fc = {
+    features: [
+      {
+        geometry: { type: "Point", coordinates: [1, 2] },
+        properties: { label: "Stop 12", ref: "1302", street: "Main Road", hidden: { deep: 1 } },
+      },
+    ],
+  };
+  const [entry] = indexFeatures(fc);
+  assert.match(entry.search, /main road/);
+  assert.match(entry.search, /1302/);
+  assert.doesNotMatch(entry.search, /deep/);
 });

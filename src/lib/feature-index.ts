@@ -15,6 +15,8 @@ export interface BrowseEntry {
   /** The feature's position in the source collection, for stable ordering. */
   index: number;
   label: string;
+  /** Everything searchable about the feature, precomputed and lower-cased. */
+  search: string;
   lon: number;
   lat: number;
   properties: Record<string, unknown> | null;
@@ -34,6 +36,31 @@ interface Position {
  */
 export function browseLabel(props: Record<string, unknown> | null | undefined): string {
   return resolveFeatureLabel(props);
+}
+
+/**
+ * The text a feature can be found by: its label plus every scalar property
+ * value, lower-cased. Filtering on the label alone hid a feature whose street,
+ * ref, operator or postcode the user actually searched for; this is built once
+ * per feature rather than rebuilt on each keystroke.
+ */
+export function featureSearchText(
+  label: string,
+  props: Record<string, unknown> | null | undefined,
+): string {
+  const parts = [label];
+  if (props) {
+    for (const v of Object.values(props)) {
+      if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+        parts.push(String(v));
+      } else if (Array.isArray(v)) {
+        for (const item of v) {
+          if (typeof item === "string" || typeof item === "number") parts.push(String(item));
+        }
+      }
+    }
+  }
+  return parts.join(" ").toLowerCase();
 }
 
 /**
@@ -142,9 +169,11 @@ export function indexFeatures(
   fc.features.forEach((f, index) => {
     const centre = featureCentre(f.geometry);
     if (!centre) return;
+    const label = browseLabel(f.properties);
     out.push({
       index,
-      label: browseLabel(f.properties),
+      label,
+      search: featureSearchText(label, f.properties),
       lon: centre[0],
       lat: centre[1],
       properties: f.properties ?? null,

@@ -209,6 +209,19 @@ export function featureKind(props: Record<string, unknown> | null | undefined): 
 }
 
 /**
+ * True when a feature carries a real identity (a name, code, ref, ...) rather
+ * than only a type we inferred. Used to keep anonymous "Footway"/"Stream"
+ * features out of a search index, where they would be pure noise.
+ */
+export function hasIdentity(props: Record<string, unknown> | null | undefined): boolean {
+  if (!props) return false;
+  if (firstString(props, IDENTITY_KEYS)) return true;
+  if (typeof props.asn === "number" && Number.isFinite(props.asn)) return true;
+  if (typeof props.regNo === "string" && props.regNo.trim()) return true;
+  return false;
+}
+
+/**
  * A human label for a feature. Never returns a placeholder an ingest wrote in;
  * falls back through kind, nearest place and finally the OSM id.
  */

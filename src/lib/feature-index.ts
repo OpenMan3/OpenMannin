@@ -9,6 +9,8 @@
  * (FeatureBrowser) and unit-tested from scripts/lib.
  */
 
+import { resolveFeatureLabel } from "./feature-label.ts";
+
 export interface BrowseEntry {
   /** The feature's position in the source collection, for stable ordering. */
   index: number;
@@ -24,29 +26,14 @@ interface Position {
   type: string;
 }
 
-/** First JSON value that is present, non-empty and comparable, in order. */
-const LABEL_KEYS = [
-  "label",
-  "name",
-  "title",
-  "address",
-  "location",
-  "site",
-  "species",
-  "Name",
-  "NAME",
-];
-
-/** A human label for a feature, or a fallback that stays honest. */
+/**
+ * A human label for a feature, or a fallback that stays honest.
+ *
+ * Kept as a named re-export so the browser and its tests call the same
+ * resolver the popup does - see feature-label.ts for why that matters.
+ */
 export function browseLabel(props: Record<string, unknown> | null | undefined): string {
-  if (!props) return "(unnamed)";
-  for (const key of LABEL_KEYS) {
-    const v = props[key];
-    if (typeof v === "string" && v.trim()) return v.trim();
-  }
-  const regNo = props.regNo;
-  if (typeof regNo === "string" && regNo.trim()) return `Reg. ${regNo}`;
-  return "(unnamed)";
+  return resolveFeatureLabel(props);
 }
 
 /**

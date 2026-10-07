@@ -12,6 +12,7 @@
  */
 
 import type { LayerDef } from "./types";
+import { resolveFeatureLabel } from "./feature-label.ts";
 
 export type GeometryKind = "point" | "line" | "polygon";
 
@@ -97,16 +98,12 @@ export function geometryKindsOf(fc: FeatureCollection): Set<GeometryKind> {
   return kinds;
 }
 
-/** Human-readable label for a feature, trying the fields our ingests actually set. */
+/**
+ * Human-readable label for a feature. Delegates to the shared resolver so the
+ * popup heading and the Browse list can never disagree.
+ */
 export function featureLabel(props: Record<string, unknown> | null | undefined): string {
-  if (!props) return "(no properties)";
-  for (const key of ["name", "label", "title", "Name", "NAME", "plot"]) {
-    const v = props[key];
-    if (typeof v === "string" && v.trim()) return v.trim();
-  }
-  const asn = props.asn;
-  if (typeof asn === "number") return `AS${asn}`;
-  return "(unnamed)";
+  return resolveFeatureLabel(props);
 }
 
 /** True when the ingests wrote a caveat block onto the collection. */

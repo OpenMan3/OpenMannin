@@ -20,29 +20,14 @@ import { useMemo, useRef, useState } from "react";
 import type { LayerDef } from "@/lib/types";
 import { layersWithFiles } from "@/lib/layer-data";
 import { indexFeatures, type BrowseEntry } from "@/lib/feature-index";
+import { formatValue, humanise, HIDDEN_KEYS } from "@/lib/feature-format";
 
-/** Fields worth a labelled row in the detail card, in display order. */
-const DETAIL_KEYS = [
-  "stopNo",
-  "naptan",
-  "locality",
-  "shelter",
-  "services",
-  "regNo",
-  "grade",
-  "species",
-  "description",
-  "plan1987",
-];
 /** Rows rendered before the count-overflow note; the list is searchable. */
 const MAX_LIST_ROWS = 250;
+/** Attribute rows shown in the detail card before an overflow note. */
+const MAX_DETAIL_ROWS = 14;
 
 const DATE_KEYS = new Set(["dateRegistered", "dateCertified", "surveyDate"]);
-
-function humanise(key: string): string {
-  const spaced = key.replace(/[_-]+/g, " ").trim();
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-}
 
 function formatDate(v: unknown): string {
   if (typeof v === "number" && Number.isFinite(v)) {
@@ -137,11 +122,15 @@ export function FeatureBrowser({
     goTo(e);
   };
 
-  const shrink = (value: unknown): string => {
-    const list = Array.isArray(value) ? value.map((v) => String(v)).join(", ") : value;
-    const s = String(list ?? "");
-    return s.length > 120 ? `${s.slice(0, 120)}…` : s;
-  };
+  // The detail card renders whatever the feature carries, hidden plumbing
+  // aside, rather than a hardcoded field list that drifts from the data.
+  const detail = useMemo(() => {
+    const props = selected?.properties;
+    if (!props) return [];
+    return Object.entries(props).filter(
+      ([k, v]) => !HIDDEN_KEYS.has(k) && v !== null && v !== undefined && v !== "",
+    );
+  }, [selected]);
 
   return (
     <div className="flex h-full min-h-0 flex-col p-3">
@@ -254,18 +243,19 @@ export function FeatureBrowser({
           {selected && (
             <div className="scroll-thin mt-2 max-h-40 shrink-0 overflow-y-auto rounded border border-[#1e2a35] bg-[#0d141a] p-2 text-[11px]">
               <div className="truncate font-semibold text-[#d7e3ec]">{selected.label}</div>
-              {DETAIL_KEYS.map((k) => {
-                const v = selected.properties?.[k];
-                if (v === undefined || v === null || v === "") return null;
-                return (
-                  <div key={k} className="flex gap-2 py-0.5">
-                    <span className="w-24 shrink-0 text-[#7d8f9d]">{humanise(k)}</span>
-                    <span className="min-w-0 flex-1 break-words text-[#d7e3ec]">
-                      {DATE_KEYS.has(k) ? formatDate(v) : shrink(v)}
-                    </span>
-                  </div>
-                );
-              })}
+              {detail.slice(0, MAX_DETAIL_ROWS).map(([k, v]) => (
+                <div key={k} className="flex gap-2 py-0.5">
+                  <span className="w-24 shrink-0 text-[#7d8f9d]">{humanise(k)}</span>
+                  <span className="min-w-0 flex-1 break-words text-[#d7e3ec]">
+                    {DATE_KEYS.has(k) ? formatDate(v) : formatValue(v)}
+                  </span>
+                </div>
+              ))}
+              {detail.length > MAX_DETAIL_ROWS && (
+                <p className="mt-1 text-[10px] text-[#6b7f8c]">
+                  Showing {MAX_DETAIL_ROWS} of {detail.length} attributes.
+                </p>
+              )}
               {typeof selected.properties?.url === "string" && selected.properties.url !== "" && (
                 <a
                   href={selected.properties.url}

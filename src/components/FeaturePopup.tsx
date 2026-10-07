@@ -19,66 +19,11 @@ import type { LayerDef } from "@/lib/types";
 import { SOURCES } from "@/lib/sources";
 import { LICENCES } from "@/lib/licences";
 import { featureLabel } from "@/lib/layer-data";
+import { formatValue, humanise, HIDDEN_KEYS } from "@/lib/feature-format";
 import type { PickedFeature } from "./MapView";
-
-const HIDDEN_KEYS = new Set([
-  "id",
-  "dataset",
-  "kind",
-  "source",
-  "ripestat",
-  "page",
-  "note",
-  "coordSource",
-]);
 
 /** Attribute rows shown before the "and N more" line. */
 const MAX_ENTRIES = 14;
-/** Hard cap on a formatted value, so one huge nested property cannot fill the card. */
-const MAX_VALUE_CHARS = 400;
-
-/**
- * Render a property value as readable text.
- *
- * `String(v)` is what this used to do, and it is correct for exactly the
- * types GeoJSON properties are assumed to hold - strings, numbers, booleans -
- * and wrong for everything else: an array of runway objects came out as
- * "[object Object],[object Object]", which is the failure this layer's own
- * satellite-pass properties were explicitly restructured to avoid (see
- * passes-worker.ts) but which the generic renderer never learned. Arrays of
- * primitives join with ", "; objects and arrays of objects flatten to
- * "key: value" pairs, recursively, then truncate.
- */
-function formatValue(v: unknown, depth = 0): string {
-  if (v === null || v === undefined) return "";
-  if (typeof v === "string") return v;
-  if (typeof v === "number" || typeof v === "boolean") return String(v);
-  if (depth > 3) return "[…]";
-
-  if (Array.isArray(v)) {
-    if (v.length === 0) return "(empty list)";
-    const parts = v.map((item) => formatValue(item, depth + 1)).filter((s) => s !== "");
-    const joined = parts.join(", ");
-    return truncate(joined);
-  }
-
-  if (typeof v === "object") {
-    const entries = Object.entries(v as Record<string, unknown>).filter(
-      ([, val]) => val !== null && val !== undefined && val !== "",
-    );
-    if (entries.length === 0) return "(no values)";
-    const joined = entries
-      .map(([k, val]) => `${k}: ${formatValue(val, depth + 1)}`)
-      .join(", ");
-    return truncate(joined);
-  }
-
-  return String(v);
-}
-
-function truncate(s: string): string {
-  return s.length > MAX_VALUE_CHARS ? `${s.slice(0, MAX_VALUE_CHARS)}…` : s;
-}
 
 export function FeaturePopup({
   picked,
@@ -276,9 +221,4 @@ export function FeaturePopup({
       </div>
     </div>
   );
-}
-
-function humanise(key: string): string {
-  const spaced = key.replace(/[_-]+/g, " ").trim();
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }

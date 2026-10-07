@@ -1,0 +1,240 @@
+/**
+ * One label for a feature, wherever it is rendered.
+ *
+ * The Browse list and the map popup used to resolve a feature's name with two
+ * different, narrow key lists, so the same feature could read "AS926" in the
+ * popup and "(unnamed)" in the list, or show "(unnamed)" as the title while the
+ * attributes underneath rendered its code, ref or operator. That is the exact
+ * complaint this module exists to fix: the title and the body can no longer
+ * disagree, because there is only one resolver.
+ *
+ * It resolves in three tiers:
+ *   1. an explicit identity the ingest wrote (name, label, code, ref, ...);
+ *   2. a kind derived from the feature's own tags (Footway, Stream, 30 mph
+ *      limit, Lighthouse, ...), optionally qualified with the nearest named
+ *      place when the feature is genuinely anonymous;
+ *   3. the OSM id, so an anonymous feature is still traceable.
+ *
+ * A placeholder such as the literal "(unnamed)" an old seamark ingest wrote
+ * into `name` is never treated as an identity - that is the whole bug.
+ */
+
+/** Values that are placeholders, not names. */
+const PLACEHOLDERS = new Set([
+  "",
+  "(unnamed)",
+  "unnamed",
+  "unknown",
+  "(unknown)",
+  "n/a",
+  "na",
+  "none",
+  "-",
+  "?",
+]);
+
+/** Identity fields in preference order: a real name beats an identifier. */
+const IDENTITY_KEYS = [
+  "label",
+  "name",
+  "Name",
+  "NAME",
+  "title",
+  "official_name",
+  "alt_name",
+  "short_name",
+  "housename",
+  "housenumber",
+  "address",
+  "location",
+  "site",
+  "code",
+  "ref",
+  "designation",
+  "species",
+  "plot",
+];
+
+const HIGHWAY: Record<string, string> = {
+  footway: "Footway",
+  path: "Path",
+  bridleway: "Bridleway",
+  cycleway: "Cycleway",
+  service: "Service road",
+  track: "Track",
+  residential: "Residential road",
+  unclassified: "Unclassified road",
+  primary: "Primary road",
+  secondary: "Secondary road",
+  tertiary: "Tertiary road",
+  trunk: "Trunk road",
+  motorway: "Motorway",
+  living_street: "Living street",
+  pedestrian: "Pedestrian street",
+  steps: "Steps",
+  road: "Road",
+  traffic_signals: "Traffic signals",
+};
+
+const RAILWAY: Record<string, string> = {
+  rail: "Railway",
+  narrow_gauge: "Narrow-gauge railway",
+  light_rail: "Light rail",
+  tram: "Tramway",
+  station: "Railway station",
+  halt: "Railway halt",
+  disused: "Disused railway",
+};
+
+const WATERWAY: Record<string, string> = {
+  stream: "Stream",
+  river: "River",
+  drain: "Drain",
+  ditch: "Ditch",
+  canal: "Canal",
+  waterfall: "Waterfall",
+};
+
+const WATER: Record<string, string> = {
+  reservoir: "Reservoir",
+  lake: "Lake",
+  pond: "Pond",
+  basin: "Basin",
+};
+
+const LEISURE: Record<string, string> = {
+  nature_reserve: "Nature reserve",
+  park: "Park",
+  common: "Common",
+  garden: "Garden",
+};
+
+const BOUNDARY: Record<string, string> = {
+  protected_area: "Protected area",
+  national_park: "National park",
+};
+
+const SEAMARK: Record<string, string> = {
+  lighthouse: "Lighthouse",
+  light_minor: "Minor light",
+  light_major: "Major light",
+  beacon: "Beacon",
+  buoy: "Buoy",
+  light_vessel: "Light vessel",
+  daymark: "Daymark",
+};
+
+const FOOT_BRIDGE_HIGHWAY = new Set(["footway", "path", "steps", "cycleway", "bridleway", "pedestrian"]);
+
+/** First present, non-placeholder string among `keys`. */
+function firstString(props: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const v = props[key];
+    if (typeof v === "string" && !PLACEHOLDERS.has(v.trim().toLowerCase()) && v.trim()) {
+      return v.trim();
+    }
+  }
+  return null;
+}
+
+function mapped(table: Record<string, string>, value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const key = value.trim().toLowerCase();
+  if (!key) return null;
+  return table[key] ?? humanise(key);
+}
+
+function humanise(value: string): string {
+  const spaced = value.replace(/[_-]+/g, " ").trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/**
+ * A kind from the feature's own tags, or null when nothing describes it.
+ *
+ * Order matters: a speed limit outranks the road class it sits on, a bridge
+ * outranks the way crossing it, and a named seamark type outranks the generic
+ * `kind` field other layers also use.
+ */
+export function featureKind(props: Record<string, unknown> | null | undefined): string | null {
+  if (!props) return null;
+
+  if (props.bridge) {
+    if (FOOT_BRIDGE_HIGHWAY.has(String(props.highway ?? "").toLowerCase())) return "Footbridge";
+    if (props.railway) return "Railway bridge";
+    if (props.highway) return "Road bridge";
+    return "Bridge";
+  }
+
+  if (typeof props.maxspeed === "string" && props.maxspeed.trim()) {
+    const v = props.maxspeed.trim();
+    if (/^none$/i.test(v)) return "National speed limit";
+    return /limit$/i.test(v) ? v : `${v} limit`;
+  }
+
+  const rail = mapped(RAILWAY, props.railway);
+  if (rail) return rail;
+
+  const waterway = mapped(WATERWAY, props.waterway);
+  if (waterway) return waterway;
+
+  const water = mapped(WATER, props.water);
+  if (water) return water;
+
+  const highway = mapped(HIGHWAY, props.highway);
+  if (highway) return highway;
+
+  const leisure = mapped(LEISURE, props.leisure);
+  if (leisure) return leisure;
+
+  const boundary = mapped(BOUNDARY, props.boundary);
+  if (boundary) return boundary;
+
+  if (props.seamarkType !== undefined || props.named !== undefined) {
+    const seamark = mapped(SEAMARK, props.kind ?? props.seamarkType);
+    if (seamark) return seamark;
+  }
+
+  // Charging networks carry no amenity tag in the ingest; the socket columns
+  // are the tell.
+  if (props.socketType2 !== undefined || props.socketChademo !== undefined || props.socketCcs !== undefined) {
+    return "Charge point";
+  }
+
+  if (typeof props.kind === "string" && props.kind.trim()) {
+    return humanise(props.kind.trim());
+  }
+
+  return null;
+}
+
+/**
+ * A human label for a feature. Never returns a placeholder an ingest wrote in;
+ * falls back through kind, nearest place and finally the OSM id.
+ */
+export function resolveFeatureLabel(props: Record<string, unknown> | null | undefined): string {
+  if (!props) return "(unnamed)";
+
+  const identity = firstString(props, IDENTITY_KEYS);
+  if (identity) return identity;
+
+  if (typeof props.asn === "number" && Number.isFinite(props.asn)) return `AS${props.asn}`;
+  if (typeof props.regNo === "string" && props.regNo.trim()) return `Reg. ${props.regNo.trim()}`;
+
+  // A registered-holder string is a weak fallback: it is a description of the
+  // owner, not the feature's name.
+  const holder = firstString(props, ["holder", "asName"]);
+  if (holder) return holder;
+
+  const kind = featureKind(props);
+  if (kind) {
+    const place = typeof props.nearestPlace === "string" ? props.nearestPlace.trim() : "";
+    if (place && !PLACEHOLDERS.has(place.toLowerCase())) return `${kind} near ${place}`;
+    return kind;
+  }
+
+  const osm = typeof props.osm === "string" ? props.osm.trim() : "";
+  if (osm) return `Feature ${osm}`;
+
+  return "(unnamed)";
+}

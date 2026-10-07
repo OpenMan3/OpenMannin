@@ -165,13 +165,6 @@
       "present": true,
       "features": 6,
       "bytes": 6627
-    },
-    "__prefixIndex": {
-      "file": "prefix-index.json",
-      "present": true,
-      "bytes": 5063,
-      "networks": 16,
-      "prefixes": 120
     }
   }
 }

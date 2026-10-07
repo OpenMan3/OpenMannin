@@ -24,7 +24,6 @@
  *
  * Output:
  *   public/data/networks.geojson    one Point per ASN, for the map
- *   public/data/prefix-index.json   compact index for the IP lookup tool
  *   public/data/_ingest-net-report.json
  *
  * Caveat carried into the UI: an ASN's *registered* country is IM, but its
@@ -201,36 +200,9 @@ async function main() {
     })),
   };
 
-  // --- prefix-index.json: what the IP lookup tool reads ---------------------
-  const index = {
-    generated: new Date().toISOString(),
-    country: "IM",
-    ripestatQueryTime: queryTime,
-    source: {
-      name: "RIPEstat",
-      url: "https://stat.ripe.net/",
-      licence: "NO-LICENCE",
-      note: "RIPE NCC data is free to use with attribution; no formal open licence is published for RIPEstat output.",
-    },
-    registeredAsnCount: registered,
-    networkCount: networks.length,
-    networks: networks
-      .filter((n) => n.prefixCount > 0)
-      .map((n) => ({
-        asn: n.asn,
-        holder: n.holder,
-        asName: n.asName,
-        routed: n.routed,
-        prefixCount: n.prefixCount,
-        prefixes: n.prefixes,
-      })),
-    unannounced: networks
-      .filter((n) => n.prefixCount === 0)
-      .map((n) => ({ asn: n.asn, holder: n.holder, routed: n.routed })),
-  };
+  const generated = new Date().toISOString();
 
   const bytesFc = writeJSON(`${OUT_DIR}/networks.geojson`, fc);
-  const bytesIdx = writeJSON(`${OUT_DIR}/prefix-index.json`, index);
 
   const routedNetworks = networks.filter((n) => n.routed);
   const totalPrefixes = networks.reduce((s, n) => s + n.prefixCount, 0);
@@ -240,7 +212,7 @@ async function main() {
   writeJSON(
     `${OUT_DIR}/_ingest-net-report.json`,
     {
-      generated: index.generated,
+      generated,
       ripestatQueryTime: queryTime,
       registeredAsns: registered,
       networksWritten: networks.length,
@@ -262,13 +234,12 @@ async function main() {
         "Map markers show the operator anchor, not the location of any prefix or subscriber.",
         `${networks.length - Object.keys(ANCHORS).length} markers use a Douglas town-centre fallback anchor at grade C because no registered street address was available.`,
       ],
-      bytes: { "networks.geojson": bytesFc, "prefix-index.json": bytesIdx },
+      bytes: { "networks.geojson": bytesFc },
     },
     { pretty: true },
   );
 
   console.log(`  networks.geojson    ${networks.length} markers, ${(bytesFc / 1024).toFixed(1)} KB`);
-  console.log(`  prefix-index.json   ${index.networks.length} with prefixes, ${(bytesIdx / 1024).toFixed(1)} KB`);
   console.log(`  prefixes            ${totalPrefixes} (v4 ${totalV4}, v6 ${totalV6})`);
   console.log(`  failures            ${failures.length}`);
   for (const n of routedNetworks.filter((x) => x.prefixCount > 0)) {

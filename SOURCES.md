@@ -23,7 +23,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | No published licence | no | yes | No terms of use, robots.txt or licence found. Absence of a licence is not a grant. Do not republish without written permission. |
 | Licence not established | no | yes | Verify before use. |
 
-## Source register (33)
+## Source register (31)
 
 | Source | Publisher | Licence | Last checked |
 | --- | --- | --- | --- |
@@ -55,8 +55,6 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | [EMODnet Bathymetry](https://emodnet.ec.europa.eu/en/bathymetry) | EMODnet / European Commission | CC-BY-4.0 | 2026-10-04 |
 | [Esri World Imagery basemap](https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer) | Esri / Maxar / Earthstar Geographics | UNKNOWN | 2026-10-04 |
 | [RIPEstat data API](https://stat.ripe.net/) | RIPE NCC | NO-LICENCE | 2026-10-04 |
-| [Companies Registry — public company search](https://services.gov.im/ded/services/companiesregistry/companysearch.iom) | Isle of Man Government — Department of Economic Affairs | OGL-IoM | 2026-10-04 |
-| [Isle of Man Financial Services Authority registers](https://www.iomfsa.im/registers/) | Isle of Man FSA | OGL-IoM | 2026-10-04 |
 | [OpenMannin compilation](https://github.com/) | OpenMannin | OGL-IoM | 2026-10-04 |
 | [Isle of Man Government public webcams](https://www.gov.im/webcams/) | Isle of Man Government (images.gov.im) | OGL-IoM | 2026-10-04 |
 | [UK Met Office DataHub](https://datahub.metoffice.gov.uk/) | UK Met Office | CC-BY-4.0 | 2026-10-04 |

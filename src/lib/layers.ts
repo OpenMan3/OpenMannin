@@ -419,11 +419,11 @@ export const LAYERS: LayerDef[] = [
     defaultOn: false,
     minZoom: 8,
     description:
-      "Every autonomous system registered to country IM, with what it currently announces in BGP. 27 ASNs registered, 16 of them routed and announcing 120 prefixes (109 IPv4, 11 IPv6). Includes Manx Telecom (AS13122, 34 prefixes), Domicilium (AS15766), Elite Group Wi-Manx (AS42455), TSG Interactive (AS43338 and AS48536), Netcetera (AS24851), Plan Communications (AS35691), Stacuity (AS197385), BlueWave/aql (AS201898) and others. Paired with a client-side IP lookup tool driven by prefix-index.json.",
+      "Every autonomous system registered to country IM, with what it currently announces in BGP. 27 ASNs registered, 16 of them routed and announcing 120 prefixes (109 IPv4, 11 IPv6). Includes Manx Telecom (AS13122, 34 prefixes), Domicilium (AS15766), Elite Group Wi-Manx (AS42455), TSG Interactive (AS43338 and AS48536), Netcetera (AS24851), Plan Communications (AS35691), Stacuity (AS197385), BlueWave/aql (AS201898) and others.",
     caveats: [
       "The marker is the OPERATOR'S ANCHOR, not the location of any prefix. ASN country of registration is IM; announced prefixes are wherever the operator routes, which for these networks is frequently mainland UK, Europe and North America. 87.254.64.0/19 and 2001:470:60::/48 (Google) appear in this index because a Manx-registered operator announces them.",
       "26 of 27 markers fall back to a Douglas town-centre anchor at confidence grade C, because RIPEstat publishes no address for the ASN. Only Manx Telecom has a verifiable anchor (Isle of Man Business Park, Braddan, grade B). Do not read these pins as premises locations.",
-      "11 of the 27 ASNs are registered but NOT announced, so they have no prefixes and appear in the index's `unannounced` list rather than on the map with an address space. Several are duplicate registrations of active holders (SC IP Limited holds AS200348, AS207092 and AS64480).",
+      "11 of the 27 ASNs are registered but NOT announced, so they have no prefixes and carry no address space. Several are duplicate registrations of active holders (SC IP Limited holds AS200348, AS207092 and AS64480).",
       "This is a routing registry, not threat intelligence. It cannot identify a subscriber or geolocate an address, and it deliberately exposes no query logs.",
     ],
     confidence: "A",

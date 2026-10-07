@@ -280,26 +280,6 @@ export const SOURCES: Record<string, Source> = {
     notes:
       "Keyless JSON, CORS *. Used as the authoritative registry of which ASNs are registered to country IM (country-asns with lod=1, which returns 27 registered / 16 routed and the actual ASN set) and of what each currently announces in BGP (announced-prefixes). GOTCHA: country-asns WITHOUT lod=1 returns only a count and no list, which reads misleadingly as 'zero'. RIPE NCC data is free to use with attribution but no formal open licence is published for RIPEstat output. RIPE Database's own search API is unusable for discovery here — every query-string + type-filter combination returns ERROR:115, including plain country:GB.",
   },
-  companiesRegistry: {
-    id: "companiesRegistry",
-    name: "Companies Registry — public company search",
-    publisher: "Isle of Man Government — Department of Economic Affairs",
-    url: "https://services.gov.im/ded/services/companiesregistry/companysearch.iom",
-    licence: "OGL-IoM",
-    lastChecked: "2026-10-04",
-    notes:
-      "FREE public fields without login: name, company number, type, status, registered office, registered agent, date of incorporation, presence of charges, liquidation flag, receivers flag, and a count of filed documents. PAID/ACCOUNT-GATED: documents (annual returns, accounts, confirmation statements), officer details, charges and mortgages. We therefore build deep links only and never scrape or republish records. Search form verified as GET with two parameters: searchby (0 = name, 1 = number) and searchtext. robots.txt is served by an F5 WAF that rejects non-browser clients, so crawl permissions are UNKNOWN — another reason to link rather than scrape. A newer portal exists at https://centralregistry.gov.im/ but is a JavaScript SPA with no crawlable profile URLs.",
-  },
-  financialServicesAuthority: {
-    id: "financialServicesAuthority",
-    name: "Isle of Man Financial Services Authority registers",
-    publisher: "Isle of Man FSA",
-    url: "https://www.iomfsa.im/registers/",
-    licence: "OGL-IoM",
-    lastChecked: "2026-10-04",
-    notes:
-      "Separate regulator with its own public registers of regulated entities (banks, insurers, funds, trusts, companies, persons). Distinct from the Companies Registry: a regulated entity here is not necessarily an incorporated company. Public search, deep-link only.",
-  },
   openmannin: {
     id: "openmannin",
     name: "OpenMannin compilation",

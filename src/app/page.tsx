@@ -7,18 +7,14 @@ import { LayerPanel } from "@/components/LayerPanel";
 import { FeaturePopup } from "@/components/FeaturePopup";
 import { FeatureBrowser } from "@/components/FeatureBrowser";
 import { GapsPanel } from "@/components/GapsPanel";
-import { IpLookup } from "@/components/IpLookup";
 import { PostcodeLookup } from "@/components/PostcodeLookup";
-import { RegistryLookupPanel } from "@/components/RegistryLookupPanel";
 
-type Tab = "layers" | "browse" | "lookup" | "postcodes" | "registry" | "gaps";
+type Tab = "layers" | "browse" | "postcodes" | "gaps";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "layers", label: "Layers" },
   { id: "browse", label: "Browse" },
-  { id: "lookup", label: "IP lookup" },
   { id: "postcodes", label: "Postcodes" },
-  { id: "registry", label: "Companies" },
   { id: "gaps", label: "Gaps" },
 ];
 
@@ -135,9 +131,7 @@ export default function Page() {
                   onLocate={centreOn}
                 />
               )}
-              {tab === "lookup" && <IpLookup />}
               {tab === "postcodes" && <PostcodeLookup onLocate={centreOn} />}
-              {tab === "registry" && <RegistryLookupPanel />}
               {tab === "gaps" && <GapsPanel gaps={GAPS} />}
             </div>
 

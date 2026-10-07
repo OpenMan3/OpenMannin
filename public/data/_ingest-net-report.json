@@ -232,7 +232,6 @@
     "26 markers use a Douglas town-centre fallback anchor at grade C because no registered street address was available."
   ],
   "bytes": {
-    "networks.geojson": 12070,
-    "prefix-index.json": 5063
+    "networks.geojson": 12070
   }
 }

@@ -25,6 +25,26 @@ import type { PickedFeature } from "./MapView";
 /** Attribute rows shown before the "and N more" line. */
 const MAX_ENTRIES = 14;
 
+/** OSM object ids look like "node/123", "way/456", "relation/789". */
+const OSM_ID = /^(node|way|relation)\/\d+$/;
+
+function osmUrl(properties: Record<string, unknown> | null, lon: number, lat: number): string {
+  const id =
+    typeof properties?.osm === "string" && OSM_ID.test(properties.osm)
+      ? properties.osm
+      : typeof properties?.id === "string" && OSM_ID.test(properties.id)
+        ? properties.id
+        : null;
+  if (id) return `https://www.openstreetmap.org/${id}`;
+  return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=17/${lat}/${lon}`;
+}
+
+function formatAsOf(asOf: string): string | null {
+  const d = new Date(asOf);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
 export function FeaturePopup({
   picked,
   onClose,
@@ -36,6 +56,7 @@ export function FeaturePopup({
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [imageFailed, setImageFailed] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Hooks first: the early return below would otherwise make the hook count
   // depend on whether something is picked, which is a rules-of-hooks violation
@@ -43,6 +64,7 @@ export function FeaturePopup({
   useEffect(() => {
     if (!picked) return;
     setImageFailed(false);
+    setCopied(false);
     rootRef.current?.focus();
 
     const onKey = (e: KeyboardEvent) => {
@@ -161,6 +183,14 @@ export function FeaturePopup({
         )}
 
         <div className="space-y-1 border-t border-[#1e2a35] px-3 py-2 text-[11px] text-[#7d8f9d]">
+          {picked.asOf && (
+            <div>
+              Data as of{" "}
+              <span className="text-[#9fb0bd]">
+                {formatAsOf(picked.asOf) ?? picked.asOf}
+              </span>
+            </div>
+          )}
           <div>
             Confidence{" "}
             <span
@@ -208,15 +238,37 @@ export function FeaturePopup({
               )}
             </div>
           )}
-          {onLocate && (
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            <a
+              href={osmUrl(properties, lon, lat)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#35c9d4] hover:underline"
+            >
+              Open in OSM
+            </a>
             <button
               type="button"
-              onClick={() => onLocate(lon, lat)}
-              className="mt-1 text-[#35c9d4] hover:underline"
+              onClick={() => {
+                navigator.clipboard
+                  ?.writeText(`${lat.toFixed(5)}, ${lon.toFixed(5)}`)
+                  .then(() => setCopied(true))
+                  .catch(() => setCopied(false));
+              }}
+              className="text-[#35c9d4] hover:underline"
             >
-              Centre map here
+              {copied ? "Copied" : "Copy coords"}
             </button>
-          )}
+            {onLocate && (
+              <button
+                type="button"
+                onClick={() => onLocate(lon, lat)}
+                className="text-[#35c9d4] hover:underline"
+              >
+                Centre map here
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

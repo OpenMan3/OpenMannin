@@ -24,6 +24,8 @@ export interface Feature {
 export interface FeatureCollection {
   type: "FeatureCollection";
   features: Feature[];
+  /** Collection-level metadata the ingests write: `generated`, caveats, licence. */
+  properties?: Record<string, unknown> | null;
 }
 
 const cache = new Map<string, FeatureCollection>();

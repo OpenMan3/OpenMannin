@@ -37,6 +37,8 @@ export interface PickedFeature {
   properties: Record<string, unknown> | null;
   lon: number;
   lat: number;
+  /** When the layer's source data was generated, for the details card. */
+  asOf?: string;
 }
 
 export type BasemapId = "esri" | "opentopo";
@@ -108,6 +110,7 @@ export function MapView({
   onPick,
   onMissing,
   onFeedErrors,
+  onViewport,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
@@ -122,6 +125,8 @@ export function MapView({
    * one look identical.
    */
   onFeedErrors?: (errors: Record<string, string>) => void;
+  /** Reports the visible map centre and zoom after each move, for deep links. */
+  onViewport?: (v: { lon: number; lat: number; zoom: number }) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import("maplibre-gl").Map | null>(null);
@@ -172,11 +177,16 @@ export function MapView({
   const enabledRef = useRef(enabled);
   const layersRef = useRef(layers);
   const onPickRef = useRef(onPick);
+  const onViewportRef = useRef(onViewport);
   useEffect(() => {
     enabledRef.current = enabled;
     layersRef.current = layers;
     onPickRef.current = onPick;
-  }, [enabled, layers, onPick]);
+    onViewportRef.current = onViewport;
+  }, [enabled, layers, onPick, onViewport]);
+
+  /** `generated` stamp of each loaded layer's source, for the details card. */
+  const layerAsOfRef = useRef<Map<string, string>>(new Map());
 
   /** The maplibre-gl module, captured at map creation for the live effect. */
   const libRef = useRef<typeof import("maplibre-gl") | null>(null);
@@ -220,10 +230,29 @@ export function MapView({
       maplibregl.setWorkerUrl(`${WORKER_BASE}maplibre-gl-worker.mjs`);
 
       const bm = BASEMAPS[basemap];
+
+      // Deep links carry ?z=&lon=&lat=; honour them when they are present and
+      // sane. Read here, in the effect (never during render), so the URL cannot
+      // break server-side prerender - this path only runs in the browser.
+      let initialView: { center: [number, number]; zoom: number } | null = null;
+      if (typeof window !== "undefined") {
+        const p = new URLSearchParams(window.location.search);
+        const z = Number(p.get("z"));
+        const lon = Number(p.get("lon"));
+        const lat = Number(p.get("lat"));
+        const sane = [z, lon, lat].every(
+          (v) => Number.isFinite(v) && (v === 0 || Math.abs(v) < 1e3),
+        );
+        if (sane && isFinite(z)) {
+          const clamped = Math.min(Math.max(z, 8), bm.maxzoom);
+          initialView = { center: [lon, lat] as [number, number], zoom: clamped };
+        }
+      }
+
       const map = new maplibregl.Map({
         container: containerRef.current,
-        center: INITIAL_CENTRE,
-        zoom: INITIAL_ZOOM,
+        center: initialView?.center ?? INITIAL_CENTRE,
+        zoom: initialView?.zoom ?? INITIAL_ZOOM,
         minZoom: 8,
         maxZoom: bm.maxzoom,
         attributionControl: { compact: true },
@@ -288,10 +317,22 @@ export function MapView({
             properties: hit.properties ?? null,
             lon: e.lngLat.lng,
             lat: e.lngLat.lat,
+            asOf: layerAsOfRef.current.get(layer.id),
           });
           return;
         }
         onPickRef.current(null);
+      });
+
+      // Publish the visible centre + zoom after each move so the page can keep
+      // the URL in sync for shareable map links.
+      map.on("moveend", () => {
+        const c = map.getCenter();
+        onViewportRef.current?.({
+          lon: c.lng,
+          lat: c.lat,
+          zoom: map.getZoom(),
+        });
       });
 
       // Show the cursor only over something we actually drew.
@@ -376,6 +417,7 @@ export function MapView({
               if (map.getLayer(id)) map.removeLayer(id);
             }
             map.removeSource(`om-${def.id}`);
+            layerAsOfRef.current.delete(def.id);
             continue;
           }
 
@@ -391,6 +433,8 @@ export function MapView({
               m.addSource(`om-${def.id}`, { type: "geojson", data: fc as never });
               addPaintLayers(maplibregl, m, def, geometryKindsOf(fc));
             }
+            const asOf = fc.properties?.generated;
+            if (typeof asOf === "string") layerAsOfRef.current.set(def.id, asOf);
             // Success clears an earlier failure. `missing` is otherwise
             // append-only, so one blip kept a layer greyed out as "no data"
             // for the rest of the session even after it loaded fine.

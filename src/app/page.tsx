@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { GAPS, LAYERS } from "@/lib/layers";
 import { MapView, type BasemapId, type PickedFeature } from "@/components/MapView";
 import { LayerPanel } from "@/components/LayerPanel";
@@ -59,6 +59,44 @@ export default function Page() {
 
   const onMissing = useCallback((next: Set<string>) => setMissing(next), []);
   const onFeedErrors = useCallback((next: Record<string, string>) => setFeedErrors(next), []);
+
+  // The visible map centre + zoom, reported by MapView after each move. Used to
+  // keep the URL in sync so a map state can be shared as a link.
+  const [viewport, setViewport] = useState<{ lon: number; lat: number; zoom: number } | null>(null);
+
+  // Deep links: ?layers=roads,postcodes&z=15&lon=-4.5&lat=54.2
+  // Read once on mount to restore the shared state; the map's own initial
+  // viewport is read by MapView directly from the URL.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const p = new URLSearchParams(window.location.search);
+    const layersParam = p.get("layers");
+    if (layersParam) {
+      const ids = layersParam
+        .split(",")
+        .map((s) => s.trim())
+        .filter((id) => LAYERS.some((l) => l.id === id));
+      if (ids.length > 0) setEnabled(new Set(ids));
+    }
+  }, []);
+
+  // Write the current state back to the URL (debounced) so the address bar
+  // always reflects what is on screen and can be copied as a shareable link.
+  useEffect(() => {
+    if (!viewport) return;
+    const t = setTimeout(() => {
+      const layers = LAYERS.filter((l) => enabled.has(l.id))
+        .map((l) => l.id)
+        .join(",");
+      const p = new URLSearchParams();
+      if (layers) p.set("layers", layers);
+      p.set("z", viewport.zoom.toFixed(1));
+      p.set("lon", viewport.lon.toFixed(5));
+      p.set("lat", viewport.lat.toFixed(5));
+      window.history.replaceState(null, "", `${window.location.pathname}?${p.toString()}`);
+    }, 500);
+    return () => clearTimeout(t);
+  }, [enabled, viewport]);
 
   const centreOn = useCallback((lon: number, lat: number) => {
     window.dispatchEvent(
@@ -179,6 +217,7 @@ export default function Page() {
           onPick={setPicked}
           onMissing={onMissing}
           onFeedErrors={onFeedErrors}
+          onViewport={setViewport}
         />
 
         <FeaturePopup picked={picked} onClose={() => setPicked(null)} onLocate={centreOn} />

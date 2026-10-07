@@ -20,19 +20,19 @@
       "file": "roads.geojson",
       "present": true,
       "features": 21239,
-      "bytes": 7844201
+      "bytes": 8705699
     },
     "bridges": {
       "file": "bridges.geojson",
       "present": true,
       "features": 557,
-      "bytes": 138642
+      "bytes": 158306
     },
     "speedlimits": {
       "file": "speed-limits.geojson",
       "present": true,
       "features": 4207,
-      "bytes": 1622447
+      "bytes": 1662672
     },
     "bus-stops": {
       "file": "bus-stops.geojson",
@@ -56,19 +56,19 @@
       "file": "railways.geojson",
       "present": true,
       "features": 284,
-      "bytes": 172855
+      "bytes": 174745
     },
     "ev": {
       "file": "ev-charging.geojson",
       "present": true,
       "features": 60,
-      "bytes": 15234
+      "bytes": 18855
     },
     "traffic-signals": {
       "file": "traffic-signals.geojson",
       "present": true,
       "features": 155,
-      "bytes": 35456
+      "bytes": 44828
     },
     "subsea-cables": {
       "file": "subsea-cables.geojson",
@@ -110,7 +110,7 @@
       "file": "seamarks.geojson",
       "present": true,
       "features": 106,
-      "bytes": 28815
+      "bytes": 31646
     },
     "networks": {
       "file": "networks.geojson",
@@ -128,7 +128,7 @@
       "file": "reservoirs.geojson",
       "present": true,
       "features": 17,
-      "bytes": 22294
+      "bytes": 22759
     },
     "power": {
       "file": "power.geojson",
@@ -140,13 +140,13 @@
       "file": "protected-areas.geojson",
       "present": true,
       "features": 13,
-      "bytes": 19900
+      "bytes": 20017
     },
     "hydro": {
       "file": "hydrography.geojson",
       "present": true,
       "features": 1430,
-      "bytes": 634550
+      "bytes": 699000
     },
     "airport": {
       "file": "airports.geojson",

@@ -17,6 +17,7 @@
 import { SOURCES } from "@/lib/sources";
 import { LICENCES } from "@/lib/licences";
 import { LAYERS } from "@/lib/layers";
+import { CommunityFeed } from "./CommunityFeed";
 
 /**
  * Third-party libraries shipped to the browser, with licences verified against
@@ -217,6 +218,9 @@ export function TransparencyPanel() {
           on the map itself.
         </p>
       </section>
+
+      {/* ---- recent OSM activity ---- */}
+      <CommunityFeed embedded />
     </div>
   );
 }

@@ -8,12 +8,10 @@ import { FeaturePopup } from "@/components/FeaturePopup";
 import { FeatureBrowser } from "@/components/FeatureBrowser";
 import { GapsPanel } from "@/components/GapsPanel";
 import { GlobalSearch } from "@/components/GlobalSearch";
-import { CommunityFeed } from "@/components/CommunityFeed";
 import { TransparencyPanel } from "@/components/TransparencyPanel";
 import { LocateButton } from "@/components/LocateButton";
 import { DestinationSheet } from "@/components/DestinationSheet";
 import {
-  ActivityIcon,
   AlertIcon,
   CloseIcon,
   LayersIcon,
@@ -25,13 +23,12 @@ import {
 import type { NavigationState } from "@/lib/navigation/host";
 import type { RouteMode } from "@/lib/navigation/profiles";
 
-type Tab = "layers" | "browse" | "gaps" | "feed" | "sources";
+type Tab = "layers" | "browse" | "gaps" | "sources";
 
 const TABS: { id: Tab; label: string; Icon: (p: { className?: string }) => React.JSX.Element }[] = [
   { id: "layers", label: "Layers", Icon: LayersIcon },
   { id: "browse", label: "Browse", Icon: ListIcon },
   { id: "gaps", label: "Gaps", Icon: AlertIcon },
-  { id: "feed", label: "Feed", Icon: ActivityIcon },
   { id: "sources", label: "Sources", Icon: ShieldIcon },
 ];
 
@@ -347,7 +344,6 @@ function PageContent() {
                 />
               )}
               {tab === "gaps" && <GapsPanel gaps={GAPS} />}
-              {tab === "feed" && <CommunityFeed />}
               {tab === "sources" && <TransparencyPanel />}
             </div>
 

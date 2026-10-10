@@ -23,6 +23,7 @@ export function GlobalSearch({
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!query.trim() || index) return;
@@ -51,6 +52,16 @@ export function GlobalSearch({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
+  // The mobile top bar opens the drawer and asks the search box to take focus.
+  useEffect(() => {
+    const onFocusSearch = () => {
+      inputRef.current?.focus();
+      setOpen(true);
+    };
+    window.addEventListener("openmannin:focus-search", onFocusSearch);
+    return () => window.removeEventListener("openmannin:focus-search", onFocusSearch);
+  }, []);
+
   const choose = (r: SearchResult) => {
     onSelect(r.layerId, r.lon, r.lat);
     setOpen(false);
@@ -77,6 +88,7 @@ export function GlobalSearch({
   return (
     <div ref={rootRef} className="relative">
       <input
+        ref={inputRef}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -86,15 +98,15 @@ export function GlobalSearch({
         onKeyDown={onKeyDown}
         placeholder="Search all layers…"
         aria-label="Search across all layers"
-        className="w-full rounded border border-[#1e2a35] bg-[#0b0f14] px-2 py-1.5 text-xs text-[#d7e3ec] placeholder:text-[#6b7f8c] focus:border-[#35c9d4] focus:outline-none"
+        className="field"
       />
 
       {showResults && (
-        <div className="scroll-thin absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded border border-[#1e2a35] bg-[#0d141a] shadow-2xl">
-          {error && <p className="p-2 text-[11px] text-[#fca5a5]">Search index failed: {error}</p>}
-          {!error && !index && <p className="p-2 text-[11px] text-[#6b7f8c]">Loading index…</p>}
+        <div className="scroll-thin absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-md border border-line bg-panel shadow-2xl">
+          {error && <p className="p-2 text-[12px] text-danger">Search index failed: {error}</p>}
+          {!error && !index && <p className="p-2 text-[12px] text-ink-3">Loading index…</p>}
           {!error && index && results.length === 0 && (
-            <p className="p-2 text-[11px] text-[#6b7f8c]">No matches.</p>
+            <p className="p-2 text-[12px] text-ink-3">No matches.</p>
           )}
           {results.map((r, i) => (
             <button
@@ -102,12 +114,14 @@ export function GlobalSearch({
               type="button"
               onMouseEnter={() => setActive(i)}
               onClick={() => choose(r)}
-              className={`flex w-full items-baseline justify-between gap-2 px-2 py-1 text-left text-[11px] ${
-                i === active ? "bg-[#12283a] text-[#35c9d4]" : "text-[#d7e3ec] hover:bg-[#0d141a]"
+              className={`flex w-full items-baseline justify-between gap-2 px-2.5 py-2 text-left text-[12px] ${
+                i === active
+                  ? "bg-raised text-accent"
+                  : "text-ink hover:bg-raised/60"
               }`}
             >
               <span className="min-w-0 flex-1 truncate">{r.label}</span>
-              <span className="shrink-0 text-[10px] text-[#6b7f8c]">{r.layerLabel}</span>
+              <span className="shrink-0 text-[10px] text-ink-3">{r.layerLabel}</span>
             </button>
           ))}
         </div>

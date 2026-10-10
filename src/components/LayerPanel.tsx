@@ -47,10 +47,10 @@ const GROUP_ORDER: LayerGroup[] = [
 ];
 
 const GRADE_CLASS: Record<string, string> = {
-  A: "text-[#34d399]",
-  B: "text-[#60a5fa]",
-  C: "text-[#fbbf24]",
-  D: "text-[#f87171]",
+  A: "text-ok",
+  B: "text-gps-soft",
+  C: "text-warn",
+  D: "text-danger",
 };
 
 export function LayerPanel({
@@ -59,6 +59,7 @@ export function LayerPanel({
   missing,
   feedErrors,
   onToggle,
+  onToggleAll,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
@@ -70,6 +71,8 @@ export function LayerPanel({
    */
   feedErrors: Record<string, string>;
   onToggle: (id: string) => void;
+  /** Flip every layer on or off in one switch. */
+  onToggleAll?: (on: boolean) => void;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -94,22 +97,35 @@ export function LayerPanel({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-[#1e2a35] px-3 py-2">
+      <div className="border-b border-line px-3 py-2.5">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Layers</h2>
-          <span className="text-xs text-[#7d8f9d]">
+          <h2 className="text-sm font-semibold text-ink">Layers</h2>
+          <span className="text-xs text-ink-3">
             {onCount} of {layers.length} shown
           </span>
         </div>
-        <p className="mt-1 text-[11px] leading-snug text-[#7d8f9d]">
+        <p className="mt-1 text-[11px] leading-snug text-ink-3">
           Grade A is operator or government data. C is a single unconfirmed source.
         </p>
+        {onToggleAll && (
+          <button
+            type="button"
+            onClick={() => onToggleAll(onCount < layers.length)}
+            className="mt-2 w-full rounded-md border border-line bg-panel px-2 py-1.5 font-mono text-[11px] text-ink-2 transition-colors hover:border-accent/50 hover:text-ink"
+          >
+            {onCount === layers.length
+              ? `> all visible — click to blank the map`
+              : onCount === 0
+                ? `> blank map — click to show everything`
+                : `> apply to all: ${onCount}/${layers.length} on`}
+          </button>
+        )}
       </div>
 
       <div className="scroll-thin flex-1 overflow-y-auto">
         {GROUP_ORDER.filter((g) => grouped.has(g)).map((group) => (
           <section key={group}>
-            <h3 className="sticky top-0 z-10 bg-[#0b0f14]/95 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-[#7d8f9d] uppercase backdrop-blur">
+            <h3 className="sticky top-0 z-10 bg-page/95 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-ink-3 uppercase backdrop-blur">
               {GROUP_LABELS[group]}
             </h3>
 
@@ -124,7 +140,7 @@ export function LayerPanel({
               const isOpen = expanded.has(layer.id);
 
               return (
-                <div key={layer.id} className="border-b border-[#131b23]">
+                <div key={layer.id} className="border-b border-line-soft">
                   <div className="flex items-start gap-2 px-3 py-2">
                     <input
                       type="checkbox"
@@ -132,24 +148,29 @@ export function LayerPanel({
                       checked={isOn}
                       disabled={isMissing}
                       onChange={() => onToggle(layer.id)}
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-[#35c9d4] disabled:opacity-40"
+                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-accent disabled:opacity-40"
                     />
 
-                    <label htmlFor={`layer-${layer.id}`} className="min-w-0 flex-1 cursor-pointer">
+                    <label
+                      htmlFor={`layer-${layer.id}`}
+                      className="min-w-0 flex-1 cursor-pointer"
+                    >
                       <span className="flex items-center gap-1.5">
                         <span
-                          className="inline-block h-2 w-2 shrink-0 rounded-full"
+                          className="icon-badge"
                           style={{ background: layer.color }}
                           aria-hidden
                         />
                         <span
-                          className={`truncate text-[13px] ${isMissing ? "text-[#6b7f8c] line-through" : "text-[#d7e3ec]"}`}
+                          className={`truncate text-[13px] ${
+                            isMissing ? "text-ink-3 line-through" : "text-ink"
+                          }`}
                         >
                           {layer.label}
                         </span>
                       </span>
 
-                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-[#7d8f9d]">
+                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-ink-3">
                         <span className={`font-mono font-semibold ${GRADE_CLASS[layer.confidence]}`}>
                           {layer.confidence}
                         </span>
@@ -160,25 +181,19 @@ export function LayerPanel({
                           <span>z{layer.minZoom}+</span>
                         )}
                         {needsPermission && (
-                          <span className="rounded bg-[#3a2a12] px-1 text-[#fbbf24]">
-                            permission needed
-                          </span>
+                          <span className="chip bg-warn/10 text-warn">permission needed</span>
                         )}
-                        {isLive && (
-                          <span className="rounded bg-[#12283a] px-1 text-[#7dd3fc]">
-                            live route
-                          </span>
-                        )}
+                        {isLive && <span className="chip bg-info/10 text-info">live route</span>}
                         {feedError && (
                           <span
-                            className="rounded bg-[#3a1414] px-1 text-[#f87171]"
+                            className="chip bg-danger/10 text-danger"
                             title={feedError}
                           >
                             feed offline
                           </span>
                         )}
                         {isMissing && (
-                          <span className="rounded bg-[#3a1414] px-1 text-[#f87171]">no data</span>
+                          <span className="chip bg-danger/10 text-danger">no data</span>
                         )}
                       </span>
                     </label>
@@ -187,19 +202,20 @@ export function LayerPanel({
                       type="button"
                       onClick={() => toggleDetail(layer.id)}
                       aria-label={`Details for ${layer.label}`}
-                      className="shrink-0 px-1 text-xs text-[#6b7f8c] hover:text-[#d7e3ec]"
+                      aria-pressed={isOpen}
+                      className="btn-icon !h-7 !w-7 !rounded-md text-xs"
                     >
-                      {isOpen ? "−" : "i"}
+                      {isOpen ? "−" : "+"}
                     </button>
                   </div>
 
                   {isOpen && (
-                    <div className="space-y-2 px-3 pb-3 pl-8 text-[11px] leading-relaxed text-[#9fb0bd]">
-                      <p>{layer.description}</p>
+                    <div className="space-y-2 px-3 pb-3 text-[12px] leading-relaxed text-ink-2">
+                      <p className="pl-8">{layer.description}</p>
 
                       {feedError && (
-                        <div className="rounded border border-[#3a1414] bg-[#1a0c0c] p-2">
-                          <div className="mb-1 font-semibold text-[#f87171]">
+                        <div className="rounded-md border border-danger/30 bg-danger/5 p-2">
+                          <div className="mb-1 font-semibold text-danger">
                             This live feed is not running
                           </div>
                           <p className="break-words">{feedError}</p>
@@ -207,8 +223,8 @@ export function LayerPanel({
                       )}
 
                       {layer.caveats && layer.caveats.length > 0 && (
-                        <div className="rounded border border-[#3a2a12] bg-[#1a1408] p-2">
-                          <div className="mb-1 font-semibold text-[#fbbf24]">
+                        <div className="rounded-md border border-warn/30 bg-warn/5 p-2">
+                          <div className="mb-1 font-semibold text-warn">
                             Caveats — read before relying on this
                           </div>
                           <ul className="list-disc space-y-1 pl-4">
@@ -219,7 +235,7 @@ export function LayerPanel({
                         </div>
                       )}
 
-                      <div className="border-t border-[#1e2a35] pt-2 text-[#7d8f9d]">
+                      <div className="border-t border-line pt-2 text-ink-3">
                         <div>
                           Source:{" "}
                           {src ? (
@@ -227,12 +243,12 @@ export function LayerPanel({
                               href={src.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[#35c9d4] hover:underline"
+                              className="link"
                             >
                               {src.name}
                             </a>
                           ) : (
-                            <span className="text-[#f87171]">unregistered: {layer.sourceId}</span>
+                            <span className="text-danger">unregistered: {layer.sourceId}</span>
                           )}
                         </div>
                         {lic && (
@@ -243,7 +259,7 @@ export function LayerPanel({
                                 href={lic.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-[#35c9d4] hover:underline"
+                                className="link"
                               >
                                 {lic.name}
                               </a>

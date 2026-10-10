@@ -134,12 +134,12 @@ export function FeatureBrowser({
 
   return (
     <div className="flex h-full min-h-0 flex-col p-3">
-      <label className="block text-[10px] tracking-wide text-[#7d8f9d] uppercase">
+      <label className="block label">
         Feature browser
         <select
           value={layerId}
           onChange={(e) => chooseLayer(e.target.value)}
-          className="mt-1 block w-full rounded border border-[#1e2a35] bg-[#0d141a] px-1.5 py-1 text-xs text-[#d7e3ec] focus:border-[#35c9d4] focus:outline-none"
+          className="field mt-1"
           aria-label="Layer to browse"
         >
           <option value="">Select a layer…</option>
@@ -154,7 +154,7 @@ export function FeatureBrowser({
       {def && (
         <>
           {error && (
-            <p className="mt-2 rounded border border-[#f87171]/40 bg-[#3a1418] px-2 py-1 text-[11px] text-[#fca5a5]">
+            <p className="mt-2 rounded-md border border-danger/40 bg-danger/10 px-2 py-1.5 text-[12px] text-danger">
               {error}
             </p>
           )}
@@ -167,14 +167,14 @@ export function FeatureBrowser({
               }}
               placeholder="Filter by name, street, ref…"
               aria-label="Filter features"
-              className="min-w-0 flex-1 rounded border border-[#1e2a35] bg-[#0b0f14] px-2 py-1 text-xs text-[#d7e3ec] placeholder:text-[#6b7f8c] focus:border-[#35c9d4] focus:outline-none"
+              className="field min-w-0 flex-1"
             />
             <div className="flex gap-1">
               <button
                 type="button"
                 onClick={() => step(-1)}
                 aria-label="Previous feature"
-                className="rounded border border-[#1e2a35] bg-[#0d141a] px-2.5 py-1 text-sm leading-none text-[#d7e3ec] hover:border-[#35c9d4] disabled:opacity-40"
+                className="btn !px-2.5 !py-1.5 text-sm leading-none"
                 disabled={!selected}
               >
                 &#9664;
@@ -183,7 +183,7 @@ export function FeatureBrowser({
                 type="button"
                 onClick={() => step(1)}
                 aria-label="Next feature"
-                className="rounded border border-[#1e2a35] bg-[#0d141a] px-2.5 py-1 text-sm leading-none text-[#d7e3ec] hover:border-[#35c9d4] disabled:opacity-40"
+                className="btn !px-2.5 !py-1.5 text-sm leading-none"
                 disabled={!selected}
               >
                 &#9654;
@@ -191,7 +191,7 @@ export function FeatureBrowser({
             </div>
           </div>
 
-          <div className="mt-1.5 text-[10px] text-[#6b7f8c]">
+          <div className="mt-1.5 text-[11px] text-ink-3">
             {total !== null && !loading && (
               <span>
                 {list.length.toLocaleString()} feature{list.length === 1 ? "" : "s"}
@@ -204,11 +204,11 @@ export function FeatureBrowser({
 
           <ul
             ref={listRef}
-            className="scroll-thin mt-2 min-h-0 flex-1 overflow-y-auto rounded border border-[#1e2a35]"
+            className="scroll-thin mt-2 min-h-0 flex-1 overflow-y-auto rounded-md border border-line"
           >
-            {loading && <li className="p-2 text-[11px] text-[#6b7f8c]">Loading…</li>}
+            {loading && <li className="p-2.5 text-[12px] text-ink-3">Loading…</li>}
             {!loading && list.length === 0 && (
-              <li className="p-2 text-[11px] text-[#6b7f8c]">
+              <li className="p-2.5 text-[12px] text-ink-3">
                 {total === 0
                   ? "This layer has no features with coordinates."
                   : query.trim()
@@ -221,10 +221,10 @@ export function FeatureBrowser({
                 <button
                   type="button"
                   onClick={() => selectRow(e)}
-                  className={`w-full truncate px-2 py-1 text-left text-[11px] ${
+                  className={`w-full truncate px-2.5 py-1.5 text-left text-[12px] ${
                     selected?.index === e.index
-                      ? "bg-[#12283a] text-[#35c9d4]"
-                      : "text-[#d7e3ec] hover:bg-[#0d141a]"
+                      ? "bg-raised text-accent"
+                      : "text-ink hover:bg-raised/50"
                   }`}
                   title={e.label}
                 >
@@ -233,7 +233,7 @@ export function FeatureBrowser({
               </li>
             ))}
             {!loading && query.trim() === "" && total !== null && total > MAX_LIST_ROWS && (
-              <li className="px-2 py-1 text-[10px] text-[#6b7f8c]">
+              <li className="px-2.5 py-1.5 text-[11px] text-ink-3">
                 Showing {MAX_LIST_ROWS.toLocaleString()} of {total.toLocaleString()} — filter to
                 narrow.
               </li>
@@ -241,18 +241,18 @@ export function FeatureBrowser({
           </ul>
 
           {selected && (
-            <div className="scroll-thin mt-2 max-h-40 shrink-0 overflow-y-auto rounded border border-[#1e2a35] bg-[#0d141a] p-2 text-[11px]">
-              <div className="truncate font-semibold text-[#d7e3ec]">{selected.label}</div>
+            <div className="scroll-thin mt-2 max-h-40 shrink-0 overflow-y-auto rounded-md border border-line bg-panel p-2.5 text-[12px]">
+              <div className="truncate font-semibold text-ink">{selected.label}</div>
               {detail.slice(0, MAX_DETAIL_ROWS).map(([k, v]) => (
                 <div key={k} className="flex gap-2 py-0.5">
-                  <span className="w-24 shrink-0 text-[#7d8f9d]">{humanise(k)}</span>
-                  <span className="min-w-0 flex-1 break-words text-[#d7e3ec]">
+                  <span className="w-24 shrink-0 text-ink-3">{humanise(k)}</span>
+                  <span className="min-w-0 flex-1 break-words text-ink">
                     {DATE_KEYS.has(k) ? formatDate(v) : formatValue(v)}
                   </span>
                 </div>
               ))}
               {detail.length > MAX_DETAIL_ROWS && (
-                <p className="mt-1 text-[10px] text-[#6b7f8c]">
+                <p className="mt-1 text-[11px] text-ink-3">
                   Showing {MAX_DETAIL_ROWS} of {detail.length} attributes.
                 </p>
               )}
@@ -261,7 +261,7 @@ export function FeatureBrowser({
                   href={selected.properties.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1 inline-block break-all text-[#35c9d4] hover:underline"
+                  className="link mt-1 inline-block break-all"
                 >
                   Official record ↗
                 </a>
@@ -269,13 +269,13 @@ export function FeatureBrowser({
               {typeof selected.properties?.surveyNote === "string" &&
                 selected.properties.surveyNote.trim() !== "" && (
                   <div className="flex gap-2 py-0.5">
-                    <span className="w-24 shrink-0 text-[#7d8f9d]">Survey note</span>
-                    <span className="min-w-0 flex-1 break-words text-[#9fb0bd]">
+                    <span className="w-24 shrink-0 text-ink-3">Survey note</span>
+                    <span className="min-w-0 flex-1 break-words text-ink-2">
                       {selected.properties.surveyNote}
                     </span>
                   </div>
                 )}
-              <p className="mt-1 text-[10px] text-[#6b7f8c]">
+              <p className="mt-1 text-[11px] text-ink-3">
                 {selected.lon.toFixed(5)}, {selected.lat.toFixed(5)}
               </p>
             </div>

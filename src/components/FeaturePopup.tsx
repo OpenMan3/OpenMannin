@@ -12,6 +12,9 @@
  * in when it opens, Escape closes it. Without that the panel was mouse-only -
  * feature picking itself is a click on the canvas, but once open, a keyboard
  * user had no way to dismiss it.
+ *
+ * On small screens it docks to the bottom of the map (clearing the tab bar);
+ * on desktop it is a card in the top-left corner.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -21,6 +24,7 @@ import { LICENCES } from "@/lib/licences";
 import { featureLabel } from "@/lib/layer-data";
 import { formatValue, humanise, HIDDEN_KEYS } from "@/lib/feature-format";
 import type { PickedFeature } from "./MapView";
+import { CloseIcon } from "./Icons";
 
 /** Attribute rows shown before the "and N more" line. */
 const MAX_ENTRIES = 14;
@@ -96,22 +100,22 @@ export function FeaturePopup({
       role="dialog"
       aria-label={`${layer.label}: ${featureLabel(properties)}`}
       tabIndex={-1}
-      className="absolute top-3 left-3 z-20 w-[min(22rem,calc(100vw-1.5rem))] overflow-hidden rounded-lg border border-[#1e2a35] bg-[#0d141a]/95 shadow-2xl backdrop-blur focus:outline-none"
+      className="om-sheet-in absolute inset-x-3 bottom-16 z-20 max-h-[62vh] overflow-hidden rounded-xl border border-line bg-panel/95 shadow-2xl backdrop-blur focus:outline-none sm:inset-x-auto sm:bottom-auto sm:left-3 sm:top-3 sm:max-h-none sm:w-[min(22rem,calc(100vw-1.5rem))]"
     >
-      <div className="flex items-start justify-between gap-2 border-b border-[#1e2a35] px-3 py-2">
+      <div className="flex items-start justify-between gap-2 border-b border-line px-3 py-2">
         <div className="min-w-0">
-          <div className="text-[10px] tracking-wide text-[#7d8f9d] uppercase">{layer.label}</div>
-          <div className="truncate text-sm font-semibold text-[#d7e3ec]">
-            {featureLabel(properties)}
+          <div className="text-[10px] font-semibold tracking-wide text-ink-3 uppercase">
+            {layer.label}
           </div>
+          <div className="truncate text-sm font-semibold text-ink">{featureLabel(properties)}</div>
         </div>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close feature details"
-          className="shrink-0 px-1 text-lg leading-none text-[#9fb0bd] hover:text-[#d7e3ec]"
+          className="btn-icon !h-8 !w-8"
         >
-          &times;
+          <CloseIcon className="h-4 w-4" />
         </button>
       </div>
 
@@ -135,28 +139,28 @@ export function FeaturePopup({
         </a>
       )}
 
-      <div className="scroll-thin max-h-[45vh] overflow-y-auto">
+      <div className="scroll-thin max-h-[45vh] overflow-y-auto sm:max-h-[50vh]">
         {entries.length > 0 && (
-          <dl className="divide-y divide-[#131b23]">
+          <dl className="divide-y divide-line-soft">
             {entries.map(([k, v]) => (
-              <div key={k} className="flex gap-2 px-3 py-1 text-[11px]">
-                <dt className="w-28 shrink-0 text-[#7d8f9d]">{humanise(k)}</dt>
-                <dd className="min-w-0 flex-1 break-words text-[#d7e3ec]">{formatValue(v)}</dd>
+              <div key={k} className="flex gap-2 px-3 py-1 text-[12px]">
+                <dt className="w-28 shrink-0 text-ink-3">{humanise(k)}</dt>
+                <dd className="min-w-0 flex-1 break-words text-ink">{formatValue(v)}</dd>
               </div>
             ))}
           </dl>
         )}
         {visible.length > entries.length && (
-          <p className="px-3 py-1 text-[10px] text-[#7d8f9d]">
+          <p className="px-3 py-1 text-[10px] text-ink-3">
             Showing {entries.length} of {visible.length} attributes.
           </p>
         )}
 
         {typeof properties?.nearestPlace === "string" && (
-          <p className="border-t border-[#1e2a35] px-3 py-2 text-[11px] text-[#9fb0bd]">
-            <span className="font-semibold text-[#d7e3ec]">Located near</span>{" "}
+          <p className="border-t border-line px-3 py-2 text-[12px] text-ink-2">
+            <span className="font-semibold text-ink">Located near</span>{" "}
             {properties.nearestPlace}
-            <span className="mt-1 block text-[10px] text-[#7d8f9d]">
+            <span className="mt-1 block text-[10px] text-ink-3">
               This is derived context, not the asset&apos;s name. No naming source
               exists for it, so nothing has been invented &mdash; use this to find it
               on the map, then check OpenStreetMap for its tags.
@@ -165,16 +169,16 @@ export function FeaturePopup({
         )}
 
         {typeof properties?.coordGrade === "string" && (
-          <p className="border-t border-[#1e2a35] px-3 py-2 text-[11px] text-[#fbbf24]">
+          <p className="border-t border-line px-3 py-2 text-[12px] text-warn">
             Coordinate grade {properties.coordGrade}
             {typeof properties.coordSource === "string" ? `: ${properties.coordSource}` : ""}
           </p>
         )}
 
         {layer.caveats && layer.caveats.length > 0 && (
-          <div className="border-t border-[#1e2a35] px-3 py-2 text-[11px] leading-relaxed">
-            <div className="mb-1 font-semibold text-[#fbbf24]">Caveats</div>
-            <ul className="list-disc space-y-1 pl-4 text-[#9fb0bd]">
+          <div className="border-t border-line px-3 py-2 text-[12px] leading-relaxed">
+            <div className="mb-1 font-semibold text-warn">Caveats</div>
+            <ul className="list-disc space-y-1 pl-4 text-ink-2">
               {layer.caveats.map((c, i) => (
                 <li key={i}>{c}</li>
               ))}
@@ -182,13 +186,10 @@ export function FeaturePopup({
           </div>
         )}
 
-        <div className="space-y-1 border-t border-[#1e2a35] px-3 py-2 text-[11px] text-[#7d8f9d]">
+        <div className="space-y-1 border-t border-line px-3 py-2 text-[11px] text-ink-3">
           {picked.asOf && (
             <div>
-              Data as of{" "}
-              <span className="text-[#9fb0bd]">
-                {formatAsOf(picked.asOf) ?? picked.asOf}
-              </span>
+              Data as of <span className="text-ink-2">{formatAsOf(picked.asOf) ?? picked.asOf}</span>
             </div>
           )}
           <div>
@@ -196,12 +197,12 @@ export function FeaturePopup({
             <span
               className={
                 layer.confidence === "A"
-                  ? "text-[#34d399]"
+                  ? "text-ok"
                   : layer.confidence === "B"
-                    ? "text-[#60a5fa]"
+                    ? "text-gps-soft"
                     : layer.confidence === "C"
-                      ? "text-[#fbbf24]"
-                      : "text-[#f87171]"
+                      ? "text-warn"
+                      : "text-danger"
               }
             >
               {layer.confidence}
@@ -211,12 +212,7 @@ export function FeaturePopup({
           {src && (
             <div>
               Source:{" "}
-              <a
-                href={src.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#35c9d4] hover:underline"
-              >
+              <a href={src.url} target="_blank" rel="noopener noreferrer" className="link">
                 {src.name}
               </a>
             </div>
@@ -225,12 +221,7 @@ export function FeaturePopup({
             <div>
               Licence:{" "}
               {lic.url ? (
-                <a
-                  href={lic.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#35c9d4] hover:underline"
-                >
+                <a href={lic.url} target="_blank" rel="noopener noreferrer" className="link">
                   {lic.name}
                 </a>
               ) : (
@@ -239,12 +230,7 @@ export function FeaturePopup({
             </div>
           )}
           <div className="flex flex-wrap gap-x-3 gap-y-1">
-            <a
-              href={osmUrl(properties, lon, lat)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#35c9d4] hover:underline"
-            >
+            <a href={osmUrl(properties, lon, lat)} target="_blank" rel="noopener noreferrer" className="link">
               Open in OSM
             </a>
             <button
@@ -255,16 +241,12 @@ export function FeaturePopup({
                   .then(() => setCopied(true))
                   .catch(() => setCopied(false));
               }}
-              className="text-[#35c9d4] hover:underline"
+              className="link"
             >
               {copied ? "Copied" : "Copy coords"}
             </button>
             {onLocate && (
-              <button
-                type="button"
-                onClick={() => onLocate(lon, lat)}
-                className="text-[#35c9d4] hover:underline"
-              >
+              <button type="button" onClick={() => onLocate(lon, lat)} className="link">
                 Centre map here
               </button>
             )}

@@ -60,6 +60,12 @@ export interface NavigationState {
   routes: Partial<Record<RouteMode, { distanceM: number; durationS: number } | null>>;
   /** Geometry-derived turn-by-turn legs for the active route. */
   steps: NavigationStep[];
+  /**
+   * True when live tracking is on but the user has dragged the map away from
+   * their position, so the UI can surface a "Recenter" affordance. Cleared by
+   * the locate press that flies back to the user.
+   */
+  recenterPending: boolean;
 }
 
 export interface AttachOptions {
@@ -177,6 +183,8 @@ type Internal = {
   routesFresh: boolean;
   /** Set when the user asked for a route (Navigate) so the view fits it. */
   fitPending: boolean;
+  /** Map dragged away from the live dot while tracking; see NavigationState. */
+  recenterPending: boolean;
 };
 
 function initialState(activeMode: RouteMode): Internal {
@@ -194,6 +202,7 @@ function initialState(activeMode: RouteMode): Internal {
     firstFlyPending: false,
     routesFresh: false,
     fitPending: false,
+    recenterPending: false,
   };
 }
 
@@ -213,6 +222,7 @@ function signature(s: Internal): string {
     s.routes.driving ? `${Math.round(s.routes.driving.distanceM)},${Math.round(s.routes.driving.durationS)}` : "n",
     s.routes.walking ? `${Math.round(s.routes.walking.distanceM)},${Math.round(s.routes.walking.durationS)}` : "n",
     s.steps.map((step) => step.distanceM).join(","),
+    s.recenterPending,
   ]);
 }
 
@@ -438,6 +448,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       routeError: state.routeError,
       routes: state.routes,
       steps: state.steps,
+      recenterPending: state.recenterPending,
     });
   };
 
@@ -511,7 +522,9 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     startPulse();
 
     // First fix after the button press pans to the user; later fixes just move
-    // the dot so the map is never yanked away while they are looking.
+    // the dot so the map is never yanked away while they are looking. A press
+    // inside the recenter flow also parked the map back on the dot here.
+    state.recenterPending = false;
     if (state.firstFlyPending) {
       state.firstFlyPending = false;
       map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 16), duration: 700 });
@@ -529,6 +542,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     };
     state.locationStatus = "error";
     state.locationError = messages[err.code] ?? `Location error ${err.code}.`;
+    state.recenterPending = false;
     stopPulse();
     publish();
   };
@@ -544,6 +558,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     ensureLayers();
     state.locationStatus = "locating";
     state.firstFlyPending = true;
+    state.recenterPending = false;
     publish();
     watcherId = navigator.geolocation.watchPosition(onGeolocation, onGeolocationError, {
       enableHighAccuracy: true,
@@ -561,6 +576,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     reqToken++;
     state.userLocation = null;
     state.firstFlyPending = false;
+    state.recenterPending = false;
     state.routes = {};
     state.steps = [];
     state.routesFresh = false;
@@ -632,7 +648,11 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
 
   const fitRoute = (route: RouteLeg) => {
     map.fitBounds(routeBounds(route), {
-      padding: { top: 90, bottom: 200, left: 40, right: 40 },
+      // Uniform and small. The map's persistent bottom padding (kept in sync
+      // with the live destination-sheet height by MapView) is what keeps the
+      // route above the sheet; a large hard-coded bottom here would double up
+      // and shove the route off-centre once both apply.
+      padding: 40,
       duration: 700,
       maxZoom: 16,
     });
@@ -878,12 +898,51 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
   const onLocateEvent = () => {
     ensureLayers();
     if (state.locationStatus === "active" && watcherId !== null) {
-      // The button toggles: a second press stops the dot.
+      // The map was dragged away from the live dot and a "Recenter" badge is
+      // showing: this press flies back to the user and resumes following.
+      // Otherwise the button is the way to stop live tracking.
+      if (state.recenterPending && state.userLocation) {
+        state.recenterPending = false;
+        state.firstFlyPending = false;
+        map.flyTo({
+          center: [state.userLocation.lon, state.userLocation.lat],
+          zoom: Math.max(map.getZoom(), 16),
+          duration: 700,
+        });
+        publish();
+        return;
+      }
+      stopLocation();
+      return;
+    }
+    if (watcherId !== null) {
+      // Still searching for a first fix; a second press cancels the watch.
       stopLocation();
       return;
     }
     startLocation();
   };
+
+  /**
+   * The user pulled the map away from their own position while tracking is on.
+   * That is the one visual signal that "I am drifting, bring me back" is real:
+   * the dot keeps moving while the camera no longer follows, so the UI must
+   * say so instead of leaving the reader to notice it. Programmatic moves
+   * (flyTo/fitBounds) do not fire dragstart, so only genuine pan gestures land
+   * here.
+   */
+  const onDragStart = () => {
+    if (
+      state.locationStatus === "active" &&
+      watcherId !== null &&
+      state.userLocation &&
+      !state.recenterPending
+    ) {
+      state.recenterPending = true;
+      publish();
+    }
+  };
+  map.on("dragstart", onDragStart);
 
   const onNavigateEvent = () => {
     ensureLayers();
@@ -959,6 +1018,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerup", onPointerEnd);
       canvas.removeEventListener("pointercancel", onPointerEnd);
+      map.off("dragstart", onDragStart);
       window.removeEventListener("openmannin:locate", onLocateWindow);
       window.removeEventListener("openmannin:navigate", onNavigateWindow);
       window.removeEventListener("openmannin:nav-mode", onModeWindow);

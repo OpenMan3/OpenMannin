@@ -114,6 +114,7 @@ export function MapView({
   onFeedErrors,
   onViewport,
   onNav,
+  insetBottom = 0,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
@@ -132,6 +133,12 @@ export function MapView({
   onViewport?: (v: { lon: number; lat: number; zoom: number }) => void;
   /** Navigation state (GPS dot, dropped destination, route), published by the host. */
   onNav?: (state: NavigationState) => void;
+  /**
+   * Pixels of the map's bottom edge covered by an overlay (the destination /
+   * turn-by-turn sheet). Fed straight into MapLibre's persistent padding so
+   * fit/fly/follow all keep the user marker and the active route above it.
+   */
+  insetBottom?: number;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import("maplibre-gl").Map | null>(null);
@@ -152,23 +159,31 @@ export function MapView({
    */
   const suppressClickUntilRef = useRef<{ current: number }>({ current: 0 });
 
-  // Handle map resize on tab focus / visibility change to fix mobile blank map issue
+  // Mobile browsers evict the WebGL context when the page is backgrounded, and
+  // come back to a blank canvas that MapLibre never repaints on its own: from
+  // its point of view nothing changed, so no frame is scheduled. Forcing a
+  // resize + repaint the moment the tab is visible again (or the context is
+  // restored) re-schedules a frame and redraws the tiles into the now-valid
+  // framebuffer. The same handler does double duty for Safari's bfcache
+  // restore, which fires neither visibilitychange nor focus.
   useEffect(() => {
+    const redraw = () => {
+      if (mapRef.current && !document.hidden) {
+        mapRef.current.resize();
+        mapRef.current.triggerRepaint();
+      }
+    };
     const handleVisibilityChange = () => {
-      if (!document.hidden && mapRef.current) {
-        mapRef.current.resize();
-      }
+      if (!document.hidden) redraw();
     };
-    const handleFocus = () => {
-      if (mapRef.current) {
-        mapRef.current.resize();
-      }
-    };
+    const handleFocus = () => redraw();
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("focus", handleFocus);
+    window.addEventListener("pageshow", handleFocus);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("pageshow", handleFocus);
     };
   }, []);
 
@@ -473,6 +488,18 @@ export function MapView({
       });
 
       mapRef.current = map;
+
+      // A backgrounded tab can lose its WebGL context. MapLibre prevents the
+      // browser from dropping it entirely, and once it is back we force a
+      // resize + repaint so the previously blank canvas redraws the tiles.
+      // Without this the map stays frozen until the user drags it.
+      map.on("webglcontextlost", () => {
+        console.warn("[map] WebGL context lost; waiting for restore");
+      });
+      map.on("webglcontextrestored", () => {
+        map.resize();
+        map.triggerRepaint();
+      });
 
       // Long-press drop pin + locate-me + on-map route layers. The host speaks
       // to the UI via window events (openmannin:locate/navigate/nav-mode/
@@ -873,6 +900,23 @@ export function MapView({
     // loading. Raster swaps are synchronous and can sync immediately.
     if (bm.kind === "raster") void syncRef.current?.();
   }, [basemap, liveReady]);
+
+  // ---- keep the overlay sheet clear of the route ---------------------------
+  // MapLibre's padding shifts the visual centre, so fit/fly/follow all treat
+  // the band under the destination sheet as unusable. Driven by the sheet's
+  // measured height, so expanding the turn-by-turn list grows the reserved
+  // area and the active route segment is never hidden behind it. Re-applied on
+  // `liveReady` because the first run happens before the map is usable.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    map.setPadding({
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: Math.max(0, Math.round(insetBottom)),
+    });
+  }, [insetBottom, liveReady]);
 
   // ---- load the data manifest ----------------------------------------------
   // The manifest is written by scripts/build-manifest.mjs at ingest time. Asking

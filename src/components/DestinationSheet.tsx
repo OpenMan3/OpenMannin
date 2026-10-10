@@ -18,7 +18,7 @@
  * geometry, not a street-name oracle, so nothing is invented.
  */
 
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { ROUTE_MODES, type RouteMode } from "@/lib/navigation/profiles";
 import type { NavigationState } from "@/lib/navigation/host";
 import { formatStepDistance, type NavigationStep } from "@/lib/navigation/steps";
@@ -79,14 +79,46 @@ export function DestinationSheet({
   onToggleMode,
   onNavigate,
   onClear,
+  stepsOpen,
+  onToggleSteps,
+  onInset,
 }: {
   state: NavigationState;
   onToggleMode: (mode: RouteMode) => void;
   onNavigate: () => void;
   onClear: () => void;
+  /** Whether the turn-by-turn list is expanded (owned by the page). */
+  stepsOpen: boolean;
+  onToggleSteps: () => void;
+  /** Reports the sheet's live pixel height, for map bottom-padding. */
+  onInset?: (px: number) => void;
 }) {
   const { destination, routes, activeMode, routeStatus, routeError, userLocation, steps } = state;
-  const [showSteps, setShowSteps] = useState(false);
+  const present = !!destination;
+
+  // The sheet overlays the bottom of the map in navigation mode, so the map
+  // needs to know how tall it actually is (the step list makes it much taller)
+  // to keep the route + user marker visible above it. Report the wrapper's
+  // height on mount, on every resize, and clear it on unmount.
+  const insetRef = useRef<HTMLDivElement | null>(null);
+  const onInsetRef = useRef(onInset);
+  useEffect(() => {
+    onInsetRef.current = onInset;
+  });
+  useEffect(() => {
+    const el = insetRef.current;
+    if (!el) return;
+    const report = () =>
+      onInsetRef.current?.(Math.max(0, Math.round(el.getBoundingClientRect().height)));
+    report();
+    const ro = new ResizeObserver(report);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      onInsetRef.current?.(0);
+    };
+  }, [present]);
+
   if (!destination) return null;
 
   const active = routes[activeMode] ?? null;
@@ -101,7 +133,10 @@ export function DestinationSheet({
   const canNavigate = !!userLocation && !busy;
 
   return (
-    <div className="om-sheet-in absolute inset-x-0 bottom-14 z-20 p-3 sm:bottom-3 sm:inset-x-auto sm:right-3 sm:w-[min(24rem,calc(100vw-1.5rem))]">
+    <div
+      ref={insetRef}
+      className="om-sheet-in absolute inset-x-0 bottom-14 z-20 p-3 sm:bottom-3 sm:inset-x-auto sm:right-3 sm:w-[min(24rem,calc(100vw-1.5rem))]"
+    >
       <div
         role="dialog"
         aria-label={`Directions to ${destination.title}`}
@@ -226,17 +261,17 @@ export function DestinationSheet({
             <>
               <button
                 type="button"
-                onClick={() => setShowSteps((v) => !v)}
-                aria-expanded={showSteps}
+                onClick={onToggleSteps}
+                aria-expanded={stepsOpen}
                 className="mt-2 flex w-full items-center justify-between gap-2 border-t border-line pt-2 text-[12px] text-ink-2 hover:text-ink"
               >
                 <span className="flex items-center gap-1.5">
                   <RouteIcon className="h-4 w-4 text-accent" />
                   {steps.length} step{steps.length === 1 ? "" : "s"}
                 </span>
-                <span className="text-[11px] text-ink-3">{showSteps ? "Hide" : "Show"} list</span>
+                <span className="text-[11px] text-ink-3">{stepsOpen ? "Hide" : "Show"} list</span>
               </button>
-              {showSteps && <StepList steps={steps} />}
+              {stepsOpen && <StepList steps={steps} />}
             </>
           )}
         </div>

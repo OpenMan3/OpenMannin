@@ -22,6 +22,7 @@ import {
 } from "@/components/Icons";
 import type { NavigationState } from "@/lib/navigation/host";
 import type { RouteMode } from "@/lib/navigation/profiles";
+import { releaseWakeLock, requestWakeLock } from "@/lib/screen-wake-lock";
 
 type Tab = "layers" | "browse" | "gaps" | "sources";
 
@@ -53,6 +54,13 @@ function PageContent() {
   // Navigation state (GPS dot, dropped pin, route), published by the map's
   // navigation host. Null until the map mounts and reports its initial state.
   const [nav, setNav] = useState<NavigationState | null>(null);
+  // Whether the turn-by-turn step list inside the destination sheet is open.
+  // Lifted so the map pad (and thus the visible route) tracks its height.
+  const [stepsOpen, setStepsOpen] = useState(false);
+  /** Measured pixel height of the destination sheet, for map bottom-padding. */
+  const [sheetInset, setSheetInset] = useState(0);
+  /** True once the user pressed Navigate; keeps the screen awake until cleared. */
+  const [navigating, setNavigating] = useState(false);
   // Layers the registry lists but public/data does not have; populated by the map
   // as each failed fetch surfaces.
   const [missing, setMissing] = useState<Set<string>>(new Set());
@@ -184,11 +192,39 @@ function PageContent() {
     window.dispatchEvent(new CustomEvent("openmannin:nav-mode", { detail: { mode } }));
   }, []);
   const navigate = useCallback(() => {
+    setNavigating(true);
     window.dispatchEvent(new CustomEvent("openmannin:navigate"));
   }, []);
   const clearNav = useCallback(() => {
+    setNavigating(false);
     window.dispatchEvent(new CustomEvent("openmannin:clear-nav"));
   }, []);
+
+  // A pin-drop without an explicit Navigate press re-opens a stale step list
+  // from the previous destination; fold it back in.
+  useEffect(() => {
+    if (!nav?.destination) setStepsOpen(false);
+  }, [nav?.destination]);
+
+  // Keep the display awake while following a route. The browser drops the lock
+  // when the tab is hidden, so re-request it the moment it is visible again.
+  const routeActive = !!nav?.destination && !!nav?.userLocation && nav.routeStatus === "ready";
+  useEffect(() => {
+    const active = navigating && routeActive;
+    if (active) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+    const onVisibility = () => {
+      if (!document.hidden && active) requestWakeLock();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      releaseWakeLock();
+    };
+  }, [navigating, routeActive]);
 
   // A global-search hit turns its layer on before flying, so the thing you
   // searched for is actually visible when you arrive.
@@ -259,7 +295,7 @@ function PageContent() {
 
       {/* ---- sidebar / drawer ---- */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col border-r border-line bg-page shadow-2xl transition-transform duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] ${
+        className={`fixed top-0 bottom-14 left-0 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col border-r border-line bg-page shadow-2xl transition-transform duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] ${
           panelOpen ? "md:w-[var(--aside-w)]" : "md:w-12"
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
         style={{ ["--aside-w" as string]: `${asideWidth}px` }}
@@ -393,6 +429,7 @@ function PageContent() {
           onFeedErrors={onFeedErrors}
           onViewport={setViewport}
           onNav={setNav}
+          insetBottom={nav?.destination && nav.routeStatus === "ready" ? sheetInset + 68 : 0}
         />
 
         <FeaturePopup picked={picked} onClose={() => setPicked(null)} onLocate={centreOn} />
@@ -404,6 +441,9 @@ function PageContent() {
             onToggleMode={setNavMode}
             onNavigate={navigate}
             onClear={clearNav}
+            stepsOpen={stepsOpen}
+            onToggleSteps={() => setStepsOpen((v) => !v)}
+            onInset={setSheetInset}
           />
         )}
       </section>
@@ -411,7 +451,7 @@ function PageContent() {
       {/* ---- mobile bottom tab bar ---- */}
       <nav
         aria-label="Sections"
-        className="absolute inset-x-0 bottom-0 z-30 flex h-14 items-stretch border-t border-line bg-page/95 backdrop-blur md:hidden"
+        className="absolute inset-x-0 bottom-0 z-50 flex h-14 items-stretch border-t border-line bg-page/95 backdrop-blur md:hidden"
       >
         {TABS.map((t) => (
           <button

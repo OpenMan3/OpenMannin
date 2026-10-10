@@ -35,8 +35,15 @@ for (const l of LAYERS) {
   if (ids.has(l.id)) fail(l, `duplicate layer id`);
   ids.add(l.id);
 
-  // Rule 1, from the registry's own header comment.
-  if (l.defaultOn && l.confidence === "D") fail(l, `grade D but defaultOn`);
+  // Rule 1, from the registry's own header comment. As of 2026-10-07 every
+  // layer is shown by default; grade D is allowed on, but it must carry its
+  // dispute flag in the caveats so the panel can surface it.
+  if (l.confidence === "D") {
+    const caveats = (l.caveats ?? []).join(" ");
+    if (!/grade[- ]D/i.test(caveats) && !/INDICATIVE|DISPUTED|NOT VERIFIED/i.test(caveats)) {
+      fail(l, `grade D but no dispute caveat where the reader can see it`);
+    }
+  }
 
   if (!SOURCES[l.sourceId]) fail(l, `unknown sourceId "${l.sourceId}"`);
   else {

@@ -20,12 +20,8 @@ services:
     ports:
       - "3000:3000"
     # No environment variables, deliberately. Nothing in this deployment reads
-    # one: the export is static, weather and satellite passes run in the
-    # browser, and the three feeds that would need a server (OpenSky, AISStream,
-    # FindMyBus) are ON HOLD in code - see SERVER_SIDE_FEEDS in
-    # src/lib/feeds/index.ts. They make no requests at all and need no key, so
-    # there is nothing to inject here. If you are looking for AISSTREAM_API_KEY,
-    # the answer is that /api/marine no longer exists.
+    # one: the export is static, and weather and satellite passes run in the
+    # browser. Nothing needs injecting here.
     #
     # The one thing that does depend on the environment is the port: PORT is
     # read by scripts/serve.mjs and defaults to 3000.

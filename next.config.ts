@@ -6,12 +6,12 @@ const nextConfig: NextConfig = {
    * Static export. Firebase Hosting serves files, so there is no runtime to run
    * a Next server in. This is what makes the deploy hands-free.
    *
-   * The cost, stated plainly: anything that needed a server now needs a Firebase
-   * Function instead. Three live feeds moved there - OpenSky (CORS pinned to
-   * their own origin), AISStream (the key must not reach a browser) and
-   * FindMyBus (no CORS header at all). The other two, weather and satellite
-   * passes, moved into the browser because their upstreams send
-   * `Access-Control-Allow-Origin: *` and need no credential.
+   * The cost, stated plainly: anything that needed a server simply does not
+   * ship. Weather and satellite passes moved into the browser because their
+   * upstreams send `Access-Control-Allow-Origin: *`, need no credential, and
+   * carry an open licence. Anything not meeting those three conditions - no
+   * CORS, a free-tier key, or a licence we cannot rely on - has been removed
+   * outright. The only remaining sources are open-licensed.
    *
    * `images.unoptimized` is required rather than optional: the image optimizer
    * is a server route, and a static export silently drops images that route

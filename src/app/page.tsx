@@ -8,35 +8,63 @@ import { FeaturePopup } from "@/components/FeaturePopup";
 import { FeatureBrowser } from "@/components/FeatureBrowser";
 import { GapsPanel } from "@/components/GapsPanel";
 import { GlobalSearch } from "@/components/GlobalSearch";
-import { PostcodeLookup } from "@/components/PostcodeLookup";
+import { CommunityFeed } from "@/components/CommunityFeed";
+import { TransparencyPanel } from "@/components/TransparencyPanel";
+import { LocateButton } from "@/components/LocateButton";
+import { DestinationSheet } from "@/components/DestinationSheet";
+import {
+  ActivityIcon,
+  AlertIcon,
+  CloseIcon,
+  LayersIcon,
+  ListIcon,
+  MenuIcon,
+  SearchIcon,
+  ShieldIcon,
+} from "@/components/Icons";
+import type { NavigationState } from "@/lib/navigation/host";
+import type { RouteMode } from "@/lib/navigation/profiles";
 
-type Tab = "layers" | "browse" | "postcodes" | "gaps";
+type Tab = "layers" | "browse" | "gaps" | "feed" | "sources";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "layers", label: "Layers" },
-  { id: "browse", label: "Browse" },
-  { id: "postcodes", label: "Postcodes" },
-  { id: "gaps", label: "Gaps" },
+const TABS: { id: Tab; label: string; Icon: (p: { className?: string }) => React.JSX.Element }[] = [
+  { id: "layers", label: "Layers", Icon: LayersIcon },
+  { id: "browse", label: "Browse", Icon: ListIcon },
+  { id: "gaps", label: "Gaps", Icon: AlertIcon },
+  { id: "feed", label: "Feed", Icon: ActivityIcon },
+  { id: "sources", label: "Sources", Icon: ShieldIcon },
 ];
 
+const ASIDE_MIN = 272;
+const ASIDE_MAX = 520;
+const ASIDE_DEFAULT = 320;
+const ASIDE_KEY = "om:asideWidth";
+
 export default function Page() {
+  return <PageContent />;
+}
+
+function PageContent() {
   const [tab, setTab] = useState<Tab>("layers");
   const [picked, setPicked] = useState<PickedFeature | null>(null);
-  const [basemap, setBasemap] = useState<BasemapId>("esri");
+  const [basemap, setBasemap] = useState<BasemapId>("opentopo");
   const [panelOpen, setPanelOpen] = useState(true);
+  /** Mobile: the drawer is slid in from the left, or closed. */
+  const [mobileOpen, setMobileOpen] = useState(false);
+  /** Desktop: resizable sidebar width, remembered between visits. */
+  const [asideWidth, setAsideWidth] = useState<number>(ASIDE_DEFAULT);
+  // Navigation state (GPS dot, dropped pin, route), published by the map's
+  // navigation host. Null until the map mounts and reports its initial state.
+  const [nav, setNav] = useState<NavigationState | null>(null);
   // Layers the registry lists but public/data does not have; populated by the map
   // as each failed fetch surfaces.
   const [missing, setMissing] = useState<Set<string>>(new Set());
   // Live layers that are on but failing, so the panel can badge them.
   const [feedErrors, setFeedErrors] = useState<Record<string, string>>({});
 
-  // Start from whatever the registry marked defaultOn.
-  //
-  // Live layers are off by default except the two that genuinely work:
-  // weather (Open-Meteo, CORS *, keyless), and - off by default but wired the
-  // same way - satellite passes (public-domain TLEs + SGP4 in a worker).
-  // OpenSky, AISStream and FindMyBus are on hold pending data agreements:
-  // polling is disabled and they badge as such in the panel.
+  // Start from whatever the registry marked defaultOn - which is everything.
+  // Every layer is shown by default; weak and disputed ones carry their
+  // caveats, and live-feed failures say so right in the layer row.
   const [enabled, setEnabled] = useState<Set<string>>(
     () => new Set(LAYERS.filter((l) => l.defaultOn).map((l) => l.id)),
   );
@@ -48,6 +76,13 @@ export default function Page() {
       else next.add(id);
       return next;
     });
+  }, []);
+
+  // The "all on / all off" switch in the layer panel. Off is a blank map,
+  // which is occasionally what you want before adding layers back one at a
+  // time to isolate a render problem.
+  const setAll = useCallback((on: boolean) => {
+    setEnabled(on ? new Set(LAYERS.map((l) => l.id)) : new Set());
   }, []);
 
   // The feature browser turns a layer on so its features are visible while it
@@ -63,6 +98,46 @@ export default function Page() {
   // The visible map centre + zoom, reported by MapView after each move. Used to
   // keep the URL in sync so a map state can be shared as a link.
   const [viewport, setViewport] = useState<{ lon: number; lat: number; zoom: number } | null>(null);
+
+  // Restore the remember-the-sized sidebar width, once.
+  useEffect(() => {
+    try {
+      const v = Number(localStorage.getItem(ASIDE_KEY));
+      if (Number.isFinite(v) && v >= ASIDE_MIN && v <= ASIDE_MAX) setAsideWidth(v);
+    } catch {
+      /* private mode: fall back to the default width */
+    }
+  }, []);
+
+  const rememberWidth = useCallback((w: number) => {
+    setAsideWidth(w);
+    try {
+      localStorage.setItem(ASIDE_KEY, String(w));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // Drag the sidebar's right edge to resize it (desktop only).
+  const startResize = useCallback(
+    (e: React.PointerEvent) => {
+      e.preventDefault();
+      const startX = e.clientX;
+      const startW = asideWidth;
+      const onMove = (ev: PointerEvent) => {
+        rememberWidth(Math.min(ASIDE_MAX, Math.max(ASIDE_MIN, startW + (ev.clientX - startX))));
+      };
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
+    },
+    [asideWidth, rememberWidth],
+  );
 
   // Deep links: ?layers=roads,postcodes&z=15&lon=-4.5&lat=54.2
   // Read once on mount to restore the shared state; the map's own initial
@@ -104,6 +179,20 @@ export default function Page() {
     );
   }, []);
 
+  // The navigation host owns all the real work; the UI just relays intent.
+  const toggleLocate = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("openmannin:locate"));
+  }, []);
+  const setNavMode = useCallback((mode: RouteMode) => {
+    window.dispatchEvent(new CustomEvent("openmannin:nav-mode", { detail: { mode } }));
+  }, []);
+  const navigate = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("openmannin:navigate"));
+  }, []);
+  const clearNav = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("openmannin:clear-nav"));
+  }, []);
+
   // A global-search hit turns its layer on before flying, so the thing you
   // searched for is actually visible when you arrive.
   const searchSelect = useCallback(
@@ -114,42 +203,113 @@ export default function Page() {
     [ensureEnabled, centreOn],
   );
 
+  /** Mobile tab bar: open the drawer on that tab, or close it if already open. */
+  const openMobileTab = useCallback(
+    (id: Tab) => {
+      setPanelOpen(true);
+      setTab(id);
+      setMobileOpen((open) => !(open && tab === id));
+    },
+    [tab],
+  );
+
   return (
-    <main className="flex h-dvh w-full overflow-hidden bg-[#0b0f14]">
-      {/* ---- sidebar ---- */}
+    <main className="flex h-dvh w-full overflow-hidden bg-page font-sans text-ink">
+      {/* ---- mobile top app bar ---- */}
+      <header className="absolute inset-x-0 top-0 z-30 flex h-11 items-center gap-2 border-b border-line bg-page/90 px-2 backdrop-blur md:hidden">
+        <button
+          type="button"
+          onClick={() => {
+            setPanelOpen(true);
+            setMobileOpen(true);
+          }}
+          aria-label="Open navigation panel"
+          className="btn-icon !h-8 !w-8"
+        >
+          <MenuIcon className="h-4 w-4" />
+        </button>
+        <div className="min-w-0 flex-1 truncate text-sm font-bold tracking-tight">
+          Open<span className="text-accent">Mannin</span>
+          <span className="ml-1 text-[11px] font-normal text-ink-3">
+            Isle of Man infrastructure
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setPanelOpen(true);
+            setMobileOpen(true);
+            window.setTimeout(
+              () => window.dispatchEvent(new Event("openmannin:focus-search")),
+              120,
+            );
+          }}
+          aria-label="Search all layers"
+          className="btn-icon !h-8 !w-8 md:hidden"
+        >
+          <SearchIcon className="h-4 w-4" />
+        </button>
+      </header>
+
+      {/* ---- drawer backdrop (mobile) ---- */}
+      {mobileOpen && (
+        <div
+          aria-hidden="true"
+          onClick={() => setMobileOpen(false)}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+        />
+      )}
+
+      {/* ---- sidebar / drawer ---- */}
       <aside
-        className={`flex shrink-0 flex-col border-r border-[#1e2a35] bg-[#0b0f14] transition-[width] ${
-          panelOpen ? "w-80" : "w-11"
-        }`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col border-r border-line bg-page shadow-2xl transition-transform duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] ${
+          panelOpen ? "md:w-[var(--aside-w)]" : "md:w-12"
+        } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+        style={{ ["--aside-w" as string]: `${asideWidth}px` }}
       >
-        <div className="flex items-center gap-2 border-b border-[#1e2a35] px-3 py-2">
+        <div className="flex h-11 shrink-0 items-center gap-1 border-b border-line px-2">
           <button
             type="button"
             onClick={() => setPanelOpen((v) => !v)}
             aria-label={panelOpen ? "Collapse panel" : "Expand panel"}
-            className="shrink-0 px-1 text-xs text-[#6b7f8c] hover:text-[#d7e3ec]"
+            className={`hidden shrink-0 rounded-md px-2 py-1 text-xs text-ink-2 hover:bg-raised hover:text-ink md:inline-flex ${
+              panelOpen ? "" : "!px-0"
+            }`}
           >
-            {panelOpen ? "⟨" : "⟩"}
+            {panelOpen ? (
+              <MenuIcon className="h-4 w-4 -scale-x-100" />
+            ) : (
+              <MenuIcon className="h-4 w-4" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close navigation panel"
+            className="btn-icon !h-8 !w-8 md:hidden"
+          >
+            <CloseIcon className="h-4 w-4" />
           </button>
           {panelOpen && (
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-bold tracking-tight">
-                Open<span className="text-[#35c9d4]">Mannin</span>
+                Open<span className="text-accent">Mannin</span>
               </div>
-              <div className="truncate text-[10px] text-[#7d8f9d]">
-                Isle of Man infrastructure map
-              </div>
+              <div className="truncate text-[10px] text-ink-3">Isle of Man infrastructure map</div>
             </div>
           )}
         </div>
 
         {panelOpen && (
           <>
-            <div className="shrink-0 border-b border-[#1e2a35] px-3 py-2">
+            <div className="shrink-0 border-b border-line px-3 py-2">
               <GlobalSearch onSelect={searchSelect} />
             </div>
 
-            <nav className="flex shrink-0 border-b border-[#1e2a35]">
+            <nav
+              aria-label="Sections"
+              className="flex shrink-0 border-b border-line"
+            >
               {TABS.map((t) => (
                 <button
                   key={t.id}
@@ -157,10 +317,11 @@ export default function Page() {
                   onClick={() => setTab(t.id)}
                   className={`flex-1 px-1 py-2 text-[11px] font-medium transition-colors ${
                     tab === t.id
-                      ? "border-b-2 border-[#35c9d4] text-[#35c9d4]"
-                      : "text-[#7d8f9d] hover:text-[#d7e3ec]"
+                      ? "border-b-2 border-accent text-accent"
+                      : "text-ink-3 hover:text-ink-2"
                   }`}
                 >
+                  <t.Icon className="mx-auto mb-0.5 h-4 w-4 md:hidden" />
                   {t.label}
                 </button>
               ))}
@@ -174,6 +335,7 @@ export default function Page() {
                   missing={missing}
                   feedErrors={feedErrors}
                   onToggle={toggle}
+                  onToggleAll={setAll}
                 />
               )}
               {tab === "browse" && (
@@ -184,28 +346,44 @@ export default function Page() {
                   onLocate={centreOn}
                 />
               )}
-              {tab === "postcodes" && <PostcodeLookup onLocate={centreOn} />}
               {tab === "gaps" && <GapsPanel gaps={GAPS} />}
+              {tab === "feed" && <CommunityFeed />}
+              {tab === "sources" && <TransparencyPanel />}
             </div>
 
-            <div className="shrink-0 border-t border-[#1e2a35] px-3 py-2">
-              <label className="flex items-center justify-between gap-2 text-[11px] text-[#7d8f9d]">
+            <div className="shrink-0 border-t border-line px-3 py-2">
+              <label className="flex items-center justify-between gap-2 text-[11px] text-ink-3">
                 Basemap
                 <select
                   value={basemap}
                   onChange={(e) => setBasemap(e.target.value as BasemapId)}
-                  className="rounded border border-[#1e2a35] bg-[#0d141a] px-1.5 py-1 text-[11px] text-[#d7e3ec] focus:border-[#35c9d4] focus:outline-none"
+                  className="rounded border border-line bg-panel px-1.5 py-1 text-[11px] text-ink focus:border-accent focus:outline-none"
                 >
-                  <option value="esri">Esri satellite</option>
                   <option value="opentopo">OpenTopoMap</option>
+                  <option value="osm">OpenStreetMap</option>
+                  <option value="openfreemap">OpenFreeMap (Liberty)</option>
                 </select>
               </label>
-              <p className="mt-1 text-[10px] leading-snug text-[#6b7f8c]">
-                Esri is keyless and zooms to z19 but its terms are the least certain licence here.
+              <p className="mt-1 text-[10px] leading-snug text-ink-3">
+                OpenTopoMap (CC-BY-SA), OpenStreetMap (ODbL), OpenFreeMap Liberty (ODbL).
               </p>
             </div>
           </>
         )}
+
+        {/* desktop resize handle */}
+        <div
+          onPointerDown={panelOpen ? startResize : undefined}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize sidebar"
+          title="Drag to resize"
+          className={`absolute inset-y-0 right-0 z-10 hidden w-1.5 cursor-col-resize items-center justify-center ${
+            panelOpen ? "md:flex" : ""
+          }`}
+        >
+          <div className="h-8 w-0.5 rounded bg-line" />
+        </div>
       </aside>
 
       {/* ---- map ---- */}
@@ -218,15 +396,42 @@ export default function Page() {
           onMissing={onMissing}
           onFeedErrors={onFeedErrors}
           onViewport={setViewport}
+          onNav={setNav}
         />
 
         <FeaturePopup picked={picked} onClose={() => setPicked(null)} onLocate={centreOn} />
 
-        <div className="pointer-events-none absolute right-3 bottom-3 z-10 max-w-[min(24rem,50vw)] rounded border border-[#1e2a35] bg-[#0b0f14]/90 px-2 py-1.5 text-[10px] leading-snug text-[#7d8f9d] backdrop-blur">
-          Every layer carries a source, a licence and a confidence grade. Check the &ldquo;i&rdquo;
-          on any layer, and see the Gaps tab for what is deliberately absent.
-        </div>
+        {nav && <LocateButton state={nav} onToggle={toggleLocate} />}
+        {nav && (
+          <DestinationSheet
+            state={nav}
+            onToggleMode={setNavMode}
+            onNavigate={navigate}
+            onClear={clearNav}
+          />
+        )}
       </section>
+
+      {/* ---- mobile bottom tab bar ---- */}
+      <nav
+        aria-label="Sections"
+        className="absolute inset-x-0 bottom-0 z-30 flex h-14 items-stretch border-t border-line bg-page/95 backdrop-blur md:hidden"
+      >
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => openMobileTab(t.id)}
+            aria-current={tab === t.id ? "page" : undefined}
+            className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
+              tab === t.id ? "text-accent" : "text-ink-3 hover:text-ink-2"
+            }`}
+          >
+            <t.Icon className="h-5 w-5" />
+            <span>{t.label}</span>
+          </button>
+        ))}
+      </nav>
     </main>
   );
 }

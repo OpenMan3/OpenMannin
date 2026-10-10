@@ -26,7 +26,7 @@ import zlib from "node:zlib";
 import { SECURITY_HEADERS, cacheControlFor } from "./static-headers.mjs";
 
 const ROOT = path.resolve(process.argv[2] ?? "out");
-const PORT = Number(process.env.PORT ?? 3000);
+const PORT = Number(process.env.PORT ?? 3111);
 const HOST = process.env.HOST ?? "0.0.0.0";
 
 if (!fs.existsSync(path.join(ROOT, "index.html"))) {

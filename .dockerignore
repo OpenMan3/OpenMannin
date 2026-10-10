@@ -14,10 +14,11 @@ out
 # --build-arg SKIP_INGEST=1, which is the flag's whole contract.
 
 # Copied from node_modules at build time by scripts/copy-maplibre-worker.mjs,
-# and regenerated before every build by scripts/build-passes-worker.mjs.
+# and regenerated before every build by the *-worker.mjs builders.
 public/maplibre-gl-worker.mjs
 public/maplibre-gl-shared.mjs
 public/passes-worker.mjs
+public/routing-worker.mjs
 
 # Local env and editor noise.
 .env

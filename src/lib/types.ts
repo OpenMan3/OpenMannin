@@ -119,50 +119,6 @@ export interface Gap {
 // Runtime feed shapes
 // ---------------------------------------------------------------------------
 
-export interface Aircraft {
-  icao24: string;
-  callsign: string;
-  originCountry: string;
-  lon: number;
-  lat: number;
-  baroAltM: number | null;
-  geoAltM: number | null;
-  groundSpeedMs: number | null;
-  trackDeg: number | null;
-  verticalRateMs: number | null;
-  onGround: boolean;
-  /** ADS-B emitter category. 0-20. NOT a civil/military flag. */
-  category: number | null;
-}
-
-export type TransitKind = "bus" | "school-bus" | "steam-train" | "tram" | "horse-tram";
-
-export interface TransitVehicle {
-  id: string;
-  lat: number;
-  lon: number;
-  headingDeg: number | null;
-  kind: TransitKind;
-  label: string;
-  /** Server-reported position timestamp. */
-  at: string;
-  /** Raw pipe-delimited record, kept for auditing a guess at fields 1/2/7. */
-  raw: string;
-}
-
-export interface Vessel {
-  mmsi: string;
-  lat: number;
-  lon: number;
-  sogKn: number | null;
-  cogDeg: number | null;
-  headingDeg: number | null;
-  /** 0 = under way using engine, 1-3 = manoeuvring etc, 15 = undefined */
-  navStatus: number | null;
-  shipType: number | null;
-  at: string;
-}
-
 export interface FeedStatus {
   ok: boolean;
   /** Present when ok === false. */

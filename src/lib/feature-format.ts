@@ -13,7 +13,6 @@ export const HIDDEN_KEYS = new Set([
   "dataset",
   "kind",
   "source",
-  "ripestat",
   "page",
   "note",
   "coordSource",

@@ -1,0 +1,941 @@
+{
+  "type": "FeatureCollection",
+  "name": "wifi",
+  "properties": {
+    "generated": "2026-10-07T20:37:24.147Z",
+    "source": "OpenStreetMap — WikiProject Isle of Man",
+    "sourceId": "osmIOM",
+    "sourceUrl": "https://www.openstreetmap.org/wiki/WikiProject_Isle_of_Man",
+    "licence": "Open Database License (ODbL)",
+    "licenceId": "ODbL",
+    "licenceUrl": "https://opendatacommons.org/licenses/odbl/",
+    "caveats": [
+      "OSM self-reported, community-maintained coverage. A mapped WiFi tag means a mapper once recorded access here — it does not prove the network is live today.",
+      "Most features are venues (cafes, pubs, hotels) whose own WiFi happens to be tagged, not municipal public hotspots.",
+      "No official public-WiFi hotspot register is published as open data for the Isle of Man.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL."
+    ]
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "node/453426276",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.48002,
+          54.1608
+        ]
+      },
+      "properties": {
+        "name": "Wicklow Hills",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/473176891",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.47817,
+          54.15009
+        ]
+      },
+      "properties": {
+        "name": "The Alpine",
+        "amenity": "cafe",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/478680058",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.4744,
+          54.16121
+        ]
+      },
+      "properties": {
+        "name": "Glen Mona",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/936625322",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.47899,
+          54.14803
+        ]
+      },
+      "properties": {
+        "name": "Santander Work Café",
+        "amenity": "cafe",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/942516662",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.47562,
+          54.15938
+        ]
+      },
+      "properties": {
+        "name": "Piano Bar & Lounge",
+        "amenity": "cafe",
+        "operator": "The Empress",
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/4585539957",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.65392,
+          54.07337
+        ]
+      },
+      "properties": {
+        "name": "CoffeeCraft, Castletown",
+        "amenity": "cafe",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/7151277585",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.37719,
+          54.31819
+        ]
+      },
+      "properties": {
+        "name": "Nine Carlton Grove",
+        "amenity": null,
+        "operator": "Isle of Man Holiday Homes",
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/10298696234",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.3865,
+          54.32239
+        ]
+      },
+      "properties": {
+        "name": "Ramsey Town Library",
+        "amenity": "library",
+        "operator": "Ramsey Town Commissioners",
+        "internet_access": "yes",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/13649580766",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.48415,
+          54.15464
+        ]
+      },
+      "properties": {
+        "name": "Gourmet Shakes n' Snacks",
+        "amenity": "cafe",
+        "operator": null,
+        "internet_access": "yes",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "node/14019418347",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.48115,
+          54.16073
+        ]
+      },
+      "properties": {
+        "name": "Ashfield Guesthouse",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/38256633",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.63428,
+          54.08675
+        ]
+      },
+      "properties": {
+        "name": "Isle of Man (Ronaldsway) Airport",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/59276113",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.473,
+          54.14844
+        ]
+      },
+      "properties": {
+        "name": "Isle of Man Sea Terminal",
+        "amenity": "ferry_terminal",
+        "operator": "Department of Infrastructure",
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/59287722",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.50124,
+          54.15363
+        ]
+      },
+      "properties": {
+        "name": "McDonald's",
+        "amenity": "fast_food",
+        "operator": "McDonald's",
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/59523525",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.5633,
+          54.1421
+        ]
+      },
+      "properties": {
+        "name": "Mount Murray Golf Club",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/59523535",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.56077,
+          54.13932
+        ]
+      },
+      "properties": {
+        "name": "Comis Hotel and Golf Resort",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/62390312",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.72074,
+          54.08513
+        ]
+      },
+      "properties": {
+        "name": "Shore Hotel",
+        "amenity": "pub",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/79143112",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.48063,
+          54.14775
+        ]
+      },
+      "properties": {
+        "name": "Little Fish Cafe",
+        "amenity": "cafe",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/80249697",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.47832,
+          54.14837
+        ]
+      },
+      "properties": {
+        "name": "Cafe Laare",
+        "amenity": "cafe",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/80822489",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.46531,
+          54.16625
+        ]
+      },
+      "properties": {
+        "name": "Regency Hotel",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/80830546",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.47583,
+          54.15941
+        ]
+      },
+      "properties": {
+        "name": "The Empress",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/80984768",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.47915,
+          54.14941
+        ]
+      },
+      "properties": {
+        "name": "The Bohemian Coffee Shop",
+        "amenity": "cafe",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/81446776",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.47808,
+          54.15076
+        ]
+      },
+      "properties": {
+        "name": "Claremont",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/82726598",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.48011,
+          54.15045
+        ]
+      },
+      "properties": {
+        "name": "Premier Inn",
+        "amenity": null,
+        "operator": "Premier Inn",
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/100018176",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.65375,
+          54.07313
+        ]
+      },
+      "properties": {
+        "name": "George Hotel",
+        "amenity": "pub",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/101784664",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.73833,
+          54.07186
+        ]
+      },
+      "properties": {
+        "name": "Thie Fuinnee",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/101833417",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.76254,
+          54.08386
+        ]
+      },
+      "properties": {
+        "name": "The Bay Hotel",
+        "amenity": "pub",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/102734588",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.38391,
+          54.32823
+        ]
+      },
+      "properties": {
+        "name": "Ramsey Park Hotel",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/103786664",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.75136,
+          54.07906
+        ]
+      },
+      "properties": {
+        "name": "The Stable at Glendown Farm",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/146910948",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.69724,
+          54.22232
+        ]
+      },
+      "properties": {
+        "name": "The Creek Inn",
+        "amenity": "pub",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/158683955",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.64345,
+          54.15775
+        ]
+      },
+      "properties": {
+        "name": "The Coffee Cottage",
+        "amenity": "cafe",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/229711876",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.54056,
+          54.13146
+        ]
+      },
+      "properties": {
+        "name": "Ard-na-Mara Holiday Apartments",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/280860908",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.48259,
+          54.14785
+        ]
+      },
+      "properties": {
+        "name": "Quayside",
+        "amenity": "cafe",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/414637480",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.65223,
+          54.07401
+        ]
+      },
+      "properties": {
+        "name": "Costa",
+        "amenity": "cafe",
+        "operator": "Costa",
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/415157496",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.4786,
+          54.15275
+        ]
+      },
+      "properties": {
+        "name": "Jaks",
+        "amenity": "pub",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/416526310",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.47887,
+          54.15309
+        ]
+      },
+      "properties": {
+        "name": "Brendan O'Donnell's",
+        "amenity": "pub",
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/419056951",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.4787,
+          54.14942
+        ]
+      },
+      "properties": {
+        "name": "Starbucks",
+        "amenity": "cafe",
+        "operator": "Starbucks",
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/419113934",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.47938,
+          54.15182
+        ]
+      },
+      "properties": {
+        "name": "Costa",
+        "amenity": "cafe",
+        "operator": "Costa",
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/755354026",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.48094,
+          54.14975
+        ]
+      },
+      "properties": {
+        "name": "Java Express",
+        "amenity": "cafe",
+        "operator": "Java Express Limited",
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/829273200",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.65258,
+          54.07331
+        ]
+      },
+      "properties": {
+        "name": "The Castle Apartments",
+        "amenity": null,
+        "operator": "Mark Moorley",
+        "internet_access": "yes",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/832286809",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.72105,
+          54.14691
+        ]
+      },
+      "properties": {
+        "name": "Eary Cushlin",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/907166087",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.42346,
+          54.17673
+        ]
+      },
+      "properties": {
+        "name": "Groudle Glen Cottages",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/1125185107",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.4993,
+          54.15135
+        ]
+      },
+      "properties": {
+        "name": "KFC",
+        "amenity": "fast_food",
+        "operator": "KFC",
+        "internet_access": "yes",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/1173431606",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.50228,
+          54.14775
+        ]
+      },
+      "properties": {
+        "name": "Hot Rocks",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": "yes",
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/1444498174",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.47497,
+          54.1615
+        ]
+      },
+      "properties": {
+        "name": "Mereside",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/1466077190",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.4791,
+          54.16032
+        ]
+      },
+      "properties": {
+        "name": "Arrandale House",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "way/1499126329",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.46959,
+          54.16364
+        ]
+      },
+      "properties": {
+        "name": "Penta Hotel",
+        "amenity": null,
+        "operator": null,
+        "internet_access": "wlan",
+        "access": null,
+        "fee": null,
+        "source": "osm"
+      }
+    }
+  ]
+}

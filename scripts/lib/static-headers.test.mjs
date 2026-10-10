@@ -35,8 +35,9 @@ test("the CSP names every origin the browser actually fetches from", () => {
     "https://api.open-meteo.com",
     "https://marine-api.open-meteo.com",
     "https://celestrak.org",
-    "https://server.arcgisonline.com",
+    "https://a.tile.openstreetmap.org",
     "https://a.tile.opentopomap.org",
+    "https://tiles.openfreemap.org",
     "https://tiles.basemaps.cartocdn.com",
   ]) {
     assert.ok(

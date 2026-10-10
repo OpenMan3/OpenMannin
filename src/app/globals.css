@@ -3,23 +3,68 @@
 /*
  * OpenMannin — Open Source Intelligence map of the Isle of Man.
  *
- * Tailwind v4 is imported as a single stylesheet; there is no tailwind.config
- * and no @theme block is required. Custom properties below are used for the
- * map chrome so the panels match MapLibre's own UI rather than fighting it.
+ * Tailwind v4 design tokens. Everything the UI paints goes through these
+ * variables (or the component classes below) so a palette change lands in one
+ * place instead of a thousand arbitrary `#hex` literals. Names are prefixed to
+ * stay clear of Tailwind's own palette (no `blue`/`rose`/`line` collisions).
  */
 
-:root {
-  --panel-bg: #0b0f14;
-  --panel-border: #1e2a35;
-  --panel-text: #d7e3ec;
-  --panel-muted: #7d8f9d;
-  --accent: #35c9d4;
+@theme {
+  --color-page: #0b0f14;
+  --color-panel: #0e151c;
+  --color-raised: #14202b;
+  --color-soft: #182431;
+  --color-line: #1e2a35;
+  --color-line-soft: #16212c;
 
-  /* Confidence grades, used by the layer panel and feature popups. */
-  --grade-a: #34d399;
-  --grade-b: #60a5fa;
-  --grade-c: #fbbf24;
-  --grade-d: #f87171;
+  --color-ink: #e6eef5;
+  --color-ink-2: #a9b9c7;
+  --color-ink-3: #76899a;
+
+  --color-accent: #35c9d4;
+  --color-accent-ink: #061419;
+
+  --color-ok: #34d399;
+  --color-info: #7dd3fc;
+  --color-warn: #fbbf24;
+  --color-danger: #f87171;
+  --color-pin: #f43f5e;
+  --color-gps: #3b82f6;
+  --color-gps-soft: #60a5fa;
+}
+
+/*
+ * Reusable building blocks. Keep components readable: a panel row, a modest
+ * button or a chip all use the same tokens and the same hover/focus language.
+ */
+@layer components {
+  .card {
+    @apply rounded-xl border border-line bg-panel/95 shadow-xl backdrop-blur;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium;
+  }
+  .btn {
+    @apply inline-flex touch-manipulation items-center justify-center gap-1.5 rounded-md border border-line bg-raised px-3 py-2 text-xs font-medium text-ink-2 transition-colors hover:bg-soft hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply border-accent/50 bg-accent font-semibold text-accent-ink hover:bg-accent/90 hover:text-accent-ink;
+  }
+  .btn-icon {
+    @apply inline-flex h-9 w-9 touch-manipulation items-center justify-center rounded-md border border-line bg-panel/95 text-ink-2 shadow-md backdrop-blur transition-colors hover:bg-raised hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95;
+  }
+  .field {
+    @apply w-full rounded-md border border-line bg-page px-2.5 py-2 text-[13px] text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/40;
+  }
+  .label {
+    @apply text-[10px] font-semibold uppercase tracking-wider text-ink-3;
+  }
+  .link {
+    @apply text-accent hover:underline;
+  }
+  .icon-badge {
+    @apply inline-flex h-2 w-2 shrink-0 rounded-full;
+  }
 }
 
 html,
@@ -29,8 +74,8 @@ body {
 
 body {
   margin: 0;
-  background: var(--panel-bg);
-  color: var(--panel-text);
+  background: var(--color-page);
+  color: var(--color-ink);
   font-family:
     ui-sans-serif,
     system-ui,
@@ -41,46 +86,61 @@ body {
     Arial,
     sans-serif;
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
 }
 
 /* MapLibre ships its own light UI; force it dark so it matches the panels. */
 .maplibregl-ctrl-group {
   background: #131b23 !important;
-  border: 1px solid var(--panel-border);
+  border: 1px solid var(--color-line);
 }
 .maplibregl-ctrl-group button + button {
-  border-top: 1px solid var(--panel-border) !important;
+  border-top: 1px solid var(--color-line) !important;
 }
 .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
   filter: invert(1) brightness(1.6);
 }
 .maplibregl-ctrl-attrib {
   background: rgba(11, 15, 20, 0.85) !important;
-  color: var(--panel-muted) !important;
+  color: var(--color-ink-3) !important;
 }
 .maplibregl-ctrl-attrib a {
-  color: var(--panel-muted) !important;
+  color: var(--color-ink-3) !important;
 }
 .maplibregl-popup-content {
-  background: #131b23;
-  color: var(--panel-text);
-  border: 1px solid var(--panel-border);
-  border-radius: 6px;
+  background: var(--color-panel);
+  color: var(--color-ink);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
   padding: 10px 12px;
   max-width: 320px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 .maplibregl-popup-tip {
-  border-top-color: #131b23 !important;
-  border-bottom-color: #131b23 !important;
+  border-top-color: var(--color-panel) !important;
+  border-bottom-color: var(--color-panel) !important;
 }
 .maplibregl-popup-close-button {
-  color: var(--panel-muted);
+  color: var(--color-ink-3);
   font-size: 18px;
   padding: 2px 8px;
 }
 
-/* Thin scrollbars so the long layer list does not dominate the layout. */
+/*
+ * On small screens we draw our own top app bar and bottom tab bar over the
+ * map, so MapLibre's own corner chrome must duck below them.
+ */
+@media (max-width: 767px) {
+  .maplibregl-ctrl-top-right {
+    top: 60px;
+  }
+  .maplibregl-ctrl-bottom-left,
+  .maplibregl-ctrl-bottom-right {
+    bottom: 64px;
+  }
+}
+
+/* Thin scrollbars so long lists do not dominate the layout. */
 .scroll-thin {
   scrollbar-width: thin;
   scrollbar-color: #2a3947 transparent;
@@ -91,4 +151,22 @@ body {
 .scroll-thin::-webkit-scrollbar-thumb {
   background: #2a3947;
   border-radius: 4px;
+}
+.scroll-thin::-webkit-scrollbar-thumb:hover {
+  background: #33475a;
+}
+
+/* Slide-up used by the destination sheet and mobile popups. */
+@keyframes om-sheet-in {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.om-sheet-in {
+  animation: om-sheet-in 180ms ease-out;
 }

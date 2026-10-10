@@ -34,9 +34,7 @@ primary_region = "lhr"
 
 # No secrets exist for this deployment. Weather and satellite passes are
 # fetched from the browser (their upstreams send Access-Control-Allow-Origin: *
-# and need no credential), and the three feeds that would need a server -
-# OpenSky, AISStream, FindMyBus - are ON HOLD in src/lib/feeds/index.ts: no
-# requests are made, no permission flag is read, nothing to inject here.
+# and need no credential). Nothing to inject here.
 
 [http_service]
   internal_port = 3000

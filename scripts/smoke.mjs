@@ -13,6 +13,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 import { decodePng, analyse } from "./lib/png.mjs";
+import { GAPS } from "../src/lib/layers.ts";
 
 const URL_UNDER_TEST = process.argv[2] ?? "http://localhost:3111/";
 // chrome remote debugging port. verify-render and verify-basemap each use a
@@ -73,20 +74,23 @@ await send("Emulation.setDeviceMetricsOverride",
   { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false }, sessionId);
 
 const consoleErrors = [];
-/**
- * 503s from live routes that are gated behind an unset permission.
- *
- * These are expected, and they are Chromium's own network log rather than
- * anything the app logs, so no amount of care in the client code stops them:
- * asking for a route that has been correctly configured to refuse service
- * produces a real HTTP 503, and the browser records it. The live layers report
- * the same condition in the layer panel as a "feed offline" badge, which is
- * where a user should be told. So they are collected separately, printed, and
- * asserted to come only from the routes that are allowed to refuse - rather
- * than blanket-filtered, which would hide a genuine outage behind the same text.
- */
-const gated503s = [];
-const GATED_ROUTES = [/\/api\/flights/, /\/api\/transit/, /\/api\/marine/];
+/** Free-tier live upstreams the browser may hit directly; transient outages
+ * are counted, not treated as defects. */
+const UPSTREAM_ROUTES = [
+  /celestrak\.org/,
+  /api\.open-meteo\.com/,
+  /marine-api\.open-meteo\.com/,
+  /overpass(-api|\.de|\.kumi)/,
+  /maps\.mail\.ru/,
+  /tile\.opentopomap\.org/,
+  /tile\.openstreetmap\.org/,
+  /tile\.openstreetmap\.fr/,
+  /tiles\.openfreemap\.org/,
+  // The one exception explicitly named: we also track overpass through the
+  // community feed client-side. We count URLs anyway.
+  /overpass-api\.de/,
+];
+const upstreamFailures = [];
 
 ws.addEventListener("message", (m) => {
   const msg = JSON.parse(m.data);
@@ -100,9 +104,8 @@ ws.addEventListener("message", (m) => {
   }
   if (msg.method === "Log.entryAdded" && msg.params.entry.level === "error") {
     const e = msg.params.entry;
-    if (e.source === "network" && /status of 503/.test(e.text ?? "")
-        && GATED_ROUTES.some((re) => re.test(e.url ?? ""))) {
-      gated503s.push(e.url.replace(/^https?:\/\/[^/]+/, ""));
+    if (e.source === "network" && UPSTREAM_ROUTES.some((re) => re.test(e.url ?? ""))) {
+      upstreamFailures.push(e.url.replace(/^https?:\/\/[^/]+/, ""));
       return;
     }
     consoleErrors.push("log: " + e.text);
@@ -167,7 +170,9 @@ const painted = analyse(decodePng(png));
 // them; that is what the panel should grey out, and the only 404s tolerated.
 const manifest = JSON.parse(fs.readFileSync(new URL("../public/data/manifest.json", import.meta.url)));
 const expectedMissing = manifest.absent.length;
-const GAPS_COUNT = Number(process.env.GAPS_COUNT ?? 15);
+// The count comes from the registry itself - a hardcoded constant here went
+// stale when layers.ts grew without anyone remembering this file.
+const GAPS_COUNT = GAPS.length;
 
 const fails = [];
 
@@ -258,20 +263,12 @@ console.log("layer rows:  ", dom.layerRows, `(${dom.checked} checked)`);
 console.log("no-data tags:", dom.missingBadges);
 console.log("attribution: ", dom.attribution);
 console.log("geojson reqs:", dataReqs.length, badData.length ? `(BAD: ${badData.length})` : "(all 200)");
-console.log("gated feeds: ", gated503s.length
-  ? `${[...new Set(gated503s)].join(", ")} (refusing to run until permitted - expected)`
-  : "none refused");
+console.log("upstream WAFs/outages seen:", upstreamFailures.length ? [...new Set(upstreamFailures)].join(", ") : "none");
 for (const [u] of dataReqs) console.log("   200", u);
 if (consoleErrors.length) {
   console.log("console:");
   for (const e of consoleErrors.slice(0, 15)) console.log("   " + e);
 }
-console.log("ip lookup:   ", ipPanel.operator && ipPanel.asn && ipPanel.cidr
-  ? `195.10.105.1 -> Manx Telecom / AS13122 / 195.10.105.0/24${ipPanel.size ? " (256 addrs)" : ""}`
-  : "FAILED");
-console.log("ip negative: ", ipNegative ? "8.8.8.8 correctly rejected" : "FAILED");
-console.log("registry:    ", reg.hasLink ? "link built" + (reg.byNumber ? ", number mode" : "") : "FAILED");
-console.log("registry invalid:", regWarns ? "12345 correctly flagged" : "FAILED");
 console.log("gaps panel:  ", `${gaps.count} entries`);
 console.log("feature popup:", popup ? (popup.hasProvenance ? "opened with provenance" : "OPENED BUT NO PROVENANCE") : "NEVER OPENED");
 console.log("screenshot:  /tmp/opencode/smoke.png");

@@ -43,6 +43,19 @@ const LAND_LON = -4.5;
 /** A separate cell over open water, for the wave and SST products. */
 const MARINE_LAT = 54.125;
 const MARINE_LON = -4.4583;
+/**
+ * Snaefell, the island's only mountain (621 m) and its high point.
+ *
+ * The brief asks for high-point weather telemetry, and this is what that means
+ * in practice: a second land cell at the summit, so a reader can see the
+ * temperature and wind gradient between the coast and the top. The summit is
+ * inside the same model grid cell as the coast at this resolution, so the two
+ * markers may sit on the same cell - which is itself the honest answer: the
+ * model cannot resolve a 621 m peak, and the numbers are the grid's, not the
+ * summit's.
+ */
+const SNAEFELL_LAT = 54.2625;
+const SNAEFELL_LON = -4.4736;
 
 const CURRENT_FIELDS = [
   "temperature_2m",
@@ -151,24 +164,35 @@ async function build(): Promise<unknown> {
     `&current=${CURRENT_FIELDS}` +
     `&hourly=temperature_2m,precipitation_probability,wind_speed_10m` +
     `&wind_speed_unit=kn&forecast_days=2&timezone=${tz}`;
+  const snaefellUrl =
+    `https://api.open-meteo.com/v1/forecast?latitude=${SNAEFELL_LAT}&longitude=${SNAEFELL_LON}` +
+    `&current=${CURRENT_FIELDS}` +
+    `&wind_speed_unit=kn&forecast_days=2&timezone=${tz}`;
   const marineUrl =
     `https://marine-api.open-meteo.com/v1/marine?latitude=${MARINE_LAT}&longitude=${MARINE_LON}` +
     `&current=${MARINE_FIELDS}` +
     `&hourly=wave_height,wave_period&forecast_days=2&timezone=${tz}`;
 
-  const [wx, marine] = await Promise.all([
+  const [wx, snaefell, marine] = await Promise.all([
     // A land failure is fatal to this collection: it is the reason the layer exists.
     fetchJson(landUrl),
+    // The summit cell is a bonus: if it fails, the coast and the sea still render.
+    fetchJson(snaefellUrl).catch(() => null),
     fetchJson(marineUrl).catch(() => null),
   ]);
 
   const c = wx?.current ?? {};
+  const s = snaefell?.current ?? {};
   const m = marine?.current ?? {};
   const generated = new Date().toISOString();
 
   // The API echoes the grid cell it actually used. Render THAT, not the point we
   // asked for - see the note at the top of this file.
   const landAt: [number, number] = [n(wx?.longitude, 4) ?? LAND_LON, n(wx?.latitude, 4) ?? LAND_LAT];
+  const snaefellAt: [number, number] = [
+    n(snaefell?.longitude, 4) ?? SNAEFELL_LON,
+    n(snaefell?.latitude, 4) ?? SNAEFELL_LAT,
+  ];
   const marineAt: [number, number] = [
     n(marine?.longitude, 4) ?? MARINE_LON,
     n(marine?.latitude, 4) ?? MARINE_LAT,
@@ -204,6 +228,34 @@ async function build(): Promise<unknown> {
       },
     },
   ];
+
+  // The summit marker is only offered when its own call returned. Same rule as
+  // the marine marker: a feature with every null property reads as "the summit
+  // is calm", which is a claim nobody made.
+  if (snaefell) {
+    const sCode = Number(s.weather_code);
+    features.push({
+      type: "Feature",
+      id: "weather/snaefell",
+      geometry: { type: "Point", coordinates: snaefellAt },
+      properties: {
+        name: "Snaefell summit (model grid)",
+        kind: "weather-snaefell",
+        observedAt: s.time ?? null,
+        summary: describeCode(sCode) ?? (Number.isFinite(sCode) ? `WMO code ${sCode}` : null),
+        temperatureC: n(s.temperature_2m),
+        feelsLikeC: n(s.apparent_temperature),
+        pressureHpa: n(s.pressure_msl),
+        windKn: n(s.wind_speed_10m),
+        windDir: n(s.wind_direction_10m, 0),
+        windCompass: compass(s.wind_direction_10m),
+        gustsKn: n(s.wind_gusts_10m),
+        coordGrade: "B",
+        coordSource:
+          "Open-Meteo model grid cell for the Snaefell request. The model cannot resolve a 621 m peak, so this cell may coincide with the coastal cell - the numbers are the grid's, not a summit instrument's.",
+      },
+    });
+  }
 
   // Only offer the sea-state marker when the marine call actually returned. A
   // feature with every null property would render as a marker on the water with

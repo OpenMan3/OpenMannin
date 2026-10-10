@@ -81,6 +81,19 @@ try {
   );
 }
 
+// 3b. The routing worker. Missing here means long-press navigation computes
+//     nothing and the UI just shows "route not computed yet" with no error -
+//     a silent gap of exactly the kind the pass worker gaps produce.
+try {
+  if (fs.statSync(path.join(ROOT, "public", "routing-worker.mjs")).size < 1000) {
+    problems.push("public/routing-worker.mjs is suspiciously small - run `npm run build:routing-worker`.");
+  }
+} catch {
+  problems.push(
+    "public/routing-worker.mjs missing - run `npm run build:routing-worker`. Long-press routing will silently do nothing.",
+  );
+}
+
 // 4. The security headers file. Cloudflare Pages reads public/_headers; if it
 //    is absent the deploy simply loses the CSP and nothing says so, because a
 //    missing header looks exactly like a working page until something breaks.
@@ -110,22 +123,13 @@ const report = {
     static: true,
     /** These run in the browser and need nothing from the host. */
     clientFeeds: ["weather", "satellite-passes"],
-    /**
-     * These would need a server this deployment does not have, and are ON HOLD
-     * in src/lib/feeds/index.ts: the map makes no request for them at all and
-     * the layer panel says why. Not "unavailable pending configuration" -
-     * unavailable pending a data-use agreement.
-     */
-    onHold: ["live-flights", "live-vessels", "live-transit"],
   },
   problems,
   warnings: [
     "This is a BUILD-TIME report. It says the map is structurally complete, not that any upstream is reachable.",
-    "Live-feed state is observed in the browser, not here: weather and satellite passes are fetched client-side. The three feeds under hosting.onHold make no request anywhere - see SERVER_SIDE_FEEDS in src/lib/feeds/index.ts for why.",
+    "Live-feed state is observed in the browser, not here: weather and satellite passes are fetched client-side.",
     "Satellite passes need public/passes-worker.mjs, bundled from src/lib/feeds/passes-worker.ts by scripts/build-passes-worker.mjs before next build. If that file is missing or stale, the layer is silently empty - there is no console error to see. (Its presence is checked above; staleness is checked by scripts/lib/passes-worker-build.test.mjs.)",
     "Open-Meteo's free tier is NON-COMMERCIAL: subscriptions or advertising both count as commercial use.",
-    "AISStream and the FindMyBus.im feed are graded NO-LICENCE. Absence of a prohibition is not a grant.",
-    "OpenSky requires a previous written agreement for operational use, including internal and non-profit use.",
   ],
 };
 

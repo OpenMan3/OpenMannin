@@ -45,10 +45,13 @@ const CONNECT_SRC = [
   "https://api.open-meteo.com",
   "https://marine-api.open-meteo.com",
   "https://celestrak.org",
-  "https://server.arcgisonline.com",
+  "https://a.tile.openstreetmap.org",
+  "https://b.tile.openstreetmap.org",
+  "https://c.tile.openstreetmap.org",
   "https://a.tile.opentopomap.org",
   "https://b.tile.opentopomap.org",
   "https://c.tile.opentopomap.org",
+  "https://tiles.openfreemap.org",
   "https://tiles.basemaps.cartocdn.com",
 ].join(" ");
 
@@ -73,7 +76,9 @@ export const SECURITY_HEADERS = Object.entries({
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "X-Frame-Options": "SAMEORIGIN",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  // geolocation is allowed for our own origin only: the locate-me control asks
+  // the browser for the visitor's position. camera/microphone/payment stay off.
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(self), payment=()",
   // Browsers only honour this over HTTPS, so a plain-HTTP LAN preview of
   // serve.mjs is unaffected. Both real hosts redirect to HTTPS first.
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains",

@@ -11,12 +11,10 @@ layers. There is no server:
   `npm start`, the Docker image, Fly.io and the systemd unit.
 - The seven `/api/*` routes that used to exist were deleted along with the
   server they needed. Weather and satellite passes moved into the browser
-  (their upstreams send `Access-Control-Allow-Origin: *`); the three feeds that
-  cannot work without a server - OpenSky, AISStream, FindMyBus - are **on
-  hold**: the map makes no request for them and the layer panel says why.
-- **There are no environment variables and no secrets.** If a document tells
-  you to set `AISSTREAM_API_KEY`, it is describing a version of the app that no
-  longer has `/api/marine`.
+  (their upstreams send `Access-Control-Allow-Origin: *`); feeds that would
+  need a server - proprietary AIS, OpenSky, FindMyBus - have been **removed**
+  rather than left half-stubbed.
+- **There are no environment variables and no secrets.**
 
 Deploy `out/` to any static host and the map works: basemap, all 39 data
 layers, weather, satellite passes.
@@ -226,8 +224,6 @@ Check, in order:
 3. `"absent": []` - no registered layer without data.
 4. `"features"` - a plausible number (currently ~38,400). Small means ingest
    partially failed and you have a half-empty island.
-5. `"hosting.onHold"` - the three feeds that make no request anywhere. They
-   are expected; the layer panel explains each one in the UI.
 
 Then load the page and confirm:
 
@@ -262,15 +258,12 @@ real bugs. If you can test on 22, prefer 22 LTS; otherwise build with
 ## Operational notes
 
 - **Attribution is a licence obligation, not decoration.** OpenTopoMap is
-  CC-BY-SA, Carto's fonts and Esri's imagery have their own terms, and
-  `verify:basemap` asserts that the attribution control follows the basemap.
+  CC-BY-SA, standard OSM and HOT tiles use the same ODbL as the data, and
+  OpenFreeMap/OpenMapTiles is BuildCC-BY/ODbL; `verify:basemap` asserts that
+  the attribution control follows the basemap.
 - **Open-Meteo's free tier is NON-COMMERCIAL.** Subscriptions or advertising
   both count. Weather is fetched by each visitor's browser, so your server
   never pays for it - but the obligation is on the use, not the transport.
-- **The on-hold feeds stay on hold** until a data-use agreement exists. See
-  `SERVER_SIDE_FEEDS` in `src/lib/feeds/index.ts`. Do not re-enable them to
-  silence a badge: a feed that is off and says why beats one that is on and
-  lying.
 - **CelesTrak** is public domain and re-read every 6 hours by each visitor's
   browser; no credentials, no rotation.
 - **If you add a live feed later**, you are re-introducing a server. Update

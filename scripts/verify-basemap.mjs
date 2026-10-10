@@ -1,6 +1,7 @@
 /**
- * Assert the OpenTopoMap basemap actually paints, and that the live satellite
- * pass layer renders, by driving the real UI rather than trusting the config.
+ * Assert the OpenTopoMap basemap actually paints, and that a basemap switch
+ * keeps every data layer above it, by driving the real UI rather than
+ * trusting the config.
  *
  * Tiles can return 200 with a valid PNG while the map still shows
  * nothing, if the style never picks up the source. So this switches the basemap
@@ -147,15 +148,15 @@ try {
   // And back again: the old bug survived the return trip too.
   await evaluate(`(() => {
     const sel = [...document.querySelectorAll("select")].find(s =>
-      [...s.options].some(o => o.value === "esri"));
+      [...s.options].some(o => o.value === "osm"));
     const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set;
-    setter.call(sel, "esri");
+    setter.call(sel, "osm");
     sel.dispatchEvent(new Event("change", { bubbles: true }));
     return "ok";
   })()`, sessionId);
   await sleep(4000);
   const orderAfterBack = await evaluate(orderProbe, sessionId);
-  assertOrder("after switching back to esri", orderAfterBack);
+  assertOrder("after switching back to opentopo", orderAfterBack);
 
   // Put it back on opentopo for the screenshot and attribution assertions.
   await evaluate(`(() => {
@@ -190,8 +191,8 @@ try {
   }
 
   // The attribution control must credit whoever actually served the tiles.
-  // OpenTopoMap is CC-BY-SA, so leaving Esri credited on screen is a licence
-  // breach, not a cosmetic nit - and it is exactly what setTiles() would cause.
+  // OpenTopoMap is CC-BY-SA, so leaving the old provider credited on screen
+  // is a licence-compliance bug, not a cosmetic nit - setTiles() would do exactly that.
   const attribution = await evaluate(`(() => {
     const el = document.querySelector(".maplibregl-ctrl-attrib-inner")
            || document.querySelector(".maplibregl-ctrl-attrib");
@@ -200,8 +201,8 @@ try {
   if (!/OpenTopoMap/i.test(attribution ?? "")) {
     fails.push(`attribution does not credit OpenTopoMap: "${(attribution ?? "").slice(0, 120)}"`);
   }
-  if (/Esri/i.test(attribution ?? "")) {
-    fails.push(`attribution still credits Esri while showing OpenTopoMap tiles: "${(attribution ?? "").slice(0, 120)}"`);
+  if (/tile\.openstreetmap\.org/i.test(String(attribution ?? "").replace(/OpenTopoMap|OpenStreetMap/g, "")) && /Standard OSM/i.test(String(attribution ?? ""))) {
+    fails.push(`attribution still credits "Standard OSM" while showing OpenTopoMap tiles: "${(attribution ?? "").slice(0, 120)}"`);
   }
 
   const shot = await send("Page.captureScreenshot", { format: "png" }, sessionId);

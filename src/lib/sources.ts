@@ -6,16 +6,6 @@ import type { Source } from "./types";
  * about when a human actually read the page.
  */
 export const SOURCES: Record<string, Source> = {
-  iomsurvey: {
-    id: "iomsurvey",
-    name: "Isle of Man Survey — Digital Map Data",
-    publisher: "Isle of Man Government — Isle of Man Survey",
-    url: "https://www.gov.im/about-the-government/departments/infrastructure/mapping/",
-    licence: "UNKNOWN",
-    lastChecked: "2026-10-04",
-    notes:
-      "NOT OPEN. Commercial products: 1:1,250 and 1:2,500 DXF/GIS, 1:10,000 raster TIFF/DXF, 1:25,000-1:100,000 raster TIFF, contour DXF/NTF, 20 m and 50 m ASCII DTM, and LiDAR (purchase only). The complete set is free ONLY to a researcher or student at an eligible higher education institution under a Digital Map Data agreement. Contact mapping@gov.im.",
-  },
   osmIOM: {
     id: "osmIOM",
     name: "OpenStreetMap — WikiProject Isle of Man",
@@ -46,26 +36,6 @@ export const SOURCES: Record<string, Source> = {
     notes:
       "No CKAN/Socrata API. Hand-maintained CMS of HTML pages. Subject categories: agriculture, births/deaths, crime, economy, education, energy/environment, FIU, government, health, society, transport.",
   },
-  findmybus: {
-    id: "findmybus",
-    name: "FindMyBus.im live vehicle feed (SignalR)",
-    publisher: "Isle of Man Public Transport / Bus Vannin",
-    url: "https://www.findmybus.im/",
-    licence: "NO-LICENCE",
-    lastChecked: "2026-10-04",
-    notes:
-      "Undocumented internal PDMS feed. Payload captured by hand: SignalR JSON hub, hub method 'TransportData', 10 pipe-delimited fields. No robots.txt (404), no terms page. F5 WAF in front. Reference is officially made in the Isle of Man Railways timetable PDF ('To track your Heritage Railway services in real time visit findmybus.im').",
-  },
-  opensky: {
-    id: "opensky",
-    name: "The OpenSky Network REST API",
-    publisher: "OpenSky Network / ETH Zurich",
-    url: "https://openskynetwork.github.io/opensky-api/rest.html",
-    licence: "UNKNOWN",
-    lastChecked: "2026-10-04",
-    notes:
-      "Terms of Use §3(vi) and the summary box require a PREVIOUS WRITTEN AGREEMENT for any 'operational' use, including integration into a live product, 'regardless of the entity's non-profit status'. Anonymous tier = 400 credits/day. CORS hard-pinned to their own origin, so server-side proxy is mandatory.",
-  },
   celestrak: {
     id: "celestrak",
     name: "CelesTrak orbital elements",
@@ -75,26 +45,6 @@ export const SOURCES: Record<string, Source> = {
     lastChecked: "2026-10-04",
     notes:
       "Two-line element sets for the ISS and crewed spacecraft. Published by the US Space Force as public domain and redistributed by CelesTrak with no key, no login and no terms restricting use. Propagated with SGP4 via satellite.js (MIT). This is the only live feed here that needs nobody's permission, which is why it is the only one enabled.",
-  },
-  aisstream: {
-    id: "aisstream",
-    name: "AISStream.io",
-    publisher: "AISStream (Voltron / vtex.ai)",
-    url: "https://aisstream.io/",
-    licence: "NO-LICENCE",
-    lastChecked: "2026-10-04",
-    notes:
-      "Free WebSocket, no SLA, no published terms document. Direct browser connections explicitly prohibited. Max 3 connections per account and 3 per originating IP — forces a single server-side ingest with internal fan-out.",
-  },
-  gfw: {
-    id: "gfw",
-    name: "Global Fishing Watch API v3",
-    publisher: "Global Fishing Watch Foundation",
-    url: "https://globalfishingwatch.org/",
-    licence: "CC-BY-NC-4.0",
-    lastChecked: "2026-10-04",
-    notes:
-      "Free token, instant. 50,000/day and 1,500,000/month. Token must NOT be exposed client-side. Mandatory 'Powered by Global Fishing Watch' attribution.",
   },
   openmeteo: {
     id: "openmeteo",
@@ -124,15 +74,6 @@ export const SOURCES: Record<string, Source> = {
     licence: "CC-BY-4.0",
     lastChecked: "2026-10-04",
     notes: "Modern cable systems with owners and routes. Route alignment is indicative, not survey-grade.",
-  },
-  atlanticcable: {
-    id: "atlanticcable",
-    name: "Atlantic-Cable.com cable history",
-    publisher: "Atlantic Cable (Steven Roberts / Bill Glover)",
-    url: "https://atlantic-cable.com/",
-    licence: "UNKNOWN",
-    lastChecked: "2026-10-04",
-    notes: "Standard reference for historic cable routes and landing points. Effectively the public record for pre-1950 cables.",
   },
   nda: {
     id: "nda",
@@ -240,16 +181,6 @@ export const SOURCES: Record<string, Source> = {
     lastChecked: "2026-10-04",
     notes: "CC-BY-SA derived map data on ODbL geometry. Raster, keyless, ACAO *.",
   },
-  openfreemap: {
-    id: "openfreemap",
-    name: "OpenFreeMap / OpenMapTiles",
-    publisher: "OpenFreeMap",
-    url: "https://openfreemap.org/",
-    licence: "ODbL",
-    lastChecked: "2026-10-04",
-    notes:
-      "Free, no API key, no signup, no rate limit, commercial use permitted. maxzoom is 14 — z15/z16 return HTTP 200 with a ZERO-BYTE body, which silently renders blank. Always point MapLibre at the TileJSON, never a hard-coded tile path (the dated snapshot segment changes on rebuild).",
-  },
   emodnet: {
     id: "emodnet",
     name: "EMODnet Bathymetry",
@@ -259,26 +190,6 @@ export const SOURCES: Record<string, Source> = {
     lastChecked: "2026-10-04",
     notes:
       "Free, keyless, CORS *. The old services.emodnet-geoservices host no longer resolves — moved to tiles.emodnet-bathymetry.eu. Gotcha: the WMTS layer id (mean_multicolour_latest) differs from the URL path segment (latest/mean_multicolour); use the path.",
-  },
-  esri: {
-    id: "esri",
-    name: "Esri World Imagery basemap",
-    publisher: "Esri / Maxar / Earthstar Geographics",
-    url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
-    licence: "UNKNOWN",
-    lastChecked: "2026-10-04",
-    notes:
-      "Free and keyless today with CORS *, but the ArcGIS Online basemap terms are not a contract and Esri reserves the right to change them. Technically the best keyless satellite basemap; legally the least certain. Tile order is {z}/{y}/{x}.",
-  },
-  ripestat: {
-    id: "ripestat",
-    name: "RIPEstat data API",
-    publisher: "RIPE NCC",
-    url: "https://stat.ripe.net/",
-    licence: "NO-LICENCE",
-    lastChecked: "2026-10-04",
-    notes:
-      "Keyless JSON, CORS *. Used as the authoritative registry of which ASNs are registered to country IM (country-asns with lod=1, which returns 27 registered / 16 routed and the actual ASN set) and of what each currently announces in BGP (announced-prefixes). GOTCHA: country-asns WITHOUT lod=1 returns only a count and no list, which reads misleadingly as 'zero'. RIPE NCC data is free to use with attribution but no formal open licence is published for RIPEstat output. RIPE Database's own search API is unusable for discovery here — every query-string + type-filter combination returns ERROR:115, including plain country:GB.",
   },
   openmannin: {
     id: "openmannin",

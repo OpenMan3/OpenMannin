@@ -3,17 +3,10 @@
 /**
  * The MapLibre view.
  *
- * Basemap choice, which took some testing to get right:
- *
- *   - OpenFreeMap and CARTO's vector "dark matter" style both declare
- *     maxzoom 14. Overpass-quality infrastructure data wants z16+.
- *   - CARTO's raster dark_all endpoint returns a byte-identical blank tile at
- *     every zoom, so it is retired for anonymous use and silently useless.
- *   - Esri World Imagery serves real imagery to z18+ with `cors: *`.
- *
- * Esri is therefore the default. Its terms are the least certain thing in this
- * project and it is registered as such in SOURCES; the satellite alternative
- * (OpenTopoMap, CC-BY-SA derived) is offered in the basemap switch.
+ * Basemap choice. Every option is genuinely open-licensed - OSM data
+ * (ODbL) for the standard tiles, OpenTopoMap under CC-BY-SA, and
+ * OpenFreeMap's Liberty style (ODbL data, ODbL-derived style). Commercial
+ * imagery (Esri et al.) was removed because it has no clear open licence.
  *
  * Our own data is drawn as GeoJSON sources so the layer registry stays the one
  * source of truth, and every paint layer is registered in PICKABLE so a click
@@ -28,9 +21,14 @@ import {
   type FeatureCollection,
   type GeometryKind,
 } from "@/lib/layer-data";
-import { fetchFeed, FEEDS_ON_HOLD, ON_HOLD_REASON } from "@/lib/feeds";
+import { fetchFeed } from "@/lib/feeds";
 import { nextPollDelayMs } from "@/lib/feeds/backoff";
 import { installPbfGuard } from "@/lib/pbf-guard";
+import {
+  attachNavigation,
+  type NavigationHost,
+  type NavigationState,
+} from "@/lib/navigation/host";
 
 export interface PickedFeature {
   layer: LayerDef;
@@ -41,7 +39,42 @@ export interface PickedFeature {
   asOf?: string;
 }
 
-export type BasemapId = "esri" | "opentopo";
+export type BasemapId = "osm" | "opentopo" | "openfreemap";
+
+type BasemapDef =
+  | { kind: "raster"; tiles: string[]; attribution: string; maxzoom: number }
+  | { kind: "style"; styleUrl: string; attribution: string; maxzoom: number };
+
+const BASEMAPS: Record<BasemapId, BasemapDef> = {
+  osm: {
+    kind: "raster",
+    tiles: [
+      "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    ],
+    attribution: "Map data &copy; OpenStreetMap contributors",
+    maxzoom: 19,
+  },
+  opentopo: {
+    kind: "raster",
+    tiles: [
+      "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+      "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
+      "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
+    ],
+    attribution:
+      "Map data &copy; OpenStreetMap contributors, SRTM | Map style &copy; OpenTopoMap (CC-BY-SA)",
+    maxzoom: 17,
+  },
+  openfreemap: {
+    kind: "style",
+    styleUrl: "https://tiles.openfreemap.org/styles/liberty",
+    attribution:
+      "Map data &copy; OpenStreetMap contributors | Map style &copy; OpenFreeMap (ODbL)",
+    maxzoom: 16,
+  },
+};
 
 /** MapLibre layer id for a registry layer, e.g. toponyms + symbol -> om-toponyms-symbol. */
 const layerIdFor = (id: string, suffix: string) => `om-${id}-${suffix}`;
@@ -58,37 +91,6 @@ function layerByMapLayerId(mapLayerId: string, defs: LayerDef[]): LayerDef | und
   if (!match) return undefined;
   return defs.find((l) => l.id === match[1]);
 }
-
-const BASEMAPS: Record<BasemapId, { tiles: string[]; attribution: string; maxzoom: number }> = {
-  esri: {
-    tiles: [
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    ],
-    attribution:
-      "Imagery &copy; Esri, Maxar, Earthstar Geographics. Basemap terms are the least certain licence in this project.",
-    maxzoom: 19,
-  },
-  opentopo: {
-    // Direct, not proxied. OpenTopoMap serves `access-control-allow-origin: *`
-    // on its raster tiles - verified by request against a.tile.opentopomap.org
-    // with a foreign Origin header - so MapLibre can load it cross-origin and
-    // the tile proxy has nothing left to do.
-    //
-    // The proxy existed to work around a CORS header that is in fact present.
-    // That was a wrong reading of an earlier probe, and it cost a server route,
-    // a bandwidth bill and a class of silent failure. Subdomains are cycled
-    // because OpenTopoMap rate-limits per host.
-    tiles: [
-      "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
-      "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
-      "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
-    ],
-    attribution:
-      "Map data &copy; OpenStreetMap contributors, SRTM | Map style &copy; OpenTopoMap (CC-BY-SA)",
-    maxzoom: 17,
-  },
-}
-
 
 const GLYPHS = "https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf";
 
@@ -111,6 +113,7 @@ export function MapView({
   onMissing,
   onFeedErrors,
   onViewport,
+  onNav,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
@@ -127,6 +130,8 @@ export function MapView({
   onFeedErrors?: (errors: Record<string, string>) => void;
   /** Reports the visible map centre and zoom after each move, for deep links. */
   onViewport?: (v: { lon: number; lat: number; zoom: number }) => void;
+  /** Navigation state (GPS dot, dropped destination, route), published by the host. */
+  onNav?: (state: NavigationState) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<import("maplibre-gl").Map | null>(null);
@@ -134,6 +139,38 @@ export function MapView({
   const [status, setStatus] = useState<string>("loading map…");
   const [missing, setMissing] = useState<Set<string>>(new Set());
   const [feedErrors, setFeedErrors] = useState<Record<string, string>>({});
+
+  // Navigation host owns the locate dot, the drop-pin, and the route layers,
+  // all of which live directly on the map. It is created in the mount effect,
+  // disposed there too, and re-hydrated when the style is swapped.
+  const navRef = useRef<NavigationHost | null>(null);
+  /**
+   * Long-press (drop pin) must not ALSO look like a click, or dropping a pin
+   * would clear the feature popup at the same time. The host stamps this with a
+   * future timestamp when a long-press fires; the click handler swallows the
+   * next click until it passes. Set once, mutated by reference, read by value.
+   */
+  const suppressClickUntilRef = useRef<{ current: number }>({ current: 0 });
+
+  // Handle map resize on tab focus / visibility change to fix mobile blank map issue
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && mapRef.current) {
+        mapRef.current.resize();
+      }
+    };
+    const handleFocus = () => {
+      if (mapRef.current) {
+        mapRef.current.resize();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
 
   /**
    * Set or clear one layer's badge, returning the SAME object when nothing
@@ -178,12 +215,14 @@ export function MapView({
   const layersRef = useRef(layers);
   const onPickRef = useRef(onPick);
   const onViewportRef = useRef(onViewport);
+  const onNavRef = useRef(onNav);
   useEffect(() => {
     enabledRef.current = enabled;
     layersRef.current = layers;
     onPickRef.current = onPick;
     onViewportRef.current = onViewport;
-  }, [enabled, layers, onPick, onViewport]);
+    onNavRef.current = onNav;
+  }, [enabled, layers, onPick, onViewport, onNav]);
 
   /** `generated` stamp of each loaded layer's source, for the details card. */
   const layerAsOfRef = useRef<Map<string, string>>(new Map());
@@ -196,6 +235,11 @@ export function MapView({
   /** Layer ids with a request already in flight, to stop requests stacking. */
   const inFlightRef = useRef<Set<string>>(new Set());
 
+  /** Cached last-known FeatureCollection for each live layer, for resync after style change. */
+  const liveFcRef = useRef<Map<string, import("@/lib/layer-data").FeatureCollection>>(new Map());
+  /** Cached highlight geometry for resync after style change. */
+  const highlightGeomRef = useRef<import("@/lib/layer-data").Feature["geometry"] | null>(null);
+
   // Populated by the mount effect, called by the effects that react to
   // visibility and basemap changes. A ref rather than a map property so the
   // map object is never cast to an anonymous shape.
@@ -206,6 +250,36 @@ export function MapView({
   const highlightRef = useRef<((e: Event) => void) | null>(null);
   /** Which basemap the current map object was last built or switched to. */
   const appliedBasemapRef = useRef<string | null>(null);
+
+  /**
+   * Re-add all our data sources/layers after a style change (e.g. switching to
+   * OpenFreeMap via setStyle). Called from the "style.load" event handler.
+   */
+  async function resyncAfterStyleChange(map: import("maplibre-gl").Map) {
+    // Re-add static geojson layers
+    await syncRef.current?.();
+
+    // Re-add live layer sources from cached FCs
+    const maplibregl = libRef.current;
+    for (const [id, fc] of liveFcRef.current) {
+      const sourceId = `om-${id}`;
+      if (!map.getSource(sourceId) && enabledRef.current.has(id) && maplibregl) {
+        map.addSource(sourceId, { type: "geojson", data: fc as never });
+        const def = layersRef.current.find((d: LayerDef) => d.id === id);
+        if (def) addPaintLayers(maplibregl, map, def, geometryKindsOf(fc));
+      }
+    }
+
+    // Re-add highlight marker if there was one
+    const geom = highlightGeomRef.current;
+    if (geom) {
+      sinkHighlight(map, geom);
+    }
+
+    // Re-add the navigation markers/route that sit above every data layer. The
+    // host repaints whatever is live (GPS dot, destination pin, active route).
+    navRef.current?.rehydrate();
+  }
 
   // ---- create the map once -------------------------------------------------
   useEffect(() => {
@@ -218,8 +292,6 @@ export function MapView({
       installPbfGuard();
       const maplibregl = (await import("maplibre-gl")) as typeof import("maplibre-gl");
       if (cancelled || !containerRef.current) return;
-      await import("maplibre-gl/dist/maplibre-gl.css");
-
       // MapLibre derives its worker URL from `import.meta.url`, which is not an
       // http(s) URL once bundled. It then gets "" back and calls new Worker(""),
       // which the browser resolves to the site root, is handed our HTML page,
@@ -237,16 +309,44 @@ export function MapView({
       let initialView: { center: [number, number]; zoom: number } | null = null;
       if (typeof window !== "undefined") {
         const p = new URLSearchParams(window.location.search);
-        const z = Number(p.get("z"));
-        const lon = Number(p.get("lon"));
-        const lat = Number(p.get("lat"));
-        const sane = [z, lon, lat].every(
-          (v) => Number.isFinite(v) && (v === 0 || Math.abs(v) < 1e3),
-        );
-        if (sane && isFinite(z)) {
-          const clamped = Math.min(Math.max(z, 8), bm.maxzoom);
-          initialView = { center: [lon, lat] as [number, number], zoom: clamped };
+        // Params must be PRESENT, not merely parseable: Number(null) is 0, so
+        // a bare URL satisfied every check below and the map opened centred on
+        // [0, 0] at z8 - the middle of the Atlantic, looking at none of the
+        // data. That read exactly like "the map is empty".
+        if (p.has("z") && p.has("lon") && p.has("lat")) {
+          const z = Number(p.get("z"));
+          const lon = Number(p.get("lon"));
+          const lat = Number(p.get("lat"));
+          const sane = [z, lon, lat].every(
+            (v) => Number.isFinite(v) && (v === 0 || Math.abs(v) < 1e3),
+          );
+          if (sane && isFinite(z)) {
+            const clamped = Math.min(Math.max(z, 8), bm.maxzoom);
+            initialView = { center: [lon, lat] as [number, number], zoom: clamped };
+          }
         }
+      }
+
+      let initialStyle: import("maplibre-gl").StyleSpecification | string;
+      if (bm.kind === "style") {
+        initialStyle = bm.styleUrl;
+      } else {
+        initialStyle = {
+          version: 8,
+          glyphs: GLYPHS,
+          sources: {
+            basemap: {
+              type: "raster",
+              tiles: bm.tiles,
+              tileSize: 256,
+              attribution: bm.attribution,
+            },
+          },
+          layers: [
+            { id: "background", type: "background", paint: { "background-color": "#0b0f14" } },
+            { id: "basemap", type: "raster", source: "basemap" },
+          ],
+        };
       }
 
       const map = new maplibregl.Map({
@@ -260,17 +360,7 @@ export function MapView({
         // basemap into a wall while looking for a subsea cable.
         pitchWithRotate: false,
         dragRotate: false,
-        style: {
-          version: 8,
-          glyphs: GLYPHS,
-          sources: {
-            basemap: { type: "raster", tiles: bm.tiles, tileSize: 256, attribution: bm.attribution },
-          },
-          layers: [
-            { id: "background", type: "background", paint: { "background-color": "#0b0f14" } },
-            { id: "basemap", type: "raster", source: "basemap" },
-          ],
-        },
+        style: initialStyle,
       });
 
       // The initial style already carries this basemap, so the switch effect
@@ -288,7 +378,20 @@ export function MapView({
       // only ever seen in a console nobody has open. Logged, not fatal: a
       // single bad tile must not stop the map.
       map.on("error", (e) => {
-        console.warn("[map]", e?.error?.message ?? e);
+        const tt = e as unknown as {
+          error?: Error;
+          sourceId?: string;
+          tile?: { tileID?: { canonical: { z: number; x: number; y: number } } };
+        };
+        const tile = tt.tile?.tileID?.canonical;
+        const stack = (tt.error && 'stack' in tt.error ? String((tt.error as Error).stack) : "")
+          .split("\n").slice(0, 3).join(" | ");
+        console.warn(
+          "[map] " +
+            String(tt.error?.message ?? e) +
+            " " + (tt.sourceId ?? "") + " " + (tile ? `z${tile.z}/${tile.x}/${tile.y}` : "") +
+            " :: " + stack,
+        );
       });
 
       map.on("load", () => {
@@ -306,8 +409,20 @@ export function MapView({
         setLiveReady((n) => n + 1);
       });
 
+      // When setStyle() loads a new style (e.g. switching to OpenFreeMap), we
+      // need to re-add all our data layers and live sources. The "style.load"
+      // event fires when the new style is fully loaded.
+      map.on("style.load", () => {
+        if (!readyRef.current) return;
+        void resyncAfterStyleChange(map);
+      });
+
 
       map.on("click", (e: import("maplibre-gl").MapMouseEvent) => {
+        // A long-press that dropped a destination also emits a synthetic click
+        // (or a real one if the finger lingered). Swallow it so the pin drop
+        // does not immediately clear the feature popup.
+        if (Date.now() < suppressClickUntilRef.current.current) return;
         const hits = map.queryRenderedFeatures(e.point);
         for (const hit of hits) {
           const layer = layerByMapLayerId(hit.layer.id, layersRef.current);
@@ -359,6 +474,16 @@ export function MapView({
 
       mapRef.current = map;
 
+      // Long-press drop pin + locate-me + on-map route layers. The host speaks
+      // to the UI via window events (openmannin:locate/navigate/nav-mode/
+      // clear-nav) and reports renderable state through onState, so MapView and
+      // the page do not need to touch MapLibre navigation layers directly.
+      suppressClickUntilRef.current.current = 0;
+      navRef.current = attachNavigation(map, {
+        onState: (s: NavigationState) => onNavRef.current?.(s),
+        suppressClickUntil: suppressClickUntilRef.current,
+      });
+
       // Debug handle. Layer paint order is the kind of bug that is invisible
       // to any check which only asks "does this layer exist" - an opaque raster
       // basemap appended on top leaves every data layer present but hidden - so
@@ -394,6 +519,8 @@ export function MapView({
       const onHighlight = (e: Event) => {
         const { geometry } = (e as CustomEvent).detail as { geometry?: unknown };
         if (!geometry) return;
+        // Cache geometry so it survives a basemap style switch.
+        highlightGeomRef.current = geometry as import("@/lib/layer-data").Feature["geometry"];
         sinkHighlight(map, geometry as never);
       };
       window.addEventListener("openmannin:highlight-feature", onHighlight);
@@ -475,11 +602,16 @@ export function MapView({
       for (const [, timer] of liveRef.current) clearTimeout(timer);
       liveRef.current.clear();
       pollFailuresRef.current.clear();
+      liveFcRef.current.clear();
+      highlightGeomRef.current = null;
       syncRef.current = null;
       if (flyToRef.current) window.removeEventListener("openmannin:fly-to", flyToRef.current);
       flyToRef.current = null;
       if (highlightRef.current) window.removeEventListener("openmannin:highlight-feature", highlightRef.current);
       highlightRef.current = null;
+      navRef.current?.dispose();
+      navRef.current = null;
+      suppressClickUntilRef.current.current = 0;
       appliedBasemapRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
@@ -514,36 +646,11 @@ export function MapView({
     const maplibregl = libRef.current;
     if (!map || !maplibregl || !readyRef.current) return;
 
-    // Feeds on hold are stripped out of the poll set: no interval, no
-    // request, no console noise. They still show up in the panel as badged
-    // (feedErrors below) so a switched-on held layer says "on hold" rather
-    // than looking like an empty live feed.
     const wanted = new Set(
       layers
-        .filter((d) => d.kind === "live" && d.endpoint && enabled.has(d.id) && !FEEDS_ON_HOLD.has(d.id))
+        .filter((d) => d.kind === "live" && d.endpoint && enabled.has(d.id))
         .map((d) => d.id),
     );
-
-    // Seed (and prune) the on-hold entries in feedErrors, using the latest
-    // enabled set. This runs in the same effect as the pollers, so the badge
-    // appears for a held layer the moment it is switched on.
-    setFeedErrors((prev) => {
-      const next = { ...prev };
-      let changed = false;
-      for (const id of FEEDS_ON_HOLD) {
-        const isLiveHere = layersRef.current.some((l) => l.id === id && l.kind === "live");
-        const on = isLiveHere && enabled.has(id);
-        const want = on ? `503: ${ON_HOLD_REASON}` : undefined;
-        if (want && next[id] !== want) {
-          next[id] = want;
-          changed = true;
-        } else if (!want && id in next) {
-          delete next[id];
-          changed = true;
-        }
-      }
-      return changed ? next : prev;
-    });
 
     // Retire pollers for layers that are no longer wanted, and take their
     // source off the map. Leaving the source behind would keep the last set of
@@ -555,12 +662,12 @@ export function MapView({
       liveRef.current.delete(id);
       inFlightRef.current.delete(id);
       pollFailuresRef.current.delete(id);
+      liveFcRef.current.delete(id);
 
       // Drop the badge with the poller. Nothing else will: polling has stopped,
       // so the success path that normally clears a stale error never runs again,
-      // and the panel badges a layer the user switched OFF as "feed offline"
-      // until the page is reloaded. Only ids that had a poller are here, so the
-      // on-hold badges seeded above are untouched.
+      // and the panel would otherwise keep a layer the user switched OFF marked
+      // as "feed offline" until the page is reloaded.
       setFeedError(id, null);
 
       const sourceId = `om-${id}`;
@@ -623,9 +730,11 @@ export function MapView({
             // console every 30 seconds for a deploy that is working exactly as
             // designed, and would drown the warnings that matter. Anything else
             // - an upstream outage, a bad token, a missing function - is a real
-            // fault and gets logged.
+            // fault and gets logged (non-fatal info; the panel badge says the
+            // same thing to the reader, and hammering upstream with console
+            // warnings on every poll is noise for transient 5xx/403s).
             if (result.error !== "not-enabled") {
-              console.warn(`[live] ${id} unavailable (${result.status}):`, result.reason);
+              console.info(`[live] ${id} unavailable (${result.status}):`, result.reason);
             }
             return;
           }
@@ -641,6 +750,9 @@ export function MapView({
             console.warn(`[live] ${id} returned an unusable collection`);
             return;
           }
+
+          // Cache the FC for resync after style changes
+          liveFcRef.current.set(id, fc);
 
           // A stale answer is still worth showing, but it must be visible: the
           // feed served a cache because the network failed.
@@ -708,51 +820,58 @@ export function MapView({
   // ---- react to basemap changes --------------------------------------------
   // `liveReady` is in the deps deliberately. The first run of this effect
   // happens before the map finishes loading and bails out, so a switch made in
-  // that first second was silently dropped - the selector said OpenTopoMap
-  // while Esri imagery stayed on screen, and no later run ever corrected it
-  // because `basemap` had not changed again. Re-running on load picks the
-  // current value up; `appliedBasemapRef` keeps that re-run from tearing down
-  // and rebuilding an already-correct source.
+  // that first second was silently dropped - a new basemap wasn't applied.
+  // Re-running on load picks the current value up;
+  // `appliedBasemapRef` keeps that re-run from rebuilding an already-correct
+  // style.
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
+    if (appliedBasemapRef.current === basemap) return;
     const bm = BASEMAPS[basemap];
-    if (appliedBasemapRef.current === basemap && map.getLayer("basemap")) return;
 
-    // The raster source has to be REPLACED, not retargeted. Attribution in
-    // MapLibre is a property of the source in the style, and setTiles() keeps
-    // the original attribution - so switching basemaps that way leaves the
-    // control crediting Esri while OpenTopoMap's CC-BY-SA tiles are on screen.
-    // That is a licence-compliance bug, not a cosmetic one.
-    if (map.getLayer("basemap")) map.removeLayer("basemap");
-    if (map.getSource("basemap")) map.removeSource("basemap");
+    if (bm.kind === "style") {
+      // Switch to a full MapLibre style URL. This replaces all sources/layers.
+      // We use diff: false to avoid fragile style diffing against our inline style.
+      map.setStyle(bm.styleUrl, { diff: false });
+      // Resync is handled by the "style.load" event listener.
+    } else {
+      // Raster basemap: replace the basemap source/layer in-place.
+      // The raster source has to be REPLACED, not retargeted. Attribution in
+      // MapLibre is a property of the source in the style, and setTiles() keeps
+      // the original attribution - so switching basemaps that way leaves the
+      // control crediting the old provider while different tiles are on screen.
+      // That is a licence-compliance bug, not a cosmetic one.
+      if (map.getLayer("basemap")) map.removeLayer("basemap");
+      if (map.getSource("basemap")) map.removeSource("basemap");
 
-    map.addSource("basemap", {
-      type: "raster",
-      tiles: bm.tiles,
-      tileSize: 256,
-      attribution: bm.attribution,
-    });
+      map.addSource("basemap", {
+        type: "raster",
+        tiles: bm.tiles,
+        tileSize: 256,
+        attribution: bm.attribution,
+      });
 
-    // The basemap MUST be re-inserted at the bottom of the layer stack.
-    // addLayer without a beforeId appends to the end, which would drop an
-    // opaque raster layer on top of every data layer and make the whole map
-    // look empty - and because the effect runs on both directions of the
-    // switch, swapping back would not recover it either. Only a refresh
-    // rebuilt the style with the basemap first, which is exactly the "it
-    // fixes itself if I reload" symptom.
-    const firstDataLayer = map
-      .getStyle()
-      .layers?.find((l) => l.id.startsWith("om-"))?.id;
-    map.addLayer(
-      { id: "basemap", type: "raster", source: "basemap" },
-      // Sit directly above the background and below everything we drew.
-      firstDataLayer ?? (map.getLayer("background") ? "background" : undefined),
-    );
+      // The basemap MUST be re-inserted at the bottom of the layer stack.
+      // addLayer without a beforeId appends to the end, which would drop an
+      // opaque raster layer on top of every data layer and make the whole map
+      // look empty.
+      const firstDataLayer = map
+        .getStyle()
+        .layers?.find((l) => l.id.startsWith("om-"))?.id;
+      map.addLayer(
+        { id: "basemap", type: "raster", source: "basemap" },
+        firstDataLayer ?? (map.getLayer("background") ? "background" : undefined),
+      );
+    }
 
     map.setMaxZoom(bm.maxzoom);
     appliedBasemapRef.current = basemap;
-    void syncRef.current?.();
+    // For style basemaps the "style.load" event handler runs the resync once the
+    // new style is ready; syncing now would add sources to a style that is still
+    // loading. Raster swaps are synchronous and can sync immediately.
+    if (bm.kind === "raster") void syncRef.current?.();
   }, [basemap, liveReady]);
 
   // ---- load the data manifest ----------------------------------------------
@@ -798,7 +917,7 @@ export function MapView({
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
       {status !== "ready" && (
-        <div className="absolute top-3 left-3 rounded bg-black/70 px-3 py-1.5 text-xs text-[#7d8f9d]">
+        <div className="absolute top-14 left-3 rounded-md bg-black/70 px-3 py-1.5 text-xs text-ink-3 md:top-3">
           {status}
         </div>
       )}

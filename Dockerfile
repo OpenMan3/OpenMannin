@@ -70,9 +70,9 @@ RUN node -e "const m=require('./public/data/manifest.json'); const absent=m.abse
 RUN npm run build
 
 # The export must be complete: index, the MapLibre worker, the passes worker,
-# the health report and the headers file. Any of these missing means the page
-# loads and something on it silently does not.
-RUN for f in out/index.html out/maplibre-gl-worker.mjs out/passes-worker.mjs out/health.json out/_headers out/data/manifest.json; do \
+# the routing worker, the health report and the headers file. Any of these
+# missing means the page loads and something on it silently does not.
+RUN for f in out/index.html out/maplibre-gl-worker.mjs out/passes-worker.mjs out/routing-worker.mjs out/health.json out/_headers out/data/manifest.json; do \
       test -f "$f" || { echo "ERROR: export is missing $f"; exit 1; }; \
     done
 

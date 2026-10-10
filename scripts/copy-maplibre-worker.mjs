@@ -38,7 +38,7 @@ const PUBLIC = path.join(ROOT, "public");
 
 // The production worker. The -dev variant carries assertions and source maps
 // and is not what a deployed map should be running.
-const FILES = ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs"];
+const FILES = ["maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs", "maplibre-gl.css"];
 
 let copied = 0;
 for (const name of FILES) {

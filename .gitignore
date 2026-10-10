@@ -37,6 +37,12 @@ public/maplibre-gl-shared.mjs
 # `npm run build` (which runs before `next build`), so there is nothing to commit.
 public/passes-worker.mjs
 
+# The on-map routing worker, bundled by scripts/build-routing-worker.mjs from
+# src/lib/navigation/routing-worker.ts. Same reasoning as the passes worker: a
+# build artifact regenerated before every dev/build, gitignored so it cannot go
+# stale against its source.
+public/routing-worker.mjs
+
 # ---------------------------------------------------------------------------
 # generated data layers - NOW COMMITTED
 #

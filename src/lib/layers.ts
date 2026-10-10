@@ -4,7 +4,10 @@ import type { Gap, LayerDef } from "./types";
  * The layer registry.
  *
  * Ordering rules that matter:
- *  1. `confidence: "D"` layers are never `defaultOn`.
+ *  1. As of 2026-10-07 every layer is `defaultOn: true` — the reader should be
+ *    shown the evidence, including the weak and the disputed, rather than a
+ *    curated subset. Disputed (grade D) layers are still rendered but flagged,
+ *    and on-hold live feeds badge themselves without ever fetching.
  *  2. Anything with a licence of `NO-LICENCE` or `UNKNOWN` that also has
  *     `requiresPermission` gets a visible badge in the layer panel. We render
  *     it because it is genuinely informative, not because we are entitled to.
@@ -42,7 +45,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "heritage.geojson",
     color: "#a6785a",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 14,
     description:
       "Places on the Isle of Man that carry a heritage designation in Wikidata (heritage designation P1435, country P17 = Isle of Man Q9676) and a published coordinate. Predominantly 'registered building' entries, plus scheduled monuments and Manx National Heritage records.",
@@ -85,7 +88,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "bridges.geojson",
     color: "#78716c",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 12,
     description:
       "Road, rail and foot bridges mapped in OpenStreetMap as ways tagged bridge=*.",
@@ -104,7 +107,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "speed-limits.geojson",
     color: "#dc2626",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 12,
     description: "Road segments carrying a posted maxspeed tag in OpenStreetMap.",
     caveats: [
@@ -147,7 +150,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "postcodes.geojson",
     color: "#a78bfa",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 10,
     description:
       "1,414 postcode centroids derived from OSM addr:postcode tags. Each point is the mean of all addresses sharing that postcode.",
@@ -167,7 +170,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "house-numbers.geojson",
     color: "#34d399",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 14,
     description:
       "8,395 address points from OpenStreetMap: 6,949 with addr:housenumber (numbered street addresses) and 1,446 named rural/heritage properties mapped with addr:housename instead of a number. Each point is a building, entrance or standalone address node.",
@@ -226,7 +229,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "traffic-signals.geojson",
     color: "#f59e0b",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 13,
     description:
       "Traffic signals (highway=traffic_signals) and marked crossings (highway=crossing) mapped in OpenStreetMap.",
@@ -250,7 +253,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "subsea-cables.geojson",
     color: "#e11d48",
-    defaultOn: false,
+    defaultOn: true,
     dashed: true,
     minZoom: 5,
     featureCount: 5,
@@ -273,7 +276,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "cable-landings.geojson",
     color: "#f43f5e",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 8,
     featureCount: 4,
     description:
@@ -287,29 +290,6 @@ export const LAYERS: LayerDef[] = [
     confidence: "C",
     sourceId: "mea",
   },
-  {
-    id: "historic-cables",
-    label: "Historic & remnant cables",
-    group: "cables",
-    kind: "geojson",
-    file: "historic-cables.geojson",
-    color: "#78716c",
-    defaultOn: false,
-    minZoom: 8,
-    description:
-      "Four documented landing PLACES, not routes. The 1859 Point Cranstal-St Bees telegraph cable (36 miles, the first cable ever to the IoM and the first use of outer servings on a submarine cable) first landed at Cranstal in Bride and was relocated to Port Cornaa after tidal damage. Also recorded: remnants at Port Grenaugh, and two short cables in The Sound possibly linking to the Calf of Man.",
-    caveats: [
-      "THESE ARE PLACES, NOT CABLE POSITIONS. Each point is a Nominatim centroid for the named landing settlement, not a surveyed cable landing or a recovered wreck.",
-      "No route geometry is published. The alignments of the 1859 and 1942 systems are not available in any reusable machine-readable form, and inferring a line between two landing points would assert a survey nobody has made.",
-      "ATLANTIC-CABLE.COM CARRIES NO EXPLICIT LICENCE and is graded UNKNOWN, so this layer renders with a permission warning in the UI. Treat the history as public record, not as a grant to republish.",
-      "The two cables in The Sound are described in the source as 'possibly linking to the Calf of Man'. That attribution is uncertain and is flagged, not resolved.",
-      "The 1942 Anglesey-IoM Post Office cable (first use of a submerged repeater) is NOT plotted: no landing place for it could be established from the source consulted.",
-      "Wreck positions and seabed debris are not included; those need a hydrographic or archaeological source and are a separate question from where a cable landed.",
-    ],
-    confidence: "C",
-    sourceId: "atlanticcable",
-    featureCount: 4,
-  },
 
   // ==========================================================================
   // INFRASTRUCTURE
@@ -321,7 +301,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "ports.geojson",
     color: "#0f766e",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 8,
     description:
       "The nine statutory ports of the Isle of Man — Douglas, Ramsey, Peel, Castletown, Port Erin, Port St Mary, Laxey, Port Cornaa and Groudle — plus 13 mapped harbour areas, Douglas and Peel marinas and 12 piers, linkspans, groins and oil jetties. Marine Operations Centre on the 2nd floor of the Sea Terminal, Douglas, 24 hours. All eight mapped basins are tidal; the north-east approaches run about 8 m, which sizes vessels above roughly 7 m out of the island.",
@@ -345,7 +325,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "satellite-stations.geojson",
     color: "#a855f7",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 10,
     description:
       "Two features, because two sites is how many have a citable position — not how many exist. The Spaceman teleport (aql Space Services, formerly BlueWave Communications) at 54.1390 N, -4.4951, about 2 km east of Douglas: carrier-neutral, chosen for low horizon clutter and separately allocated spectrum, with dark fibre into the aql UK network and access to BlueWave masts including the adjacent 40 m CARNANE1 tower. Also the IOMS GNSS reference station at the airport, documented in OS Net and Leica SmartNet.",
@@ -370,7 +350,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "dumpsites.geojson",
     color: "#ea580c",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 5,
     description:
       "Beaufort's Dyke: a glacial tunnel valley in the North Channel, 200-312 m deep, a designated MoD ordnance disposal ground after WWI and the UK's largest offshore dump site post-WWII. Over 1 million tonnes of conventional munitions; ~14,000-14,500 tonnes of 5-inch artillery rockets with phosgene dumped July 1945 plus ~14,000 t phosgene loose-dumped 1946-47; ~2 tonnes of low-level radioactive waste in concrete-encased drums authorised in the 1950s-60s. Dumping closed under the London and Oslo Conventions 1972, last dumping ~1976. A magnitude 2.5 explosion was registered on 8 February 1986. Shown as a grade-C indicative 50 x 3.5 km corridor along the OSPAR disposal axis, plus the grade-B axis itself.",
@@ -395,7 +375,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "seamarks.geojson",
     color: "#eab308",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 10,
     description:
       "106 lights, light-vessels, beacons and buoys from OpenStreetMap, including Chicken Rock, Calf of Man, Point of Ayre and Bradda Head. Unnamed beacons are kept and flagged rather than discarded.",
@@ -410,25 +390,44 @@ export const LAYERS: LayerDef[] = [
     featureCount: 106,
   },
   {
-    id: "networks",
-    label: "IP networks & ASNs",
+    id: "comms-towers",
+    label: "Communication towers & masts",
     group: "infrastructure",
     kind: "geojson",
-    file: "networks.geojson",
-    color: "#a78bfa",
-    defaultOn: false,
-    minZoom: 8,
+    file: "comms-towers.geojson",
+    color: "#7c3aed",
+    defaultOn: true,
+    minZoom: 10,
     description:
-      "Every autonomous system registered to country IM, with what it currently announces in BGP. 27 ASNs registered, 16 of them routed and announcing 120 prefixes (109 IPv4, 11 IPv6). Includes Manx Telecom (AS13122, 34 prefixes), Domicilium (AS15766), Elite Group Wi-Manx (AS42455), TSG Interactive (AS43338 and AS48536), Netcetera (AS24851), Plan Communications (AS35691), Stacuity (AS197385), BlueWave/aql (AS201898) and others.",
+      "OSM-tagged cell/mast and antenna structures island-wide: man_made=tower, man_made=mast and man_made=communications_tower, with the communication-specific tower:type where mapped. This is the only open route to this data — no operator mast register is published for the Isle of Man.",
     caveats: [
-      "The marker is the OPERATOR'S ANCHOR, not the location of any prefix. ASN country of registration is IM; announced prefixes are wherever the operator routes, which for these networks is frequently mainland UK, Europe and North America. 87.254.64.0/19 and 2001:470:60::/48 (Google) appear in this index because a Manx-registered operator announces them.",
-      "26 of 27 markers fall back to a Douglas town-centre anchor at confidence grade C, because RIPEstat publishes no address for the ASN. Only Manx Telecom has a verifiable anchor (Isle of Man Business Park, Braddan, grade B). Do not read these pins as premises locations.",
-      "11 of the 27 ASNs are registered but NOT announced, so they have no prefixes and carry no address space. Several are duplicate registrations of active holders (SC IP Limited holds AS200348, AS207092 and AS64480).",
-      "This is a routing registry, not threat intelligence. It cannot identify a subscriber or geolocate an address, and it deliberately exposes no query logs.",
+      "OSM community mapping, not the operators' asset register. Present-on-the-ground sites may be unmapped, and mapped sites may be decommissioned.",
+      "A mast is not proof of a live transmitter: OSM records its existence, not its operational state.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
-    confidence: "A",
-    sourceId: "ripestat",
-    featureCount: 27,
+    confidence: "C",
+    sourceId: "osmIOM",
+    featureCount: 97,
+  },
+  {
+    id: "wifi",
+    label: "Places offering WiFi",
+    group: "infrastructure",
+    kind: "geojson",
+    file: "wifi.geojson",
+    color: "#0ea5e9",
+    defaultOn: true,
+    minZoom: 12,
+    description:
+      "OSM-tagged internet_access=wlan/yes and amenity=wifi features: cafes, pubs, hotels and other venues a mapper has recorded as offering WiFi. No open public-WiFi hotspot register exists for the island, so this is the only open signal — thin and self-reported.",
+    caveats: [
+      "OSM self-reported, community-maintained. A mapped WiFi tag means a mapper once recorded access here, not that the network is live today.",
+      "Mostly venues with their own WiFi, not verified municipal public hotspots.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
+    ],
+    confidence: "C",
+    sourceId: "osmIOM",
+    featureCount: 46,
   },
 
   // ==========================================================================
@@ -441,10 +440,10 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "offshore-wind.geojson",
     color: "#0ea5e9",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 5,
     description:
-      "One project, and it is a refusal rather than a lease. Mooir Vannin (Ørsted, ~1.4 GW, up to 100 turbines, 6-12 nm off Maughold Head) reached the Marine Infrastructure Consent process and its application CLOSED UNCONSENTED on 9 September 2026. Nothing is operating or consented. Shown as a single grade-D indicative point at the midpoint of the published distance band. Not default-on.",
+      "One project, and it is a refusal rather than a lease. Mooir Vannin (Ørsted, ~1.4 GW, up to 100 turbines, 6-12 nm off Maughold Head) reached the Marine Infrastructure Consent process and its application CLOSED UNCONSENTED on 9 September 2026. Nothing is operating or consented. Shown as a single grade-D indicative point at the midpoint of the published distance band. Now shown by default like every other layer — but it is grade D and a refusal, not a consented project, so read it as a recorded proposal that did not proceed.",
     caveats: [
       "GRADE D POSITION. The point is an indicative centroid derived from the published bearing and distance ('6-12 nautical miles off Maughold Head') projected north-east into the Irish Sea. It is NOT a lease area, a consent boundary or a turbine position. It falls about 15 km from the nearest coast, beyond the 3 nm territorial sea, in the extended jurisdiction area.",
       "THE CONSENT WAS REFUSED. The Marine Infrastructure Consent application closed unconsented on 9 September 2026. A refused proposal is a materially different fact from one that lapsed unexamined, which is why it is mapped at all.",
@@ -464,7 +463,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "reservoirs.geojson",
     color: "#0d9488",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 10,
     description:
       "Reservoirs and impounding water bodies mapped in OpenStreetMap (landuse=reservoir / water=reservoir). Manx Utilities' operational reservoirs include West Baldwin, Sulby, Clypse and Kerrowdhoo.",
@@ -483,7 +482,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "power.geojson",
     color: "#ea580c",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 10,
     description:
       "Four generation sites joined to MEA Ch.6.1 capacities: Pulrose (135MW — an 87MW combined-cycle gas turbine plus five diesel engines at 48MW), Peel (38.4MW, four diesel engines), the Island Energy from Waste plant (7MW capable, typically supplying ~3MW), and Sulby hydro (1MW). Manx Utilities has over 178MW of generation capacity, 1,300 km of underground cable and 530 km of overhead line, on three independent supply chains. Also 24 named and 53 unnamed substations, 23 solar arrays and 1 wind generator mapped by OSM.",
@@ -555,7 +554,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "airports.geojson",
     color: "#f43f5e",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 7,
     featureCount: 7,
     description:
@@ -603,7 +602,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "tide-stations.geojson",
     color: "#818cf8",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 9,
     featureCount: 6,
     description:
@@ -623,62 +622,6 @@ export const LAYERS: LayerDef[] = [
   // LIVE FEEDS
   // ==========================================================================
   {
-    id: "live-transit",
-    label: "Live vehicles (bus, steam train, tram, horse tram)",
-    group: "live",
-    kind: "live",
-    // Marks this as a live feed. Resolved in src/lib/feeds. This deployment is a
-    // static export on Cloudflare Pages with no server, so function-backed feeds
-    // are reported as unavailable rather than fetched.
-    endpoint: "function:live-transit",
-    color: "#22d3ee",
-    defaultOn: false,
-    // As of 2026-10-06 this feed is on hold: polling is disabled and no
-    // requests are made until a data agreement is secured (FEEDS_ON_HOLD).
-    description:
-      "Live positions from the FindMyBus.im SignalR hub. This single stream covers ALL government-operated road passenger transport: buses (type B), school buses (S), steam trains (L), trams (T) and horse trams (H). Server-side ingest, one upstream connection, fanned out to all clients. OFF BY DEFAULT: it needs FINDMYBUS_PERMISSION=1 and, as of 2026-10-05, the upstream is not actually delivering.",
-    caveats: [
-      "*** DELIVERY IS UNVERIFIED. *** Re-tested 2026-10-05: negotiate, handshake and poll all succeed, and 11 separate connections were held for 160 s in total, but NOT ONE TransportData frame was ever pushed. The hub accepted an invocation and returned 200 with an empty body. So the protocol is right and the endpoint is live, and we still have never seen a vehicle on it. Do not describe this layer as working until a real frame has been seen.",
-      "The route is built to the protocol verified from the official client bundle: POST /transporthub/negotiate?negotiateVersion=1, then handshake and poll with the returned CONNECTION TOKEN (not connectionId - using connectionId gets 'No Connection with that ID' on every request), frames terminated by 0x1e, method 'TransportData'.",
-      "THE SERVER DROPS THE CONNECTION ABOUT 15 SECONDS after the handshake, whether or not it sent anything, and answers each poll immediately instead of holding it. Verified. So this cannot be a held-open socket like the AIS feed: the route re-negotiates on a loop and keeps last-known position per vehicle, with the receive time as the staleness clock.",
-      "NO robots.txt (404), no terms page, no licence. Absence of a licence is not a grant. The route refuses to run unless FINDMYBUS_PERMISSION=1, so setting it is the deliberate act of saying you have checked. Contact infrastructure@gov.im before publishing.",
-      "An F5 BIG-IP WAF sits in front and returns HTTP 504 on a fraction of long-polls. Treat 504 as normal, keep exactly one poll in flight, and carry the ARRAFFinity cookie across negotiate, handshake and poll or the WAF moves us to a different backend mid-conversation.",
-      "The client hard-deletes markers older than 300 s. That interval is read from api/v1/clientconfig rather than hardcoded, so a change on their side does not silently become a lie here.",
-      "The payload carries no trustworthy timestamp, so age is measured from when we received the record. A congested upstream inflates every age on the map.",
-      "Fields at indices 1, 2 and 7 are transmitted but never read by the official client. We do not guess their meaning; the raw record is carried through uninterpreted.",
-      "Groudle Glen Railway and Great Laxey Mine Railway are absent from this feed entirely.",
-    ],
-    confidence: "A",
-    sourceId: "findmybus",
-  },
-  {
-    id: "live-flights",
-    label: "Live aircraft",
-    group: "live",
-    kind: "live",
-    // Server-backed, and unavailable here. OpenSky pins CORS to its own origin, so a
-    // browser cannot call it at all - see src/lib/feeds. As of 2026-10-06 it is
-    // on hold: no polling runs and no requests are made until a written data
-    // agreement is secured - see FEEDS_ON_HOLD in src/lib/feeds/index.ts.
-    endpoint: "function:live-flights",
-    color: "#f472b6",
-    defaultOn: false,
-    description:
-      "ADS-B aircraft state vectors within a 0.15 x 0.25 degree box centred on the Isle of Man, which falls in the <=25 sq degree cost tier at 1 credit per call.",
-    caveats: [
-      "PERMISSION REQUIRED BEFORE PUBLISHING. OpenSky's Terms of Use §3(vi) and its own summary box require a previous written agreement for any 'operational' use, including integration into a live product, 'even for only internal' use and 'regardless of the entity's non-profit status'. Email contact@opensky-network.org. The route refuses to run without OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET, so setting them is the deliberate act of saying the agreement exists.",
-      "400 credits/day on the anonymous tier, IP-bucketed. That is about 400 refreshes per day across ALL your users behind one egress IP. You need an OAuth2 account (basic auth was removed 2026-03-18) and aggressive caching. The box used is 0.4 x 0.6 degrees = 0.24 sq degrees, inside the <=25 sq degree tier at 1 credit per call; widening it to catch more traffic crosses into the next tier.",
-      "CORS is hard-pinned to https://opensky-network.org regardless of the Origin header - verified by request. A browser cannot read this feed, and it would need a server-side proxy to be reachable from one at all.",
-      "`category` IS ABSENT FROM THE ANONYMOUS TIER ENTIRELY. Re-tested 2026-10-05: state vectors came back as 17-element arrays with no index 17, so the ADS-B emitter category is simply not there. Indexing the documented position blindly yields undefined where a number belongs, which becomes NaN in JSON and draws a marker at 0,0 off West Africa. Every field is read through a null guard for this reason.",
-      "`category` is the ADS-B EMITTER category (0-20), not a civil/military flag. Treating category 1 or 14 as 'military' is community folklore and will miss most military traffic, because most military aircraft emit category 1 or 7.",
-      "`/tracks` and `/tracks/all` return 404 from OpenSky. Only the /states/all family responds.",
-      "An empty box returns `\"states\": null`, not `[]`. Guard against null.",
-      "This is ADS-B over a volunteer receiver network. An aircraft with no transmitter, or one below coverage, does not appear at all - an empty layer does not mean an empty sky, and coverage over the Irish Sea is thinner than over land.",
-    ],
-    confidence: "A",
-    sourceId: "opensky",
-  },
-  {
     id: "satellite-passes",
     label: "Satellite pass predictions",
     group: "live",
@@ -687,7 +630,7 @@ export const LAYERS: LayerDef[] = [
     // SGP4 arithmetic runs in a Web Worker. See src/lib/feeds/passes-client.ts.
     endpoint: "client:satellite-passes",
     color: "#c084fc",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 5,
     description:
       "Predicted pass windows for the ISS and other crewed spacecraft over the island's two ground stations, computed in your browser by propagating public-domain two-line element sets with SGP4, in a Web Worker so the map stays responsive.",
@@ -700,30 +643,6 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "celestrak",
-  },
-  {
-    id: "live-vessels",
-    label: "Live vessels (AIS)",
-    group: "live",
-    kind: "live",
-    // Server-backed, and unavailable here. An AISStream key must not be readable in
-    // devtools, and their 3-connections-per-IP cap forbids a socket per visitor.
-    endpoint: "function:live-vessels",
-    color: "#2dd4bf",
-    defaultOn: false,
-    // On hold as of 2026-10-06: polling disabled, no upstream requests
-    // (FEEDS_ON_HOLD).
-    minZoom: 5,
-    description:
-      "AIS PositionReports inside a bounding box around the Isle of Man. Would need one server-side ingest fanned out to all clients, which a static host cannot provide.",
-    caveats: [
-      "There is NO free, no-key, programmatic AIS source. MarineTraffic is ~EUR 330 per 10,000 credits and now sales-gated. Global Fishing Watch needs a token and is CC BY-NC (non-commercial only, which rules out an ad-supported site).",
-      "AISStream is free but has NO published terms document, no SLA and no replay. Absence of a prohibition is not a commercial-use grant — this is a legal gap, not an open licence.",
-      "AISStream caps you at 3 connections per account AND 3 per originating IP, which is why this would need one ingest plus internal fan-out rather than one socket per client.",
-      "Send permessage-deflate; uncompressed connections are bandwidth-capped from September 2026.",
-    ],
-    confidence: "C",
-    sourceId: "aisstream",
   },
   {
     id: "weather",
@@ -1002,6 +921,15 @@ export const GAPS: Gap[] = [
     whatWeWouldNeed:
       "DEFA marine habitat layers under the OGL, or an EMODnet seabed-habitat ingest with per-product attribution.",
     contact: "EnvironmentalProtection@gov.im",
+    severity: "medium",
+  },
+  {
+    id: "ais-live",
+    title: "Live AIS vessel tracking",
+    wanted: "Live positions of vessels transiting Manx waters — the busiest OSINT signal there is for Douglas Bay and the Irish Sea approaches.",
+    whyUnavailable:
+      "There is NO free, no-key programmatic AIS source. AISStream is free but requires an API key, caps 3 connections per account AND per originating IP, prohibits direct browser connections in its own docs, and publishes no terms document — an undocumented-licence gap we will not silently build on. MarineTraffic is sales-gated and paid; Global Fishing Watch is CC BY-NC (blocks ad-supported deployment). A browser-side WebSocket client was built and evaluated on 2026-10-07, then removed, because a client shipped without a deployer-provided key would be dead code and would still lean on an undocumented licence.",
+    whatWeWouldNeed: "A server-side ingest fanning one licensed connection out to clients, or a properly documented open licence from the provider.",
     severity: "medium",
   },
 ];

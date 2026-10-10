@@ -23,23 +23,17 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | No published licence | no | yes | No terms of use, robots.txt or licence found. Absence of a licence is not a grant. Do not republish without written permission. |
 | Licence not established | no | yes | Verify before use. |
 
-## Source register (31)
+## Source register (22)
 
 | Source | Publisher | Licence | Last checked |
 | --- | --- | --- | --- |
-| [Isle of Man Survey — Digital Map Data](https://www.gov.im/about-the-government/departments/infrastructure/mapping/) | Isle of Man Government — Isle of Man Survey | UNKNOWN | 2026-10-04 |
 | [OpenStreetMap — WikiProject Isle of Man](https://www.openstreetmap.org/wiki/WikiProject_Isle_of_Man) | OpenStreetMap contributors | ODbL | 2026-10-04 |
 | [Wikidata](https://www.wikidata.org/) | Wikimedia Foundation / Wikidata community | CC0-1.0 | 2026-10-06 |
 | [Isle of Man Government web publication](https://www.gov.im/) | Isle of Man Government | OGL-IoM | 2026-10-04 |
-| [FindMyBus.im live vehicle feed (SignalR)](https://www.findmybus.im/) | Isle of Man Public Transport / Bus Vannin | NO-LICENCE | 2026-10-04 |
-| [The OpenSky Network REST API](https://openskynetwork.github.io/opensky-api/rest.html) | OpenSky Network / ETH Zurich | UNKNOWN | 2026-10-04 |
 | [CelesTrak orbital elements](https://celestrak.org/) | CelesTrak (GP data by TLE) | PUBLIC-DOMAIN | 2026-10-04 |
-| [AISStream.io](https://aisstream.io/) | AISStream (Voltron / vtex.ai) | NO-LICENCE | 2026-10-04 |
-| [Global Fishing Watch API v3](https://globalfishingwatch.org/) | Global Fishing Watch Foundation | CC-BY-NC-4.0 | 2026-10-04 |
 | [Open-Meteo weather and marine API](https://open-meteo.com/) | Open-Meteo | CC-BY-4.0 | 2026-10-04 |
 | [Manx Utilities asset disclosures](https://www.manxutilities.im/) | Manx Utilities | OGL-IoM | 2026-10-04 |
 | [Submarine Cable Map / TeleGeography](https://www.submarinecablemap.com/) | TeleGeography | CC-BY-4.0 | 2026-10-04 |
-| [Atlantic-Cable.com cable history](https://atlantic-cable.com/) | Atlantic Cable (Steven Roberts / Bill Glover) | UNKNOWN | 2026-10-04 |
 | [Nuclear Decommissioning Authority / Sellafield Ltd](https://www.gov.uk/government/publications/nuclear-decommissioning-authority-annual-report-and-accounts-2025-to-2026) | UK Nuclear Decommissioning Authority | OGL-IoM | 2026-10-04 |
 | [Manx Marine Environmental Assessment (MMEA), 2nd edition](https://www.gov.im/media/1363407/ch-21-physical-environment.pdf) | Isle of Man Government | OGL-IoM | 2026-10-04 |
 | [OpenStreetMap seamarks survey](https://wiki.openstreetmap.org/wiki/Seamark) | OpenStreetMap contributors | ODbL | 2026-10-04 |
@@ -51,10 +45,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | [The Crown Estate offshore wind leasing](https://www.thecrownestate.co.uk/our-business/marine/offshore-wind/morgan-offshore-wind-site) | The Crown Estate | PUBLIC-DOMAIN | 2026-10-04 |
 | [Spaceman teleport / aql Space Services](https://spaceman.im/) | aql (formerly BlueWave Communications) | PUBLIC-DOMAIN | 2026-10-04 |
 | [OpenTopoMap tiles](https://opentopomap.org/) | OpenTopoMap (based on OpenStreetMap, SRTM) | CC-BY-4.0 | 2026-10-04 |
-| [OpenFreeMap / OpenMapTiles](https://openfreemap.org/) | OpenFreeMap | ODbL | 2026-10-04 |
 | [EMODnet Bathymetry](https://emodnet.ec.europa.eu/en/bathymetry) | EMODnet / European Commission | CC-BY-4.0 | 2026-10-04 |
-| [Esri World Imagery basemap](https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer) | Esri / Maxar / Earthstar Geographics | UNKNOWN | 2026-10-04 |
-| [RIPEstat data API](https://stat.ripe.net/) | RIPE NCC | NO-LICENCE | 2026-10-04 |
 | [OpenMannin compilation](https://github.com/) | OpenMannin | OGL-IoM | 2026-10-04 |
 | [Isle of Man Government public webcams](https://www.gov.im/webcams/) | Isle of Man Government (images.gov.im) | OGL-IoM | 2026-10-04 |
 | [UK Met Office DataHub](https://datahub.metoffice.gov.uk/) | UK Met Office | CC-BY-4.0 | 2026-10-04 |
@@ -93,7 +84,6 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | --- | --- | --- | --- | --- |
 | Submarine cables (`subsea-cables`) | osmSeamarks | ODbL | B | 5 |
 | Cable landings (`cable-landings`) | mea | OGL-IoM | C | 4 |
-| Historic & remnant cables (`historic-cables`) | atlanticcable | UNKNOWN | C | 4 |
 
 ### infrastructure
 
@@ -103,7 +93,8 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Satellite ground stations (`satellite`) | spaceman | PUBLIC-DOMAIN | B | 2 |
 | Chemical & ordnance dumpsites (`dumpsites`) | ospar | PUBLIC-DOMAIN | B | 2 |
 | Lighthouses & seamarks (`lighthouses`) | osmIOM | ODbL | B | 106 |
-| IP networks & ASNs (`networks`) | ripestat | NO-LICENCE | A | 27 |
+| Communication towers & masts (`comms-towers`) | osmIOM | ODbL | C | 97 |
+| Places offering WiFi (`wifi`) | osmIOM | ODbL | C | 46 |
 
 ### energy
 
@@ -137,13 +128,10 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 
 | Layer | Source | Licence | Grade | Features |
 | --- | --- | --- | --- | --- |
-| Live vehicles (bus, steam train, tram, horse tram) (`live-transit`) | findmybus | NO-LICENCE | A | live/blocked |
-| Live aircraft (`live-flights`) | opensky | UNKNOWN | A | live/blocked |
 | Satellite pass predictions (`satellite-passes`) | celestrak | PUBLIC-DOMAIN | C | live/blocked |
-| Live vessels (AIS) (`live-vessels`) | aisstream | NO-LICENCE | C | live/blocked |
 | Weather & sea state (`weather`) | openmeteo | CC-BY-4.0 | A | live/blocked |
 
-## Gaps (22)
+## Gaps (23)
 
 Coverage that could not be sourced under a usable licence. Rendered in the app as a first-class panel.
 
@@ -171,3 +159,4 @@ Coverage that could not be sourced under a usable licence. Rendered in the app a
 | TT and Billown course infrastructure (`tt-course`) | low | The previous layer was a government 'MotorCourse' service and is removed. No open, licensed alignment is published; the widely quoted 37.73 mile length is Wikipedia-only with no official linear referencing. |
 | Coastal access points (`coastal-access`) | low | This was a government map layer (40 points) and is removed because it is not openly licensed. No independently licensed equivalent was found. |
 | Marine habitats and fishery closures (`marine-habitats`) | medium | This was a government map layer (434 features) and is removed because it is not openly licensed. Some layers of this type exist in EMODnet (CC-BY 4.0) but no ingest has been built for them yet. |
+| Live AIS vessel tracking (`ais-live`) | medium | There is NO free, no-key programmatic AIS source. AISStream is free but requires an API key, caps 3 connections per account AND per originating IP, prohibits direct browser connections in its own docs, and publishes no terms document — an undocumented-licence gap we will not silently build on. MarineTraffic is sales-gated and paid; Global Fishing Watch is CC BY-NC (blocks ad-supported deployment). A browser-side WebSocket client was built and evaluated on 2026-10-07, then removed, because a client shipped without a deployer-provided key would be dead code and would still lean on an undocumented licence. |

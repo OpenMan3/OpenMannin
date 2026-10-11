@@ -1,23 +1,21 @@
 {
   "ok": true,
   "worker": true,
-  "layers": 27,
-  "features": 40495,
+  "layers": 37,
+  "features": 53031,
   "absent": [],
   "check": "static-build",
-  "generated": "2026-10-10T03:45:07.563Z",
+  "generated": "2026-10-11T00:49:48.682Z",
   "hosting": {
     "static": true,
     "clientFeeds": [
-      "weather",
       "satellite-passes"
     ]
   },
   "problems": [],
   "warnings": [
     "This is a BUILD-TIME report. It says the map is structurally complete, not that any upstream is reachable.",
-    "Live-feed state is observed in the browser, not here: weather and satellite passes are fetched client-side.",
-    "Satellite passes need public/passes-worker.mjs, bundled from src/lib/feeds/passes-worker.ts by scripts/build-passes-worker.mjs before next build. If that file is missing or stale, the layer is silently empty - there is no console error to see. (Its presence is checked above; staleness is checked by scripts/lib/passes-worker-build.test.mjs.)",
-    "Open-Meteo's free tier is NON-COMMERCIAL: subscriptions or advertising both count as commercial use."
+    "Live-feed state is observed in the browser, not here: satellite passes are fetched client-side.",
+    "Satellite passes need public/passes-worker.mjs, bundled from src/lib/feeds/passes-worker.ts by scripts/build-passes-worker.mjs before next build. If that file is missing or stale, the layer is silently empty - there is no console error to see. (Its presence is checked above; staleness is checked by scripts/lib/passes-worker-build.test.mjs.)"
   ]
 }

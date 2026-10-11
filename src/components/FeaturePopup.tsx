@@ -5,8 +5,7 @@
  *
  * Shown for whatever was last clicked on the map. It always shows the layer's
  * provenance underneath the feature's own attributes, so a screenshot of this
- * panel carries its own citation. Webcam features additionally show the live
- * snapshot, which is the whole point of a webcam layer.
+ * panel carries its own citation.
  *
  * It is a DIALOG, and keyboard users can reach it: `role="dialog"`, focus moves
  * in when it opens, Escape closes it. Without that the panel was mouse-only -
@@ -18,7 +17,6 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import type { LayerDef } from "@/lib/types";
 import { SOURCES } from "@/lib/sources";
 import { LICENCES } from "@/lib/licences";
 import { featureLabel } from "@/lib/layer-data";
@@ -59,7 +57,6 @@ export function FeaturePopup({
   onLocate?: (lon: number, lat: number) => void;
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const [imageFailed, setImageFailed] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Hooks first: the early return below would otherwise make the hook count
@@ -67,7 +64,6 @@ export function FeaturePopup({
   // the moment two clicks alternate.
   useEffect(() => {
     if (!picked) return;
-    setImageFailed(false);
     setCopied(false);
     rootRef.current?.focus();
 
@@ -91,8 +87,6 @@ export function FeaturePopup({
     ([k, v]) => !HIDDEN_KEYS.has(k) && v !== null && v !== "" && v !== undefined,
   );
   const entries = visible.slice(0, MAX_ENTRIES);
-
-  const image = typeof properties?.image === "string" ? properties.image : null;
 
   return (
     <div
@@ -119,24 +113,10 @@ export function FeaturePopup({
         </button>
       </div>
 
-      {image && !imageFailed && (
-        <a href={image} target="_blank" rel="noopener noreferrer" className="block">
-          {/* Snapshot only. The publisher serves no video stream, and there is no
-              published grant for reusing these images, so this is a hotlink. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={image}
-            alt={featureLabel(properties)}
-            className="block max-h-48 w-full bg-black object-cover"
-            loading="lazy"
-            // Hotlinks break: the webcam publisher sits behind a WAF that
-            // rejects some requests (see the layer's own caveats), and any
-            // rotated URL leaves a broken-image glyph where the snapshot was.
-            // The card is still useful without the picture, so drop the image
-            // rather than advertise the failure.
-            onError={() => setImageFailed(true)}
-          />
-        </a>
+      {typeof properties?.safety === "string" && properties.safety && (
+        <p className="border-b border-danger/30 bg-danger/10 px-3 py-2 text-[12px] font-semibold leading-snug text-danger">
+          {properties.safety}
+        </p>
       )}
 
       <div className="scroll-thin max-h-[45vh] overflow-y-auto sm:max-h-[50vh]">

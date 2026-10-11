@@ -68,7 +68,6 @@ const LICENCE_CLASS: Record<string, string> = {
   "OGL-IoM-DERIVED": "bg-ok/10 text-ok",
   ODbL: "bg-ok/10 text-ok",
   "CC-BY-4.0": "bg-ok/10 text-ok",
-  "CC-BY-NC-4.0": "bg-warn/10 text-warn",
   "PUBLIC-DOMAIN": "bg-ok/10 text-ok",
   "CC0-1.0": "bg-ok/10 text-ok",
   "PD-OURAIRPORTS": "bg-ok/10 text-ok",
@@ -90,7 +89,6 @@ function LicenceBadge({ id }: { id: string }) {
 
 export function TransparencyPanel() {
   const liveLayers = LAYERS.filter((l) => l.kind === "live");
-  const sourceIds = new Set(LAYERS.map((l) => l.sourceId));
 
   return (
     <div className="scroll-thin h-full overflow-y-auto">

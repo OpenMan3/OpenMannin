@@ -12,13 +12,13 @@
  *
  * WHY THE CSP IS THIS SHAPE.
  *
- * The map now talks to third-party origins FROM THE BROWSER: weather to
- * Open-Meteo, satellite passes to CelesTrak, basemap tiles to OpenTopoMap and
- * ArcGIS, glyphs to Carto. An older version of this policy had
- * `connect-src 'self'`, which blanks every one of those requests and is the
- * single easiest way to ship a map that looks like it is broken by itself.
+ * The map now talks to third-party origins FROM THE BROWSER: satellite passes
+ * to CelesTrak, basemap tiles to OpenTopoMap and ArcGIS, glyphs to Carto. An
+ * older version of this policy had `connect-src 'self'`, which blanks every
+ * one of those requests and is the single easiest way to ship a map that looks
+ * like it is broken by itself.
  *
- *   connect-src   the six origins above plus 'self' for /data/*.geojson.
+ *   connect-src   those origins plus 'self' for /data/*.geojson.
  *   script-src    'self' plus 'unsafe-inline': the Next static export inlines
  *                 its flight payload in <script> tags (six of them in
  *                 index.html). No 'unsafe-eval' - neither the app chunks nor
@@ -29,9 +29,7 @@
  *   worker-src    'self' for /maplibre-gl-worker.mjs and /passes-worker.mjs,
  *                 blob: because MapLibre falls back to a blob worker when the
  *                 module worker fails to load.
- *   img-src       'self' for icons, data:/blob: for canvas exports, and
- *                 images.gov.im for the webcam snapshots (FeaturePopup
- *                 hotlinks them; the layer's caveats say so).
+ *   img-src       'self' for icons, data:/blob: for canvas exports.
  *   style-src     'unsafe-inline' because MapLibre writes element.style
  *                 directly rather than inserting stylesheet rules.
  *   frame-ancestors / object-src / base-uri   clickjacking, plugin and
@@ -42,8 +40,6 @@
 /** Origins the browser is allowed to fetch from. */
 const CONNECT_SRC = [
   "'self'",
-  "https://api.open-meteo.com",
-  "https://marine-api.open-meteo.com",
   "https://celestrak.org",
   "https://a.tile.openstreetmap.org",
   "https://b.tile.openstreetmap.org",
@@ -53,7 +49,13 @@ const CONNECT_SRC = [
   "https://c.tile.opentopomap.org",
   "https://tiles.openfreemap.org",
   "https://tiles.basemaps.cartocdn.com",
+  // 3D terrain: AWS Open Data DEM tiles (raster-dem, terrarium). MapLibre
+  // fetches these as array buffers, so they need connect-src specifically.
+  "https://s3.amazonaws.com",
 ].join(" ");
+
+/** Origins allowed for <img>, ImageBitmap and canvas tainting. */
+const IMG_SRC = ["'self'", "data:", "blob:", "https://s3.amazonaws.com"].join(" ");
 
 export const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
@@ -62,7 +64,7 @@ export const CONTENT_SECURITY_POLICY = [
   "frame-ancestors 'self'",
   `script-src 'self' 'unsafe-inline'`,
   `style-src 'self' 'unsafe-inline'`,
-  `img-src 'self' data: blob: https://images.gov.im`,
+  `img-src ${IMG_SRC}`,
   `font-src 'self' data:`,
   `connect-src ${CONNECT_SRC}`,
   `worker-src 'self' blob:`,

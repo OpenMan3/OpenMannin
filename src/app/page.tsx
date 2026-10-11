@@ -11,18 +11,24 @@ import { GlobalSearch } from "@/components/GlobalSearch";
 import { TransparencyPanel } from "@/components/TransparencyPanel";
 import { LocateButton } from "@/components/LocateButton";
 import { DestinationSheet } from "@/components/DestinationSheet";
+import { FollowModeButton } from "@/components/FollowModeButton";
+import { ProgressHUD } from "@/components/ProgressHUD";
+
+
+
+import { MapControls } from "@/components/MapControls";
 import {
   AlertIcon,
   CloseIcon,
   LayersIcon,
   ListIcon,
   MenuIcon,
-  SearchIcon,
   ShieldIcon,
 } from "@/components/Icons";
-import type { NavigationState } from "@/lib/navigation/host";
+import type { NavigationState, FollowMode } from "@/lib/navigation/host";
 import type { RouteMode } from "@/lib/navigation/profiles";
 import { releaseWakeLock, requestWakeLock } from "@/lib/screen-wake-lock";
+import type { Map } from "maplibre-gl";
 
 type Tab = "layers" | "browse" | "gaps" | "sources";
 
@@ -37,6 +43,8 @@ const ASIDE_MIN = 272;
 const ASIDE_MAX = 520;
 const ASIDE_DEFAULT = 320;
 const ASIDE_KEY = "om:asideWidth";
+/** Persisted 3D-terrain preference. */
+const TERRAIN_KEY = "om:terrain3d";
 
 export default function Page() {
   return <PageContent />;
@@ -46,6 +54,15 @@ function PageContent() {
   const [tab, setTab] = useState<Tab>("layers");
   const [picked, setPicked] = useState<PickedFeature | null>(null);
   const [basemap, setBasemap] = useState<BasemapId>("opentopo");
+  /** 3D terrain + camera pitch, remembered between visits. */
+  const [terrain3d, setTerrain3d] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem(TERRAIN_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
   const [panelOpen, setPanelOpen] = useState(true);
   /** Mobile: the drawer is slid in from the left, or closed. */
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -66,6 +83,8 @@ function PageContent() {
   const [missing, setMissing] = useState<Set<string>>(new Set());
   // Live layers that are on but failing, so the panel can badge them.
   const [feedErrors, setFeedErrors] = useState<Record<string, string>>({});
+  // MapLibre instance, set when MapView is ready.
+  const [map, setMap] = useState<Map | null>(null);
 
   // Start from whatever the registry marked defaultOn - which is everything.
   // Every layer is shown by default; weak and disputed ones carry their
@@ -87,7 +106,8 @@ function PageContent() {
   // which is occasionally what you want before adding layers back one at a
   // time to isolate a render problem.
   const setAll = useCallback((on: boolean) => {
-    setEnabled(on ? new Set(LAYERS.map((l) => l.id)) : new Set());
+    const next: Set<string> = on ? new Set(LAYERS.map((l) => l.id)) : new Set();
+    setEnabled(next);
   }, []);
 
   // The feature browser turns a layer on so its features are visible while it
@@ -122,6 +142,15 @@ function PageContent() {
       /* ignore */
     }
   }, []);
+
+  // Persist the 3D-terrain choice so it survives a reload.
+  useEffect(() => {
+    try {
+      localStorage.setItem(TERRAIN_KEY, terrain3d ? "1" : "0");
+    } catch {
+      /* private mode: the preference simply does not persist */
+    }
+  }, [terrain3d]);
 
   // Drag the sidebar's right edge to resize it (desktop only).
   const startResize = useCallback(
@@ -184,12 +213,15 @@ function PageContent() {
     );
   }, []);
 
-  // The navigation host owns all the real work; the UI just relays intent.
+// The navigation host owns all the real work; the UI just relays intent.
   const toggleLocate = useCallback(() => {
     window.dispatchEvent(new CustomEvent("openmannin:locate"));
   }, []);
   const setNavMode = useCallback((mode: RouteMode) => {
     window.dispatchEvent(new CustomEvent("openmannin:nav-mode", { detail: { mode } }));
+  }, []);
+  const setFollowMode = useCallback((mode: FollowMode) => {
+    window.dispatchEvent(new CustomEvent("openmannin:nav-follow", { detail: { mode } }));
   }, []);
   const navigate = useCallback(() => {
     setNavigating(true);
@@ -248,42 +280,6 @@ function PageContent() {
 
   return (
     <main className="flex h-dvh w-full overflow-hidden bg-page font-sans text-ink">
-      {/* ---- mobile top app bar ---- */}
-      <header className="absolute inset-x-0 top-0 z-30 flex h-11 items-center gap-2 border-b border-line bg-page/90 px-2 backdrop-blur md:hidden">
-        <button
-          type="button"
-          onClick={() => {
-            setPanelOpen(true);
-            setMobileOpen(true);
-          }}
-          aria-label="Open navigation panel"
-          className="btn-icon !h-8 !w-8"
-        >
-          <MenuIcon className="h-4 w-4" />
-        </button>
-        <div className="min-w-0 flex-1 truncate text-sm font-bold tracking-tight">
-          Open<span className="text-accent">Mannin</span>
-          <span className="ml-1 text-[11px] font-normal text-ink-3">
-            Isle of Man infrastructure
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setPanelOpen(true);
-            setMobileOpen(true);
-            window.setTimeout(
-              () => window.dispatchEvent(new Event("openmannin:focus-search")),
-              120,
-            );
-          }}
-          aria-label="Search all layers"
-          className="btn-icon !h-8 !w-8 md:hidden"
-        >
-          <SearchIcon className="h-4 w-4" />
-        </button>
-      </header>
-
       {/* ---- drawer backdrop (mobile) ---- */}
       {mobileOpen && (
         <div
@@ -295,7 +291,7 @@ function PageContent() {
 
       {/* ---- sidebar / drawer ---- */}
       <aside
-        className={`fixed top-0 bottom-14 left-0 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col border-r border-line bg-page shadow-2xl transition-transform duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] ${
+        className={`fixed top-0 bottom-12 left-0 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col border-r border-line bg-page shadow-2xl transition-transform duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] ${
           panelOpen ? "md:w-[var(--aside-w)]" : "md:w-12"
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
         style={{ ["--aside-w" as string]: `${asideWidth}px` }}
@@ -416,7 +412,7 @@ function PageContent() {
         >
           <div className="h-8 w-0.5 rounded bg-line" />
         </div>
-      </aside>
+</aside>
 
       {/* ---- map ---- */}
       <section className="relative min-w-0 flex-1">
@@ -429,12 +425,32 @@ function PageContent() {
           onFeedErrors={onFeedErrors}
           onViewport={setViewport}
           onNav={setNav}
+          onMapReady={setMap}
           insetBottom={nav?.destination && nav.routeStatus === "ready" ? sheetInset + 68 : 0}
+          terrain3d={terrain3d}
         />
 
         <FeaturePopup picked={picked} onClose={() => setPicked(null)} onLocate={centreOn} />
 
-        {nav && <LocateButton state={nav} onToggle={toggleLocate} />}
+        {/* Map overlays (always visible when map is ready) */}
+        {map && (
+          <MapControls
+            basemap={basemap}
+            onBasemapChange={setBasemap}
+            terrain3d={terrain3d}
+            onTerrainChange={setTerrain3d}
+          />
+        )}
+
+        {nav && (
+          <>
+            <LocateButton state={nav} onToggle={toggleLocate} />
+            {nav.routeStatus === "ready" && (
+              <FollowModeButton followMode={nav.followMode} onToggle={setFollowMode} />
+            )}
+          </>
+        )}
+        {nav && <ProgressHUD state={nav} />}
         {nav && (
           <DestinationSheet
             state={nav}
@@ -444,6 +460,7 @@ function PageContent() {
             stepsOpen={stepsOpen}
             onToggleSteps={() => setStepsOpen((v) => !v)}
             onInset={setSheetInset}
+            minimized
           />
         )}
       </section>
@@ -451,7 +468,7 @@ function PageContent() {
       {/* ---- mobile bottom tab bar ---- */}
       <nav
         aria-label="Sections"
-        className="absolute inset-x-0 bottom-0 z-50 flex h-14 items-stretch border-t border-line bg-page/95 backdrop-blur md:hidden"
+        className="absolute inset-x-0 bottom-0 z-50 flex h-12 items-stretch border-t border-line bg-page/95 backdrop-blur md:hidden"
       >
         {TABS.map((t) => (
           <button

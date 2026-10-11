@@ -32,12 +32,13 @@ EnvironmentFile=-/etc/default/openmannin
 # is exactly the bug this unit exists to not have.
 #
 # THERE ARE NO ENVIRONMENT VARIABLES FOR THE LIVE FEEDS, and no secrets are
-# needed to run this service. Weather and satellite passes are fetched by the
-# BROWSER straight from Open-Meteo and CelesTrak. The three feeds that would
-# need a server (OpenSky, AISStream, FindMyBus) are on hold in
-# src/lib/feeds/index.ts: no requests are made and nothing is configured. If a
-# doc tells you to set AISSTREAM_API_KEY for this unit, that doc is describing
-# a version of the app that no longer has /api/marine.
+# needed to run this service. Satellite passes are fetched by the BROWSER
+# straight from CelesTrak. Feeds that would need a server or whose licence is
+# not free for commercial use (OpenSky, AISStream, FindMyBus, Open-Meteo
+# weather, Met Office) have been removed from src/lib/feeds/index.ts: no
+# requests are made and nothing is configured. If a doc tells you to set
+# AISSTREAM_API_KEY for this unit, that doc is describing a version of the app
+# that no longer has /api/marine.
 #
 # To change the port:
 #   systemctl edit openmannin     # and add Environment=PORT=8080 under [Service]

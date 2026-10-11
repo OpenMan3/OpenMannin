@@ -11,12 +11,21 @@
  */
 
 import type { RouteMode } from "./profiles";
+import { ROUTE_MODES } from "./profiles";
+
+export { ROUTE_MODES };
 
 /** A completed route for one profile, or null when no road route exists. */
 export interface RouteLeg {
   distanceM: number;
   durationS: number;
   coordinates: [number, number][];
+  /**
+   * Street name of each segment, parallel to `coordinates`: entry k names the
+   * segment from coordinates[k] to coordinates[k+1]. `null` where the road is
+   * unnamed. Empty when no names are known.
+   */
+  segmentNames: (string | null)[];
 }
 
 export type RouteMap = Partial<Record<RouteMode, RouteLeg | null>>;

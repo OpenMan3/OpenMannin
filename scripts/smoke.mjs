@@ -78,8 +78,6 @@ const consoleErrors = [];
  * are counted, not treated as defects. */
 const UPSTREAM_ROUTES = [
   /celestrak\.org/,
-  /api\.open-meteo\.com/,
-  /marine-api\.open-meteo\.com/,
   /overpass(-api|\.de|\.kumi)/,
   /maps\.mail\.ru/,
   /tile\.opentopomap\.org/,

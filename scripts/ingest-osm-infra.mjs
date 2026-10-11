@@ -74,7 +74,7 @@ const DATASETS = [
     query: `[out:json][timeout:180];
 way["highway"](${BBOX});
 out geom;`,
-    keep: { name: "name", highway: "highway", ref: "ref", surface: "surface" },
+    keep: { name: "name", highway: "highway", ref: "ref", surface: "surface", oneway: "oneway", junction: "junction", access: "access", motorVehicle: "motor_vehicle", motorcar: "motorcar", vehicle: "vehicle", foot: "foot", bicycle: "bicycle", service: "service", maxspeed: "maxspeed" },
     isFeature: (t) => t.highway && !["proposed", "construction", "razed"].includes(t.highway),
   },
   {
@@ -176,6 +176,116 @@ out geom;`,
 );
 out geom;`,
     keep: { name: "name", landuse: "landuse", water: "water", operator: "operator" },
+  },
+  {
+    out: "emergency.geojson",
+    label: "emergency services",
+    mode: "point",
+    query: `[out:json][timeout:180];
+(
+  node["amenity"="police"](${BBOX});
+  way["amenity"="police"](${BBOX});
+  node["amenity"="fire_station"](${BBOX});
+  way["amenity"="fire_station"](${BBOX});
+  node["amenity"="ambulance_station"](${BBOX});
+  way["amenity"="ambulance_station"](${BBOX});
+  node["emergency"="defibrillator"](${BBOX});
+  way["emergency"="defibrillator"](${BBOX});
+);
+out center;`,
+    keep: {
+      name: "name",
+      amenity: "amenity",
+      emergency: "emergency",
+      operator: "operator",
+      phone: "phone",
+      contactPhone: "contact:phone",
+      openingHours: "opening_hours",
+      access: "access",
+    },
+  },
+  {
+    out: "footpaths.geojson",
+    label: "footpaths & PRoW",
+    mode: "line",
+    query: `[out:json][timeout:180];
+way["highway"~"^(footway|path|bridleway|steps)$"](${BBOX});
+out geom;`,
+    keep: { name: "name", highway: "highway", foot: "foot", bicycle: "bicycle", horse: "horse", surface: "surface", designation: "designation", access: "access" },
+  },
+  {
+    out: "schools-health.geojson",
+    label: "schools & health",
+    mode: "point",
+    query: `[out:json][timeout:180];
+(
+  node["amenity"~"^(school|college|university|kindergarten)$"](${BBOX});
+  way["amenity"~"^(school|college|university|kindergarten)$"](${BBOX});
+  node["amenity"~"^(hospital|clinic|doctors|dentist|pharmacy|veterinary)$"](${BBOX});
+  way["amenity"~"^(hospital|clinic|doctors|dentist|pharmacy|veterinary)$"](${BBOX});
+);
+out center;`,
+    keep: {
+      name: "name",
+      amenity: "amenity",
+      operator: "operator",
+      phone: "phone",
+      website: "website",
+      openingHours: "opening_hours",
+      capacity: "capacity",
+      healthcare: "healthcare",
+    },
+  },
+  {
+    out: "tourism.geojson",
+    label: "tourism",
+    mode: "point",
+    query: `[out:json][timeout:180];
+(
+  node["tourism"~"^(attraction|viewpoint|museum|gallery|zoo|theme_park|artwork|memorial|monument)$"](${BBOX});
+  way["tourism"~"^(attraction|viewpoint|museum|gallery|zoo|theme_park|artwork|memorial|monument)$"](${BBOX});
+  node["tourism"="camp_site"](${BBOX});
+  way["tourism"="camp_site"](${BBOX});
+  node["tourism"="hostel"](${BBOX});
+  way["tourism"="hostel"](${BBOX});
+  node["tourism"="hotel"](${BBOX});
+  way["tourism"="hotel"](${BBOX});
+  node["tourism"="guest_house"](${BBOX});
+  way["tourism"="guest_house"](${BBOX});
+);
+out center;`,
+    keep: {
+      name: "name",
+      tourism: "tourism",
+      operator: "operator",
+      phone: "phone",
+      website: "website",
+      openingHours: "opening_hours",
+      stars: "stars",
+      capacity: "capacity",
+      fee: "fee",
+    },
+  },
+  {
+    out: "worship.geojson",
+    label: "places of worship",
+    mode: "point",
+    query: `[out:json][timeout:180];
+(
+  node["amenity"="place_of_worship"](${BBOX});
+  way["amenity"="place_of_worship"](${BBOX});
+);
+out center;`,
+    keep: {
+      name: "name",
+      amenity: "amenity",
+      religion: "religion",
+      denomination: "denomination",
+      operator: "operator",
+      phone: "phone",
+      website: "website",
+      building: "building",
+    },
   },
 ];
 

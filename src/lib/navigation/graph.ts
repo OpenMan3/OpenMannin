@@ -15,12 +15,12 @@
  *
  * This module is PURE: no DOM, no MapLibre, no fetch. That is what lets the
  * same code run in the routing Web Worker and in `node --test`. Profiles
- * (who may use which road, and how fast) live in ./profiles and are applied
- * only when a route is requested, so one graph serves both driving and
- * walking.
+ * (who may use which road, in which direction, and how fast) live in
+ * ./profiles and are applied only when a route is requested, so one graph
+ * serves driving, walking and cycling alike.
  */
 
-import { edgeTimeS, maxSpeedKmh, type Profile } from "./profiles.ts";
+import { edgeTimeS, maxSpeedKmh, type Profile, type RoadTags } from "./profiles.ts";
 
 export interface LatLng {
   lon: number;
@@ -39,6 +39,8 @@ export interface Graph {
   edgeB: Int32Array;
   edgeLenM: Float64Array;
   edgeHighway: (string | null)[];
+  /** Access/direction/speed tags per edge, or null when the way had none. */
+  edgeRoad: (RoadTags | null)[];
   /** Spatial index: 100 m cell key -> edge ids whose bbox touches the cell. */
   index: Map<string, number[]>;
 }
@@ -64,6 +66,12 @@ export interface RouteResult {
   durationS: number;
   /** [lon, lat] pairs: user position → road → destination pin. */
   coordinates: [number, number][];
+  /**
+   * Street name of each segment, parallel to `coordinates`: entry k names the
+   * segment from coordinates[k] to coordinates[k+1]. `null` where the road is
+   * unnamed. Empty when no names are known.
+   */
+  segmentNames: (string | null)[];
 }
 
 interface Feature {
@@ -127,6 +135,53 @@ export function distanceToSegmentM(
   return { u, lon, lat, distanceM: haversineM(px, py, lon, lat) };
 }
 
+function asString(v: unknown): string | null {
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+/** Parse an OSM `oneway` (and the implicit roundabout rule) into -1 | 0 | 1. */
+function parseOneway(props: Record<string, unknown> | null | undefined): -1 | 0 | 1 {
+  const ow = asString(props?.oneway)?.toLowerCase() ?? null;
+  if (ow === "-1" || ow === "reverse") return -1;
+  if (ow === "yes" || ow === "true" || ow === "1") return 1;
+  if (ow === "no" || ow === "false" || ow === "0") return 0;
+  const junction = asString(props?.junction)?.toLowerCase();
+  if (junction === "roundabout" || junction === "circular") return 1;
+  return 0;
+}
+
+/**
+ * The routing-relevant tags of a way, or null when none are present, so the
+ * graph does not carry empty objects for the many untagged segments.
+ */
+function parseRoadTags(props: Record<string, unknown> | null | undefined): RoadTags | null {
+  const name = asString(props?.name);
+  const oneway = parseOneway(props);
+  const access = asString(props?.access);
+  const motorVehicle = asString(props?.motorVehicle);
+  const motorcar = asString(props?.motorcar);
+  const vehicle = asString(props?.vehicle);
+  const foot = asString(props?.foot);
+  const bicycle = asString(props?.bicycle);
+  const service = asString(props?.service);
+  const maxspeed = asString(props?.maxspeed);
+  if (
+    !name &&
+    oneway === 0 &&
+    !access &&
+    !motorVehicle &&
+    !motorcar &&
+    !vehicle &&
+    !foot &&
+    !bicycle &&
+    !service &&
+    !maxspeed
+  ) {
+    return null;
+  }
+  return { name, oneway, access, motorVehicle, motorcar, vehicle, foot, bicycle, service, maxspeed };
+}
+
 export function buildGraph(fc: {
   features?: Feature[];
 }): Graph {
@@ -154,6 +209,7 @@ export function buildGraph(fc: {
   const edgeB: number[] = [];
   const edgeLenM: number[] = [];
   const edgeHighway: (string | null)[] = [];
+  const edgeRoad: (RoadTags | null)[] = [];
 
   for (const feature of fc.features ?? []) {
     const geom = feature.geometry;
@@ -162,6 +218,7 @@ export function buildGraph(fc: {
     if (pts.length < 2) continue;
     const highway =
       typeof feature.properties?.highway === "string" ? feature.properties.highway : null;
+    const road = parseRoadTags(feature.properties);
 
     let prev = nodeFor([pts[0][0], pts[0][1]]);
     for (let i = 1; i < pts.length; i++) {
@@ -174,13 +231,17 @@ export function buildGraph(fc: {
         edgeB.push(cur);
         edgeLenM.push(len);
         edgeHighway.push(highway);
+        edgeRoad.push(road);
       }
       prev = cur;
     }
   }
 
-  // Adjacency (undirected: roads.geojson carries no oneway, so every edge is
-  // traversable both ways for both profiles).
+  // Adjacency is undirected - both endpoints list each other - because walking
+  // may use a one-way street either way and a one-way is still physically
+  // traversable. Direction and access are enforced per-profile at search time
+  // (edgeTimeS consults edgeRoad and the traversal direction), which keeps this
+  // graph shared by every profile.
   const adjTo: number[][] = Array.from({ length: nextNode }, () => []);
   const adjEdge: number[][] = Array.from({ length: nextNode }, () => []);
   for (let e = 0; e < edgeA.length; e++) {
@@ -223,6 +284,7 @@ export function buildGraph(fc: {
     edgeB: Int32Array.from(edgeB),
     edgeLenM: Float64Array.from(edgeLenM),
     edgeHighway,
+    edgeRoad,
     index,
   };
 }
@@ -338,7 +400,7 @@ function search(
   start: SnapResult,
   goal: SnapResult,
   profile: Profile,
-): { path: number[]; timeS: number } | null {
+): { path: number[]; edges: number[]; timeS: number } | null {
 
   const nodeCount = graph.nodeCount;
   const g = new Float64Array(nodeCount);
@@ -353,8 +415,16 @@ function search(
   const hOf = (n: number) => haversineM(graph.lon[n], graph.lat[n], goal.lon, goal.lat) * invMaxSpeed;
 
   const heap = new MinHeap();
-  const seed = (node: number, distToNodeM: number, viaEdge: number) => {
-    const time = edgeTimeS(profile, distToNodeM, graph.edgeHighway[viaEdge]);
+  // Seeding walks from the projection to an endpoint. `forward` says whether
+  // that move follows the way's own A→B direction; a one-way refuses the other.
+  const seed = (node: number, distToNodeM: number, viaEdge: number, forward: boolean) => {
+    const time = edgeTimeS(
+      profile,
+      distToNodeM,
+      graph.edgeHighway[viaEdge],
+      graph.edgeRoad[viaEdge],
+      forward,
+    );
     if (time === null) return;
     if (time >= g[node]) return;
     g[node] = time;
@@ -362,13 +432,19 @@ function search(
     parentEdge[node] = viaEdge;
     heap.push(time + hOf(node), node);
   };
-  seed(graph.edgeA[start.edge], start.distA, start.edge);
-  seed(graph.edgeB[start.edge], start.distB, start.edge);
+  seed(graph.edgeA[start.edge], start.distA, start.edge, false);
+  seed(graph.edgeB[start.edge], start.distB, start.edge, true);
 
   const goalA = graph.edgeA[goal.edge];
   const goalB = graph.edgeB[goal.edge];
-  const goalPartialTime = (n: number) =>
-    edgeTimeS(profile, n === goalA ? goal.distA : goal.distB, graph.edgeHighway[goal.edge]) ?? 0;
+  const goalPartialTime = (n: number): number | null =>
+    edgeTimeS(
+      profile,
+      n === goalA ? goal.distA : goal.distB,
+      graph.edgeHighway[goal.edge],
+      graph.edgeRoad[goal.edge],
+      n === goalA,
+    );
 
   let best: { node: number; timeS: number } | null = null;
 
@@ -383,11 +459,14 @@ function search(
     // time a goal endpoint pops, g[node] is optimal. Its total is that plus the
     // remaining partial along the goal edge.
     if (node === goalA || node === goalB) {
-      const total = g[node] + goalPartialTime(node);
-      if (!best || total < best.timeS) best = { node, timeS: total };
-      // Can't be beaten: every entry still in the heap has f >= f of this pop,
-      // and f is a lower bound on a full route through it.
-      if (best && best.timeS <= f) break;
+      const partial = goalPartialTime(node);
+      if (partial !== null) {
+        const total = g[node] + partial;
+        if (!best || total < best.timeS) best = { node, timeS: total };
+        // Can't be beaten: every entry still in the heap has f >= f of this pop,
+        // and f is a lower bound on a full route through it.
+        if (best && best.timeS <= f) break;
+      }
     }
 
     const neighbors = graph.adjTo[node];
@@ -395,7 +474,15 @@ function search(
     for (let k = 0; k < neighbors.length; k++) {
       const to = neighbors[k];
       const edge = neighborEdges[k];
-      const step = edgeTimeS(profile, graph.edgeLenM[edge], graph.edgeHighway[edge]);
+      // Traversing edge from `node` to `to` is forward when `node` is the A end.
+      const forward = graph.edgeA[edge] === node;
+      const step = edgeTimeS(
+        profile,
+        graph.edgeLenM[edge],
+        graph.edgeHighway[edge],
+        graph.edgeRoad[edge],
+        forward,
+      );
       if (step === null) continue;
       const alt = g[node] + step;
       if (alt >= g[to]) continue;
@@ -408,17 +495,21 @@ function search(
 
   if (!best) return null;
 
-  // Reconstruct the node chain ending at the goal endpoint.
+  // Reconstruct the node chain ending at the goal endpoint. `edges[i]` is the
+  // edge used to reach path[i]; path[0]'s edge is the seed edge (start.edge).
   const path: number[] = [];
+  const edges: number[] = [];
   let cursor = best.node;
   for (;;) {
     path.push(cursor);
+    edges.push(parentEdge[cursor]);
     const p = parent[cursor];
     if (p < 0) break;
     cursor = p;
   }
   path.reverse();
-  return { path, timeS: best.timeS };
+  edges.reverse();
+  return { path, edges, timeS: best.timeS };
 }
 
 /**
@@ -439,52 +530,85 @@ export function routeBetween(
   const goalSnap = nearestSnap(graph, dest.lon, dest.lat, profile.maxSnapM);
   if (!startSnap || !goalSnap) return null;
 
-  let nodeCoords: [number, number][];
-  let timeS: number;
+  const roadName = (e: number): string | null => graph.edgeRoad[e]?.name ?? null;
+  const startName = roadName(startSnap.edge);
+  const goalName = roadName(goalSnap.edge);
 
-  if (startSnap.edge === goalSnap.edge) {
-    // Both projections on the same road: the network leg is along that segment
-    // between the projections. The off-road connectors are added below.
-    nodeCoords = [];
-    timeS =
-      edgeTimeS(
-        profile,
-        Math.abs(startSnap.distA - goalSnap.distA),
-        graph.edgeHighway[startSnap.edge],
-      ) ?? 0;
+  // Coordinates and the parallel segment-name list are built together and
+  // de-duplicated together, so names[k] always names the segment from
+  // coordinates[k] to coordinates[k+1].
+  const coords: [number, number][] = [[start.lon, start.lat]];
+  const names: (string | null)[] = [];
+  const push = (pt: [number, number], name: string | null): void => {
+    const prev = coords[coords.length - 1];
+    if (Math.abs(prev[0] - pt[0]) <= 1e-9 && Math.abs(prev[1] - pt[1]) <= 1e-9) return;
+    coords.push(pt);
+    names.push(name);
+  };
+
+  let timeS = 0;
+
+  // Fast path: both projections land on the same road segment. It is only
+  // usable when the profile may travel that way along the segment (a one-way
+  // with the destination "behind" the start falls through to a full search).
+  let sameEdge = startSnap.edge === goalSnap.edge;
+  if (sameEdge) {
+    const forward = startSnap.distA <= goalSnap.distA;
+    const t = edgeTimeS(
+      profile,
+      Math.abs(startSnap.distA - goalSnap.distA),
+      graph.edgeHighway[startSnap.edge],
+      graph.edgeRoad[startSnap.edge],
+      forward,
+    );
+    if (t === null) sameEdge = false;
+    else timeS = t;
+  }
+
+  if (sameEdge) {
+    push([startSnap.lon, startSnap.lat], startName);
+    push([goalSnap.lon, goalSnap.lat], startName);
+    push([dest.lon, dest.lat], goalName);
   } else {
     const res = search(graph, startSnap, goalSnap, profile);
     if (!res) return null;
-    nodeCoords = res.path.map((n): [number, number] => [graph.lon[n], graph.lat[n]]);
     timeS = res.timeS;
-  }
-
-  const coordinates: [number, number][] = [
-    [start.lon, start.lat],
-    [startSnap.lon, startSnap.lat],
-    ...nodeCoords,
-    [goalSnap.lon, goalSnap.lat],
-    [dest.lon, dest.lat],
-  ];
-
-  // Drop adjacent duplicates introduced by snapping (e.g. startSnap === node[0]).
-  const clean: [number, number][] = [];
-  for (const pt of coordinates) {
-    const prev = clean[clean.length - 1];
-    if (!prev || Math.abs(prev[0] - pt[0]) > 1e-9 || Math.abs(prev[1] - pt[1]) > 1e-9) {
-      clean.push(pt);
+    push([startSnap.lon, startSnap.lat], startName);
+    for (let i = 0; i < res.path.length; i++) {
+      const n = res.path[i];
+      push([graph.lon[n], graph.lat[n]], roadName(res.edges[i]));
     }
+    push([goalSnap.lon, goalSnap.lat], goalName);
+    push([dest.lon, dest.lat], goalName);
   }
 
   let distanceM = 0;
-  for (let i = 1; i < clean.length; i++) {
-    distanceM += haversineM(clean[i - 1][0], clean[i - 1][1], clean[i][0], clean[i][1]);
+  for (let i = 1; i < coords.length; i++) {
+    distanceM += haversineM(coords[i - 1][0], coords[i - 1][1], coords[i][0], coords[i][1]);
   }
 
-  // Straight-line connectors off the road, at road speed.
+  // Straight-line connectors off the road, at road speed. The join onto the
+  // nearest edge is not a directional move, so it is checked as "forward".
   const connector =
-    (edgeTimeS(profile, startSnap.distanceM, graph.edgeHighway[startSnap.edge]) ?? 0) +
-    (edgeTimeS(profile, goalSnap.distanceM, graph.edgeHighway[goalSnap.edge]) ?? 0);
+    (edgeTimeS(
+      profile,
+      startSnap.distanceM,
+      graph.edgeHighway[startSnap.edge],
+      graph.edgeRoad[startSnap.edge],
+      true,
+    ) ?? 0) +
+    (edgeTimeS(
+      profile,
+      goalSnap.distanceM,
+      graph.edgeHighway[goalSnap.edge],
+      graph.edgeRoad[goalSnap.edge],
+      true,
+    ) ?? 0);
 
-  return { distanceM, durationS: Math.round(timeS + connector), coordinates: clean };
+  return {
+    distanceM,
+    durationS: Math.round(timeS + connector),
+    coordinates: coords,
+    segmentNames: names,
+  };
 }

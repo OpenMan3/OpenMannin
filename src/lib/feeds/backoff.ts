@@ -1,7 +1,7 @@
 /**
  * Poll backoff for the live client feeds.
  *
- * The browser calls Open-Meteo and CelesTrak directly - there is no server
+ * The browser calls CelesTrak directly - there is no server
  * cache between this page and them on a static host, so the poll interval IS
  * the rate limit. When an upstream is down or answering 429, hammering it every
  * thirty seconds on the next tab's every poll makes the outage worse and costs

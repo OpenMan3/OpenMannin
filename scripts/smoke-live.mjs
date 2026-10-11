@@ -8,7 +8,7 @@
  * GeoJSON.
  *
  * Asserts, against the real production build in Chromium:
- *   1. A default-on live layer (weather) is on the map with real features.
+ *   1. A default-on live layer (satellite passes) is on the map with real features.
  *   2. A gated live layer (flights) reports itself as offline in the panel.
  *   3. Toggling a live layer OFF removes its source and paint layers.
  *   4. Toggling a gated live layer ON starts a poller and surfaces the 503.
@@ -147,9 +147,9 @@ console.log("=== OpenMannin live-layer test ===\n");
 
 // ---- 1. default-on live layer is live ---------------------------------------
 let s = await probe();
-const weatherSource = s.sources.includes("om-weather");
-if (!weatherSource) fails.push("default-on live layer 'weather' has no source on the map");
-console.log("1. weather source present:", weatherSource, "| features:", await featureCount("om-weather"));
+const passesSource = s.sources.includes("om-satellite-passes");
+if (!passesSource) fails.push("default-on live layer 'satellite-passes' has no source on the map");
+console.log("1. satellite-passes source present:", passesSource, "| features:", await featureCount("om-satellite-passes"));
 
 // ---- 2. on-hold live layer: badged, polled never ----------------------------
 // live-flights is default-off and on hold. Toggling it ON must surface the hold

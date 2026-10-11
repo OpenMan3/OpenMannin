@@ -6,7 +6,7 @@ OpenMannin renders only data that can be traced to a source, a licence and a con
 
 This project does **not** ingest, cache, trace or derive anything from government maps or map-derived products. The IoM Open Government Licence explicitly **excludes maps and map-derived products** ([OGL](https://www.gov.im/about-this-site/open-government-licence/), [maps exclusion](https://www.gov.im/about-this-site/terms-and-conditions/maps/)), and the Isle of Man Survey base cartography is sold commercially. All island-wide vector coverage is built from independently licensed sources — principally OpenStreetMap (ODbL) and Wikidata (CC0). Coverage that could not be independently sourced is recorded as a gap rather than relicensed.
 
-## Licence register (12)
+## Licence register (11)
 
 | Licence | Commercial | Permission required | Obligation |
 | --- | --- | --- | --- |
@@ -14,7 +14,6 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Crown copyright — derived open datasets (base mapping NOT included) ([link](https://www.gov.im/about-this-site/open-government-licence/)) | yes | no | Crown copyright, attribution required. CRITICAL EXCLUSION: this covers the derived feature services published through the open data portal only. It does NOT cover the Isle of Man Survey base cartography, which is Crown copyright but explicitly excluded from the OGL and sold commercially. Never mix our vectors with their base tiles without a licence. Also excluded: personal data, departmental logos, the Isle of Man crest, third-party rights, patents, trademarks and designs. |
 | Open Database License (OpenStreetMap) ([link](https://opendatacommons.org/licenses/odbl/)) | yes | no | Attribution AND share-alike on derived databases. OSM data is (c) OpenStreetMap contributors. |
 | Creative Commons Attribution 4.0 ([link](https://creativecommons.org/licenses/by/4.0/)) | yes | no | Attribution with link to licence. |
-| Creative Commons Attribution-NonCommercial 4.0 ([link](https://creativecommons.org/licenses/by-nc/4.0/)) | no | no | Attribution. Non-commercial use only — blocks monetised deployment. |
 | Public domain / no known copyright | yes | no | Attribution appreciated, not required. |
 | Creative Commons CC0 1.0 (public domain dedication) ([link](https://creativecommons.org/publicdomain/zero/1.0/)) | yes | no | No rights reserved. Attribution optional. |
 | OurAirports public domain dedication ([link](https://ourairports.com/data/)) | yes | no | OurAirports publishes its airport, runway and heliport tables under a public domain dedication. No attribution required, though crediting OurAirports is appreciated. Note this covers the DATA, not the website's own compiled map styling. |
@@ -23,7 +22,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | No published licence | no | yes | No terms of use, robots.txt or licence found. Absence of a licence is not a grant. Do not republish without written permission. |
 | Licence not established | no | yes | Verify before use. |
 
-## Source register (22)
+## Source register (19)
 
 | Source | Publisher | Licence | Last checked |
 | --- | --- | --- | --- |
@@ -31,7 +30,6 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | [Wikidata](https://www.wikidata.org/) | Wikimedia Foundation / Wikidata community | CC0-1.0 | 2026-10-06 |
 | [Isle of Man Government web publication](https://www.gov.im/) | Isle of Man Government | OGL-IoM | 2026-10-04 |
 | [CelesTrak orbital elements](https://celestrak.org/) | CelesTrak (GP data by TLE) | PUBLIC-DOMAIN | 2026-10-04 |
-| [Open-Meteo weather and marine API](https://open-meteo.com/) | Open-Meteo | CC-BY-4.0 | 2026-10-04 |
 | [Manx Utilities asset disclosures](https://www.manxutilities.im/) | Manx Utilities | OGL-IoM | 2026-10-04 |
 | [Submarine Cable Map / TeleGeography](https://www.submarinecablemap.com/) | TeleGeography | CC-BY-4.0 | 2026-10-04 |
 | [Nuclear Decommissioning Authority / Sellafield Ltd](https://www.gov.uk/government/publications/nuclear-decommissioning-authority-annual-report-and-accounts-2025-to-2026) | UK Nuclear Decommissioning Authority | OGL-IoM | 2026-10-04 |
@@ -47,8 +45,6 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | [OpenTopoMap tiles](https://opentopomap.org/) | OpenTopoMap (based on OpenStreetMap, SRTM) | CC-BY-4.0 | 2026-10-04 |
 | [EMODnet Bathymetry](https://emodnet.ec.europa.eu/en/bathymetry) | EMODnet / European Commission | CC-BY-4.0 | 2026-10-04 |
 | [OpenMannin compilation](https://github.com/) | OpenMannin | OGL-IoM | 2026-10-04 |
-| [Isle of Man Government public webcams](https://www.gov.im/webcams/) | Isle of Man Government (images.gov.im) | OGL-IoM | 2026-10-04 |
-| [UK Met Office DataHub](https://datahub.metoffice.gov.uk/) | UK Met Office | CC-BY-4.0 | 2026-10-04 |
 
 ## Layers by source
 
@@ -121,7 +117,6 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 
 | Layer | Source | Licence | Grade | Features |
 | --- | --- | --- | --- | --- |
-| Public webcams (`webcams`) | webcamsGov | OGL-IoM | B | 10 |
 | Tide reference stations (`tide-stations`) | mea | OGL-IoM | A | 6 |
 
 ### live
@@ -129,7 +124,6 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Layer | Source | Licence | Grade | Features |
 | --- | --- | --- | --- | --- |
 | Satellite pass predictions (`satellite-passes`) | celestrak | PUBLIC-DOMAIN | C | live/blocked |
-| Weather & sea state (`weather`) | openmeteo | CC-BY-4.0 | A | live/blocked |
 
 ## Gaps (23)
 

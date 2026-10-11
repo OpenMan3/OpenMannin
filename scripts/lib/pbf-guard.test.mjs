@@ -30,8 +30,7 @@ test("glyph, vector-tile and font URLs are classified as protobuf", () => {
 
 test("non-protobuf URLs are passed through untouched", () => {
   assert.ok(!isProtobufUrl("https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle"));
-  assert.ok(!isProtobufUrl("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/0/0/0"));
-  assert.ok(!isProtobufUrl("https://api.open-meteo.com/v1/forecast?latitude=54"));
+  assert.ok(!isProtobufUrl("https://a.tile.opentopomap.org/12/2000/1300.png"));
   assert.ok(!isProtobufUrl("/data/manifest.json"));
 });
 

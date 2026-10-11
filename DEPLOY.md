@@ -10,14 +10,15 @@ layers. There is no server:
   runtime). The app's own file server is `scripts/serve.mjs`, run by
   `npm start`, the Docker image, Fly.io and the systemd unit.
 - The seven `/api/*` routes that used to exist were deleted along with the
-  server they needed. Weather and satellite passes moved into the browser
-  (their upstreams send `Access-Control-Allow-Origin: *`); feeds that would
-  need a server - proprietary AIS, OpenSky, FindMyBus - have been **removed**
-  rather than left half-stubbed.
+  server they needed. Satellite passes moved into the browser (its upstream
+  sends `Access-Control-Allow-Origin: *`); feeds that would need a server or
+  whose licence is not free for commercial use - proprietary AIS, OpenSky,
+  FindMyBus, Open-Meteo weather, Met Office data - have been **removed** rather
+  than left half-stubbed.
 - **There are no environment variables and no secrets.**
 
-Deploy `out/` to any static host and the map works: basemap, all 39 data
-layers, weather, satellite passes.
+Deploy `out/` to any static host and the map works: basemap, all data
+layers, satellite passes.
 
 **Two things still rule out a lazy deploy:**
 
@@ -232,7 +233,7 @@ Then load the page and confirm:
 - the browser console has no Content-Security-Policy violations (a `connect-src`
   violation means the host is not sending the headers - see the top of this
   file);
-- the satellite-passes and weather layers load data without any configuration.
+- the satellite-passes layer loads data without any configuration.
 
 ## What is verified, and what is not
 
@@ -261,11 +262,11 @@ real bugs. If you can test on 22, prefer 22 LTS; otherwise build with
   CC-BY-SA, standard OSM and HOT tiles use the same ODbL as the data, and
   OpenFreeMap/OpenMapTiles is BuildCC-BY/ODbL; `verify:basemap` asserts that
   the attribution control follows the basemap.
-- **Open-Meteo's free tier is NON-COMMERCIAL.** Subscriptions or advertising
-  both count. Weather is fetched by each visitor's browser, so your server
-  never pays for it - but the obligation is on the use, not the transport.
-- **CelesTrak** is public domain and re-read every 6 hours by each visitor's
+- **Every source must be free for any use, including commercial.** Open-Meteo's
+  free tier was NON-COMMERCIAL and has been removed, as was the Met Office
+  DataHub (paid key). A CC-BY-NC licence identifies data that cannot be used
+  here. CelesTrak is public domain and re-read every 6 hours by each visitor's
   browser; no credentials, no rotation.
-- **If you add a live feed later**, you are re-introducing a server. Update
-  `scripts/static-headers.mjs` (`connect-src`) in the same change, or the CSP
-  will block it and the failure will look like an app bug.
+- **If you add a live feed later**, check both its licence and its CORS:
+  update `scripts/static-headers.mjs` (`connect-src`) in the same change, or
+  the CSP will block it and the failure will look like an app bug.

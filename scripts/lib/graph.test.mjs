@@ -23,6 +23,7 @@ import { PROFILES } from "../../src/lib/navigation/profiles.ts";
 
 const DRIVING = PROFILES.driving;
 const WALKING = PROFILES.walking;
+const CYCLING = PROFILES.cycling;
 
 /** Shorthand for a LineString feature whose highway class we set. */
 const road = (highway, pts) => ({
@@ -175,4 +176,166 @@ test("routeBetween returns null when either end is off the network", () => {
   const inTheSea = { lon: -4.47, lat: 54.17 };
   assert.equal(routeBetween(g, inTheSea, onRoad, DRIVING), null, "start off network");
   assert.equal(routeBetween(g, onRoad, inTheSea, WALKING), null, "destination off network");
+});
+
+/** Helper: a road feature with tags and a simple A→B geometry. */
+const taggedRoad = (highway, tags, pts) => ({
+  geometry: { type: "LineString", coordinates: pts },
+  properties: { highway, ...tags },
+});
+
+test("driving refuses one-way in the wrong direction", () => {
+  // One-way A→B (residential). Start at A, dest at B = forward (OK).
+  // Start at B, dest at A = reverse (should fail).
+  const g = buildGraph({
+    features: [
+      taggedRoad("residential", { oneway: "yes" }, [
+        [-4.48, 54.16],
+        [-4.478, 54.16],
+      ]),
+    ],
+  });
+  const a = { lon: -4.48, lat: 54.16 };
+  const b = { lon: -4.478, lat: 54.16 };
+  const forward = routeBetween(g, a, b, DRIVING);
+  const reverse = routeBetween(g, b, a, DRIVING);
+  assert.ok(forward, "forward along one-way should work");
+  assert.equal(reverse, null, "reverse along one-way must be refused");
+});
+
+test("walking ignores one-way restriction", () => {
+  const g = buildGraph({
+    features: [
+      taggedRoad("residential", { oneway: "yes" }, [
+        [-4.48, 54.16],
+        [-4.478, 54.16],
+      ]),
+    ],
+  });
+  const a = { lon: -4.48, lat: 54.16 };
+  const b = { lon: -4.478, lat: 54.16 };
+  const forward = routeBetween(g, a, b, WALKING);
+  const reverse = routeBetween(g, b, a, WALKING);
+  assert.ok(forward, "walking forward works");
+  assert.ok(reverse, "walking reverse also works (ignores one-way)");
+});
+
+test("cycling uses cycleway, refuses footway without bicycle=yes", () => {
+  const g = buildGraph({
+    features: [
+      taggedRoad("cycleway", {}, [
+        [-4.48, 54.16],
+        [-4.478, 54.16],
+      ]),
+      taggedRoad("footway", {}, [
+        [-4.48, 54.161],
+        [-4.478, 54.161],
+      ]),
+    ],
+  });
+  const a = { lon: -4.48, lat: 54.16 };
+  const b = { lon: -4.478, lat: 54.16 };
+  const a2 = { lon: -4.48, lat: 54.161 };
+  const b2 = { lon: -4.478, lat: 54.161 };
+  const cycleCycle = routeBetween(g, a, b, CYCLING);
+  const cycleFoot = routeBetween(g, a2, b2, CYCLING);
+  assert.ok(cycleCycle, "cycleway allowed for cycling");
+  assert.equal(cycleFoot, null, "bare footway refused for cycling");
+});
+
+test("cycling allows footway when bicycle=yes", () => {
+  const g = buildGraph({
+    features: [
+      taggedRoad("footway", { bicycle: "yes" }, [
+        [-4.48, 54.16],
+        [-4.478, 54.16],
+      ]),
+    ],
+  });
+  const a = { lon: -4.48, lat: 54.16 };
+  const b = { lon: -4.478, lat: 54.16 };
+  const r = routeBetween(g, a, b, CYCLING);
+  assert.ok(r, "footway with bicycle=yes allowed");
+});
+
+test("cycling respects bicycle=dismount speed", () => {
+  const g = buildGraph({
+    features: [
+      taggedRoad("footway", { bicycle: "dismount" }, [
+        [-4.48, 54.16],
+        [-4.478, 54.16],
+      ]),
+    ],
+  });
+  const a = { lon: -4.48, lat: 54.16 };
+  const b = { lon: -4.478, lat: 54.16 };
+  const r = routeBetween(g, a, b, CYCLING);
+  assert.ok(r, "dismount allowed");
+  // ~130 m at 5 km/h = ~94s
+  assert.ok(r.durationS > 80 && r.durationS < 120, `dismount duration ${r.durationS}s`);
+});
+
+test("driving refuses access=no and access=private", () => {
+  const g = buildGraph({
+    features: [
+      taggedRoad("residential", { access: "no" }, [
+        [-4.48, 54.16],
+        [-4.478, 54.16],
+      ]),
+      taggedRoad("residential", { access: "private" }, [
+        [-4.48, 54.161],
+        [-4.478, 54.161],
+      ]),
+    ],
+  });
+  const a = { lon: -4.48, lat: 54.16 };
+  const b = { lon: -4.478, lat: 54.16 };
+  const a2 = { lon: -4.48, lat: 54.161 };
+  const b2 = { lon: -4.478, lat: 54.161 };
+  assert.equal(routeBetween(g, a, b, DRIVING), null, "access=no refused");
+  assert.equal(routeBetween(g, a2, b2, DRIVING), null, "access=private refused");
+  // Walking should still work on access=private (IoM commons)
+  assert.ok(routeBetween(g, a2, b2, WALKING), "walking on access=private allowed");
+});
+
+test("routeBetween returns segmentNames parallel to coordinates", () => {
+  const g = buildGraph({
+    features: [
+      taggedRoad("residential", { name: "Main Street" }, [
+        [-4.48, 54.16],
+        [-4.48, 54.161],
+      ]),
+      taggedRoad("residential", {}, [
+        [-4.48, 54.161],
+        [-4.478, 54.161],
+      ]),
+    ],
+  });
+  const a = { lon: -4.48, lat: 54.16 };
+  const b = { lon: -4.478, lat: 54.161 };
+  const r = routeBetween(g, a, b, DRIVING);
+  assert.ok(r, "route found");
+  assert.ok(r.segmentNames, "segmentNames present");
+  // coords: start, snapA, node(A), node(B), snapB, dest = 6 points
+  // segments: 5, but the last (snapB->dest) has no name -> null
+  // We expect names for: start->snapA (Main St), snapA->node (Main St), node->node (unnamed), node->snapB (unnamed), snapB->dest (null)
+  // The exact count depends on snapping, but segmentNames.length === coords.length - 1
+  assert.equal(r.segmentNames.length, r.coordinates.length - 1, "segmentNames parallel to segments");
+  assert.ok(r.segmentNames.includes("Main Street"), "named road appears in segmentNames");
+});
+
+test("routeBetween same-edge reverse is refused for driving on one-way", () => {
+  const g = buildGraph({
+    features: [
+      taggedRoad("residential", { oneway: "yes" }, [
+        [-4.48, 54.16],
+        [-4.478, 54.16],
+      ]),
+    ],
+  });
+  // Both points on the same one-way segment, but destination "behind" start
+  const a = { lon: -4.478, lat: 54.16 }; // at B
+  const b = { lon: -4.48, lat: 54.16 };  // at A
+  assert.equal(routeBetween(g, a, b, DRIVING), null, "same-edge reverse refused");
+  assert.ok(routeBetween(g, a, b, WALKING), "walking same-edge reverse allowed");
 });

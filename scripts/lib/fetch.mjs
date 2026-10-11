@@ -16,7 +16,7 @@ export const UA =
   "OpenMannin/0.1 (Isle of Man open infrastructure map; +https://github.com/openmannin) node-fetch";
 
 /**
- * gov.im and images.gov.im both sit behind an F5 BIG-IP ASM that rejects
+ * gov.im sits behind an F5 BIG-IP ASM that rejects
  * requests without a browser-shaped User-Agent. We keep one honest UA string
  * with a browser token in it rather than spoofing a full browser, and we send
  * it to everything so behaviour is predictable.

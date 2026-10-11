@@ -29,44 +29,11 @@ import { resolveFeatureLabel } from "../feature-label";
 import { computeRoutes, type RouteLeg, type RouteMap } from "./client";
 import { ROUTE_MODES, type RouteMode } from "./profiles";
 import { deriveSteps, type NavigationStep } from "./steps";
+import type { UserLocation, Destination, LocationStatus, RouteStatus, NavigationState, FollowMode } from "./types";
 
-export interface UserLocation {
-  lon: number;
-  lat: number;
-  accuracyM?: number;
-  timestamp: number;
-}
-
-export interface Destination {
-  lon: number;
-  lat: number;
-  title: string;
-  detail: string;
-}
-
-export type LocationStatus = "idle" | "locating" | "active" | "error";
-
-export type RouteStatus = "idle" | "loading" | "ready" | "no-route" | "error";
-
-/** What the UI needs to render, without route geometry rattling re-renders. */
-export interface NavigationState {
-  locationStatus: LocationStatus;
-  locationError: string | null;
-  userLocation: UserLocation | null;
-  destination: Destination | null;
-  activeMode: RouteMode;
-  routeStatus: RouteStatus;
-  routeError: string | null;
-  routes: Partial<Record<RouteMode, { distanceM: number; durationS: number } | null>>;
-  /** Geometry-derived turn-by-turn legs for the active route. */
-  steps: NavigationStep[];
-  /**
-   * True when live tracking is on but the user has dragged the map away from
-   * their position, so the UI can surface a "Recenter" affordance. Cleared by
-   * the locate press that flies back to the user.
-   */
-  recenterPending: boolean;
-}
+// Re-export types for consumers
+export type { NavigationState, FollowMode, LocationStatus, RouteStatus, RouteMode } from "./types";
+export type { Destination, UserLocation } from "./types";
 
 export interface AttachOptions {
   onState: (state: NavigationState) => void;
@@ -185,6 +152,14 @@ type Internal = {
   fitPending: boolean;
   /** Map dragged away from the live dot while tracking; see NavigationState. */
   recenterPending: boolean;
+  /** Camera follow state: none = manual, follow = center on dot, heading = rotate to heading. */
+  followMode: FollowMode;
+  /** True when the user has deviated from the route and a recalc is pending. */
+  offRoute: boolean;
+  /** Distance along the route from the user's position (metres). */
+  progressM: number;
+  /** Distance remaining to destination (metres). */
+  remainingM: number;
 };
 
 function initialState(activeMode: RouteMode): Internal {
@@ -203,6 +178,10 @@ function initialState(activeMode: RouteMode): Internal {
     routesFresh: false,
     fitPending: false,
     recenterPending: false,
+    followMode: "none",
+    offRoute: false,
+    progressM: 0,
+    remainingM: 0,
   };
 }
 
@@ -229,17 +208,6 @@ function signature(s: Internal): string {
 // ---------------------------------------------------------------------------
 // Layer plumbing shared by first-add and style rehydrate
 // ---------------------------------------------------------------------------
-
-function ensureGeoJson(
-  map: Map,
-  id: string,
-  data: { type: string; features: unknown[] },
-): GeoJSONSource {
-  const existing = map.getSource(id);
-  if (existing) return existing as GeoJSONSource;
-  map.addSource(id, { type: "geojson", data: data as never });
-  return map.getSource(id) as GeoJSONSource;
-}
 
 /** Paint-layer registration happens once; rehydrate re-runs it after setStyle. */
 function addNavLayers(map: Map): void {
@@ -376,14 +344,9 @@ function emptyCollection(): { type: "FeatureCollection"; features: [] } {
 /** Keep markers and the route above every data layer (top = last painted). */
 function liftNavLayers(map: Map): void {
   const order = [
-    `${SOURCE_ROUTE}-casing`,
-    `${SOURCE_ROUTE}-glow`,
-    `${SOURCE_ROUTE}-main`,
-    `${SOURCE_USER}-accuracy`,
-    `${SOURCE_USER}-halo`,
-    `${SOURCE_USER}-dot`,
-    `${SOURCE_DEST}-ring`,
-    `${SOURCE_DEST}-pin`,
+    ...ROUTE_LAYERS,
+    ...USER_LAYERS,
+    ...DEST_LAYERS,
   ];
   for (const id of order) {
     if (map.getLayer(id)) map.moveLayer(id);
@@ -449,6 +412,10 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       routes: state.routes,
       steps: state.steps,
       recenterPending: state.recenterPending,
+      followMode: state.followMode,
+      offRoute: state.offRoute,
+      progressM: state.progressM,
+      remainingM: state.remainingM,
     });
   };
 

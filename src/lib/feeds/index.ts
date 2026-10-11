@@ -1,10 +1,14 @@
 /**
  * One entry point the map polls, so the map does not care where a feed runs.
  *
- * Both live feeds run in the browser because their upstreams send
- * `Access-Control-Allow-Origin: *`, need no credential, and are published
- * under an open licence (Cc-BY / public domain): weather (Open-Meteo) and
- * satellite passes (CelesTrak TLEs + SGP4 in a worker).
+ * The one live feed runs in the browser because its upstream sends
+ * `Access-Control-Allow-Origin: *`, needs no credential, and is published
+ * under an open licence that permits any use: satellite passes (CelesTrak TLEs
+ * + SGP4 in a worker, public domain).
+ *
+ * A weather feed (Open-Meteo) used to live here too. It was withdrawn because
+ * the free tier is non-commercial only, and this site requires data that is
+ * free to use for any purpose including commercial.
  *
  * Everything else on a static host has nowhere to go: there is no server to
  * hold a credential or to hold open a socket. The failure shape is
@@ -13,7 +17,6 @@
  */
 
 import { fetchPasses } from "./passes-client.ts";
-import { fetchWeather } from "./weather-client.ts";
 
 export interface FeedOk {
   ok: true;
@@ -50,7 +53,6 @@ const CLIENT_FEEDS: Record<
     stale?: boolean;
   }>
 > = {
-  weather: fetchWeather,
   "satellite-passes": () => fetchPasses("spaceman"),
 };
 

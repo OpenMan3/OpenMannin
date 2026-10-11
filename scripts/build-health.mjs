@@ -17,7 +17,7 @@
  * WHAT IT NO LONGER CHECKS. The old route reported which live feeds were
  * enabled, because on a server the answer depends on that instance's
  * environment variables. On a static host two of the five feeds no longer
- * involve the host at all (weather and satellite passes run in the browser), and
+ * involve the host at all (satellite passes run in the browser), and
  * the other three depend on the Functions deployment, which is a separate
  * lifecycle. So live-feed state moved to the browser, where the client can
  * actually observe what happened, and where a "feed offline" badge is grounded
@@ -122,14 +122,13 @@ const report = {
   hosting: {
     static: true,
     /** These run in the browser and need nothing from the host. */
-    clientFeeds: ["weather", "satellite-passes"],
+    clientFeeds: ["satellite-passes"],
   },
   problems,
   warnings: [
     "This is a BUILD-TIME report. It says the map is structurally complete, not that any upstream is reachable.",
-    "Live-feed state is observed in the browser, not here: weather and satellite passes are fetched client-side.",
+    "Live-feed state is observed in the browser, not here: satellite passes are fetched client-side.",
     "Satellite passes need public/passes-worker.mjs, bundled from src/lib/feeds/passes-worker.ts by scripts/build-passes-worker.mjs before next build. If that file is missing or stale, the layer is silently empty - there is no console error to see. (Its presence is checked above; staleness is checked by scripts/lib/passes-worker-build.test.mjs.)",
-    "Open-Meteo's free tier is NON-COMMERCIAL: subscriptions or advertising both count as commercial use.",
   ],
 };
 

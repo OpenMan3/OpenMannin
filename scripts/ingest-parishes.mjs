@@ -25,16 +25,19 @@ const RELATION_IDS = [
  * Each way has a geometry array of {lat, lon} points.
  */
 function reconstructRings(ways) {
+  // Round coordinates to 6 decimal places for matching (approx 0.1m precision)
+  const key = (p) => `${p.lat.toFixed(6)},${p.lon.toFixed(6)}`;
+
   const nodeWays = new Map();
   for (const way of ways) {
     const geom = way.geometry;
     if (!geom || geom.length < 2) continue;
-    const startKey = `${geom[0].lat},${geom[0].lon}`;
-    const endKey = `${geom[geom.length - 1].lat},${geom[geom.length - 1].lon}`;
+    const startKey = key(geom[0]);
+    const endKey = key(geom[geom.length - 1]);
     if (!nodeWays.has(startKey)) nodeWays.set(startKey, []);
     if (!nodeWays.has(endKey)) nodeWays.set(endKey, []);
-    nodeWays.get(startKey).push({ way, isStart: true });
-    nodeWays.get(endKey).push({ way, isStart: false });
+    nodeWays.get(startKey).push({ way, reversed: false });
+    nodeWays.get(endKey).push({ way, reversed: true });
   }
 
   const visited = new Set();
@@ -44,27 +47,40 @@ function reconstructRings(ways) {
     if (visited.has(way.id)) continue;
     const ring = [];
     let current = way;
+    let currentReversed = false;
+
+    // Remember the ring's starting point to detect closure
+    const ringStartKey = key(way.geometry[0]);
 
     for (let i = 0; i < ways.length + 1; i++) {
       visited.add(current.id);
-      ring.push(current);
+      ring.push({ way: current, reversed: currentReversed });
 
       const geom = current.geometry;
-      const endPoint = geom[geom.length - 1];
-      const endKey = `${endPoint.lat},${endPoint.lon}`;
+      const endPoint = currentReversed ? geom[0] : geom[geom.length - 1];
+      const endKey = key(endPoint);
 
-      const candidates = nodeWays.get(endKey) ?? [];
-      const next = candidates.find((c) => !visited.has(c.way.id));
-      if (!next) break;
-
-      current = next.way;
-
-      const startPoint = current.geometry[0];
-      if (startPoint.lat === endPoint.lat && startPoint.lon === endPoint.lon) {
-        visited.add(current.id);
-        ring.push(current);
+      // Check if we've returned to the ring's starting point (closed ring)
+      if (endKey === ringStartKey && ring.length > 1) {
+        // Ring is closed!
         break;
       }
+
+      const candidates = nodeWays.get(endKey) ?? [];
+      // Find an unvisited way that connects to this endpoint
+      let next = null;
+      let nextReversed = false;
+      for (const c of candidates) {
+        if (!visited.has(c.way.id)) {
+          next = c.way;
+          nextReversed = c.reversed;
+          break;
+        }
+      }
+      if (!next) break;
+
+      current = next;
+      currentReversed = nextReversed;
     }
 
     if (ring.length >= 3) rings.push(ring);
@@ -75,42 +91,26 @@ function reconstructRings(ways) {
 
 /** Parse OSM XML relation response into a structured object. */
 function parseRelationXml(xml) {
-  // Extract relation tags
+  // Extract relation tags - use fresh regex each time to avoid lastIndex issues
   const tags = {};
-  const tagRegex = /<tag k="([^"]+)" v="([^"]+)"\/>/g;
-  let match;
-  while ((match = tagRegex.exec(xml)) !== null) {
-    tags[match[1]] = match[2];
-  }
+  const tagMatches = xml.matchAll(/<tag k="([^"]+)" v="([^"]+)"\/>/g);
+  for (const m of tagMatches) tags[m[1]] = m[2];
 
-  // Extract all nodes with coordinates
+  // Extract all nodes with coordinates - nodes have many attributes, use flexible regex
+  // lat/lon can be negative, so include - in character class
   const nodes = new Map();
-  const nodeRegex = /<node id="(\d+)" lat="([\d.]+)" lon="([\d.]+)"/g;
-  while ((match = nodeRegex.exec(xml)) !== null) {
-    nodes.set(Number(match[1]), { lat: Number(match[2]), lon: Number(match[3]) });
-  }
+  const nodeMatches = xml.matchAll(/<node\s+id="(\d+)"[^>]*\slat="([-\d.]+)"\s+lon="([-\d.]+)"/g);
+  for (const m of nodeMatches) nodes.set(Number(m[1]), { lat: Number(m[2]), lon: Number(m[3]) });
 
   // Extract way members with their node references
   const ways = [];
-  const wayRegex = /<way id="(\d+)"[^>]*>([\s\S]*?)<\/way>/g;
-  while ((match = wayRegex.exec(xml)) !== null) {
-    const wayId = Number(match[1]);
-    const wayBody = match[2];
-    const ndRefs = [];
-    const ndRegex = /<nd ref="(\d+)"\/>/g;
-    let ndMatch;
-    while ((ndMatch = ndRegex.exec(wayBody)) !== null) {
-      ndRefs.push(Number(ndMatch[1]));
-    }
-    // Build geometry from node coordinates
-    const geometry = [];
-    for (const ref of ndRefs) {
-      const node = nodes.get(ref);
-      if (node) geometry.push(node);
-    }
-    if (geometry.length >= 2) {
-      ways.push({ id: wayId, geometry });
-    }
+  const wayMatches = xml.matchAll(/<way id="(\d+)"[^>]*>([\s\S]*?)<\/way>/g);
+  for (const m of wayMatches) {
+    const wayId = Number(m[1]);
+    const wayBody = m[2];
+    const ndRefs = [...wayBody.matchAll(/<nd ref="(\d+)"\/>/g)].map((nm) => Number(nm[1]));
+    const geometry = ndRefs.map((ref) => nodes.get(ref)).filter(Boolean);
+    if (geometry.length >= 2) ways.push({ id: wayId, geometry });
   }
 
   return { tags, ways };
@@ -150,9 +150,12 @@ async function main() {
       }
 
       const polygons = rings.map((ring) => {
-        const coords = ring.map((way) =>
-          way.geometry.map((p) => [Number(p.lon.toFixed(6)), Number(p.lat.toFixed(6))]),
-        );
+        const coords = ring.map(({ way, reversed }) => {
+          const geom = reversed
+            ? [...way.geometry].reverse()
+            : way.geometry;
+          return geom.map((p) => [Number(p.lon.toFixed(6)), Number(p.lat.toFixed(6))]);
+        });
         for (const line of coords) {
           const first = line[0];
           const last = line[line.length - 1];

@@ -22,7 +22,7 @@ import { useEffect, useRef } from "react";
 import { ROUTE_MODES, type RouteMode } from "@/lib/navigation/profiles";
 import type { NavigationState } from "@/lib/navigation/host";
 import { formatStepDistance, type NavigationStep } from "@/lib/navigation/steps";
-import { CarIcon, CloseIcon, ClockIcon, RouteIcon, WalkIcon } from "./Icons";
+import { BikeIcon, CarIcon, CloseIcon, ClockIcon, RouteIcon, WalkIcon } from "./Icons";
 
 function formatDistance(m: number): string {
   return formatStepDistance(m);
@@ -47,7 +47,14 @@ function arrivalTime(s: number): string {
 
 const MODE_ICON: Record<RouteMode, (p: { className?: string }) => React.JSX.Element> = {
   driving: CarIcon,
+  cycling: BikeIcon,
   walking: WalkIcon,
+};
+
+const MODE_LABEL: Record<RouteMode, string> = {
+  driving: "Drive",
+  cycling: "Cycle",
+  walking: "Walk",
 };
 
 function StepList({ steps }: { steps: NavigationStep[] }) {
@@ -82,6 +89,7 @@ export function DestinationSheet({
   stepsOpen,
   onToggleSteps,
   onInset,
+  minimized,
 }: {
   state: NavigationState;
   onToggleMode: (mode: RouteMode) => void;
@@ -92,6 +100,8 @@ export function DestinationSheet({
   onToggleSteps: () => void;
   /** Reports the sheet's live pixel height, for map bottom-padding. */
   onInset?: (px: number) => void;
+  /** Mobile: whether to show minimized version when route is ready. */
+  minimized?: boolean;
 }) {
   const { destination, routes, activeMode, routeStatus, routeError, userLocation, steps } = state;
   const present = !!destination;
@@ -122,8 +132,6 @@ export function DestinationSheet({
   if (!destination) return null;
 
   const active = routes[activeMode] ?? null;
-  const other = ROUTE_MODES.filter((m) => m !== activeMode)[0] ?? null;
-  const otherRoute = other ? routes[other] : undefined;
 
   const busy = routeStatus === "loading";
   const noNetwork = routeStatus === "no-route";
@@ -132,10 +140,56 @@ export function DestinationSheet({
 
   const canNavigate = !!userLocation && !busy;
 
+  // Mobile: minimized sheet when route is ready and not showing steps
+  const isMinimized = minimized && ready && !stepsOpen && !busy && !noNetwork && !failed;
+
+  if (isMinimized) {
+    return (
+      <div
+        ref={insetRef}
+        className="om-sheet-in absolute inset-x-0 bottom-12 z-20 px-3 pb-3 sm:bottom-3 sm:inset-x-auto sm:right-3 sm:w-[min(24rem,calc(100vw-1.5rem))]"
+      >
+        <div role="dialog" aria-label={`Directions to ${destination.title}`} className="card overflow-hidden">
+          <div className="flex items-center justify-between gap-2 px-3 py-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wide text-pin uppercase">
+                <span aria-hidden="true" className="inline-block h-2 w-2 rounded-full border border-white/80" />
+                Destination
+              </div>
+              <div className="truncate text-sm font-semibold text-ink">{destination.title}</div>
+            </div>
+            {ready && active && (
+              <div className="flex items-center gap-3 text-[12px] text-ink-2 shrink-0">
+                <span className="flex items-center gap-1">
+                  <span className="font-semibold text-ink">{formatDistance(active.distanceM)}</span>
+                  <span className="text-ink-3">·</span>
+                  <span className="font-semibold text-ink">{formatDuration(active.durationS)}</span>
+                </span>
+                <span className="flex items-center gap-0.5 text-[10px] text-ink-3">
+                  <ClockIcon className="h-3 w-3" />
+                  {arrivalTime(active.durationS)}
+                </span>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={onToggleSteps}
+              className="btn-icon !h-8 !w-8 flex items-center gap-1 px-2 text-[11px] text-ink-2 hover:text-ink"
+              aria-label="Show turn-by-turn directions"
+            >
+              <RouteIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">{steps.length} steps</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={insetRef}
-      className="om-sheet-in absolute inset-x-0 bottom-14 z-20 p-3 sm:bottom-3 sm:inset-x-auto sm:right-3 sm:w-[min(24rem,calc(100vw-1.5rem))]"
+      className="om-sheet-in absolute inset-x-0 bottom-12 z-20 p-3 sm:bottom-3 sm:inset-x-auto sm:right-3 sm:w-[min(24rem,calc(100vw-1.5rem))]"
     >
       <div
         role="dialog"
@@ -186,7 +240,7 @@ export function DestinationSheet({
                 }`}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                <span className="truncate">{mode === "driving" ? "Drive" : "Walk"}</span>
+                <span className="truncate">{MODE_LABEL[mode]}</span>
                 {r && (
                   <span className="ml-auto shrink-0 text-[10px] font-normal opacity-70">
                     {formatDistance(r.distanceM)}
@@ -227,15 +281,13 @@ export function DestinationSheet({
             <div className="flex items-end justify-between gap-3">
               <dl className="flex gap-4">
                 <div>
-                  <dt className="label">
-                    {otherRoute !== undefined ? "Route" : "Distance"}
-                  </dt>
+                  <dt className="label">Distance</dt>
                   <dd className="text-lg font-semibold text-ink tabular-nums">
                     {formatDistance(active.distanceM)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="label">{otherRoute !== undefined ? "By road" : "Time"}</dt>
+                  <dt className="label">Time</dt>
                   <dd className="text-lg font-semibold text-ink tabular-nums">
                     {formatDuration(active.durationS)}
                   </dd>
@@ -248,14 +300,19 @@ export function DestinationSheet({
             </div>
           )}
 
-          {other && otherRoute !== undefined && ready && (
-            <p className="mt-1 truncate text-[11px] text-ink-3">
-              {other === "walking" ? "Walking" : "Driving"} alternative:{" "}
-              {otherRoute
-                ? `${formatDistance(otherRoute.distanceM)} · ${formatDuration(otherRoute.durationS)}`
-                : "no road route"}
-            </p>
-          )}
+          {ready &&
+            ROUTE_MODES.filter((m) => m !== activeMode).map((mode) => {
+              const r = routes[mode];
+              if (r === undefined) return null;
+              return (
+                <p key={mode} className="mt-1 truncate text-[11px] text-ink-3">
+                  {MODE_LABEL[mode]} alternative:{" "}
+                  {r
+                    ? `${formatDistance(r.distanceM)} · ${formatDuration(r.durationS)}`
+                    : "no road route"}
+                </p>
+              );
+            })}
 
           {ready && steps.length > 0 && (
             <>

@@ -1,22 +1,31 @@
 /**
  * Turn-by-turn steps derived from route geometry.
  *
- * The routing worker returns a bare polyline - the graph has no street names
- * and no junction tags, so nothing here is invented as a ground truth. What the
- * polyline DOES contain is honest navigational information: where the bearing
- * changes enough to be a "turn", and how far you travel between turns. This
- * module turns that into a short, readable list of legs.
+ * The routing worker returns a polyline plus, where OpenStreetMap knows it, the
+ * street name of each segment. Nothing here is invented as a ground truth: a
+ * leg is a run of segments whose bearing stays near-constant, and its name is
+ * the name of the longest segment in that run. What the geometry gives us is
+ * honest navigational information - where the bearing changes enough to be a
+ * "turn", and how far you travel between turns - and the names are carried
+ * through only when the underlying way had one.
+ *
+ * Distances are shown in the island's units (feet/yards/miles); the legs
+ * themselves are metres.
  *
  * PURE: no DOM, no MapLibre, no fetch - testable under `node --test`.
  */
 
+import { formatDistance } from "../units.ts";
+
 export interface NavigationStep {
-  /** e.g. "Head north for 300 m" (first leg) or "Turn right, then 1.2 km". */
+  /** e.g. "Head north on Main Street for 300 yd". */
   instruction: string;
   /** Length of this leg in metres. */
   distanceM: number;
   /** Absolute compass bearing of the leg's travel direction, degrees 0-360. */
   bearing: number;
+  /** Street name for this leg, when the road on it is named. */
+  streetName?: string | null;
 }
 
 const RAD = Math.PI / 180;
@@ -78,12 +87,9 @@ const MAX_LEGS = 16;
 /** A leg this short contributes no distance and is dropped. */
 const MIN_LEG_M = 8;
 
+/** A leg distance in the island's road units (feet/yards/miles). */
 export function formatStepDistance(m: number): string {
-  if (m >= 1000) {
-    const km = m / 1000;
-    return `${km >= 10 ? km.toFixed(0) : km.toFixed(1)} km`;
-  }
-  return `${Math.round(m)} m`;
+  return formatDistance(m);
 }
 
 function turnPhrase(fromBearing: number, toBearing: number): string {
@@ -98,34 +104,65 @@ function turnPhrase(fromBearing: number, toBearing: number): string {
 }
 
 /**
+ * Recompute the displayed legs for whichever route is active right now.
+ */
+export function syncSteps(route?: { coordinates: readonly (readonly [number, number])[]; segmentNames?: (string | null)[] } | null): NavigationStep[] {
+  return route && route.coordinates.length > 1
+    ? deriveSteps(route.coordinates, route.segmentNames)
+    : [];
+}
+  /**
  * Split a route polyline into straight-ish legs. Segments whose bearing stays
  * near the leg's running direction accumulate; a change past
  * TURN_THRESHOLD_DEG closes the leg and starts the next.
+ *
+ * `names` (optional) is parallel to the segment index: names[k] is the street
+ * name of the segment from coordinates[k] to coordinates[k+1]. Each leg takes
+ * the name of its longest named segment, so a brief crossing of an unnamed
+ * connector does not erase the street you are actually on.
  */
-export function deriveSteps(coordinates: readonly (readonly [number, number])[]): NavigationStep[] {
-  if (coordinates.length < 2) return [];
+export function deriveSteps(
+  coordinates: readonly (readonly [number, number])[],
+  names?: readonly (string | null | undefined)[],
+): NavigationStep[] {
 
-  const segs: { bearing: number; distanceM: number }[] = [];
+  const segs: { bearing: number; distanceM: number; name: string | null }[] = [];
   for (let i = 1; i < coordinates.length; i++) {
     const [x1, y1] = coordinates[i - 1];
     const [x2, y2] = coordinates[i];
     if (!Number.isFinite(x1) || !Number.isFinite(y1) || !Number.isFinite(x2) || !Number.isFinite(y2)) continue;
     const d = haversineM(x1, y1, x2, y2);
     if (d < 0.5) continue;
-    segs.push({ bearing: bearingDeg(x1, y1, x2, y2), distanceM: d });
+    const rawName = names?.[i - 1];
+    segs.push({
+      bearing: bearingDeg(x1, y1, x2, y2),
+      distanceM: d,
+      name: typeof rawName === "string" && rawName.trim() ? rawName.trim() : null,
+    });
   }
   if (segs.length === 0) return [];
 
   // Walk the segments, folding each into the current leg while its bearing
-  // stays near the leg's running (mean) direction.
-  const legs: { bearing: number; distanceM: number }[] = [];
+  // stays near the leg's running (mean) direction. The leg's name is that of
+  // its longest named segment.
+  const legs: { bearing: number; distanceM: number; name: string | null }[] = [];
   let sumX = 0;
   let sumY = 0;
   let distanceM = 0;
+  let name: string | null = null;
+  let nameLen = -1;
+
+  const reset = () => {
+    sumX = 0;
+    sumY = 0;
+    distanceM = 0;
+    name = null;
+    nameLen = -1;
+  };
 
   const closeLeg = () => {
     const bearing = normalizeDeg(Math.atan2(sumY, sumX) * DEG);
-    if (distanceM >= MIN_LEG_M) legs.push({ bearing, distanceM });
+    if (distanceM >= MIN_LEG_M) legs.push({ bearing, distanceM, name });
   };
 
   let prevBearing = segs[0].bearing;
@@ -137,15 +174,17 @@ export function deriveSteps(coordinates: readonly (readonly [number, number])[])
     if (legs.length > 0 || distanceM > 0) {
       if (deltaFromPrev > TURN_THRESHOLD_DEG && deltaFromRun > TURN_THRESHOLD_DEG * 1.4) {
         closeLeg();
-        sumX = 0;
-        sumY = 0;
-        distanceM = 0;
-      }
-    }
+        reset();
+}
+}
     const b = seg.bearing * RAD;
     sumX += Math.cos(b);
     sumY += Math.sin(b);
     distanceM += seg.distanceM;
+    if (seg.name && seg.distanceM > nameLen) {
+      name = seg.name;
+      nameLen = seg.distanceM;
+    }
     prevBearing = seg.bearing;
   }
   closeLeg();
@@ -153,25 +192,44 @@ export function deriveSteps(coordinates: readonly (readonly [number, number])[])
   if (legs.length === 0) {
     // Everything folded into one leg (e.g. a single straight connector).
     const total = segs.reduce((n, s) => n + s.distanceM, 0);
-    return [{ bearing: segs[0].bearing, distanceM: total, instruction: "" }];
+    const longest = segs.reduce((a, b) => (b.distanceM > a.distanceM ? b : a), segs[0]);
+    return [
+      {
+        bearing: segs[0].bearing,
+        distanceM: total,
+        instruction: "",
+        streetName: longest.name,
+      },
+    ];
   }
 
   // Fold the (rare) tail of loose segments into the final leg.
   const folded = legs.slice(0, MAX_LEGS);
   if (legs.length > MAX_LEGS) {
+    const last = folded[folded.length - 1];
     const rest = legs.slice(MAX_LEGS - 1);
     folded[folded.length - 1] = {
-      bearing: folded[folded.length - 1].bearing,
-      distanceM: folded[folded.length - 1].distanceM + rest.reduce((n, l) => n + l.distanceM, 0),
+      bearing: last.bearing,
+      distanceM: last.distanceM + rest.reduce((n, l) => n + l.distanceM, 0),
+      name: last.name,
     };
   }
 
-  return folded.map((leg, i) => ({
-    instruction:
+  return folded.map((leg, i) => {
+    const dist = formatStepDistance(leg.distanceM);
+    const instruction =
       i === 0
-        ? `Head ${cardinal(leg.bearing)} for ${formatStepDistance(leg.distanceM)}`
-        : `${turnPhrase(folded[i - 1].bearing, leg.bearing)}, heading ${cardinal(leg.bearing)} for ${formatStepDistance(leg.distanceM)}`,
-    distanceM: Math.round(leg.distanceM),
-    bearing: Math.round(leg.bearing),
-  }));
+        ? leg.name
+          ? `Head ${cardinal(leg.bearing)} on ${leg.name} for ${dist}`
+          : `Head ${cardinal(leg.bearing)} for ${dist}`
+        : leg.name
+          ? `${turnPhrase(folded[i - 1].bearing, leg.bearing)} onto ${leg.name} for ${dist}`
+          : `${turnPhrase(folded[i - 1].bearing, leg.bearing)}, heading ${cardinal(leg.bearing)} for ${dist}`;
+    return {
+      instruction,
+      distanceM: Math.round(leg.distanceM),
+      bearing: Math.round(leg.bearing),
+      streetName: leg.name,
+    };
+  });
 }

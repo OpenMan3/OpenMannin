@@ -12,9 +12,12 @@
  * out with the reason, rather than silently hidden. A layer that 404s and a
  * layer that does not exist are different problems and the user should see
  * which is which.
+ *
+ * Groups are collapsible/expandable and remember their state in localStorage.
+ * Default: all groups expanded on first visit; user preference persists.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { LayerDef, LayerGroup } from "@/lib/types";
 import { SOURCES } from "@/lib/sources";
 import { LICENCES } from "@/lib/licences";
@@ -27,6 +30,7 @@ const GROUP_LABELS: Record<LayerGroup, string> = {
   cables: "Subsea cables",
   energy: "Energy",
   environment: "Environment",
+  poi: "Points of interest",
   aviation: "Aviation",
   surveillance: "Surveillance & environment",
   live: "Live feeds",
@@ -41,6 +45,7 @@ const GROUP_ORDER: LayerGroup[] = [
   "transport",
   "trails",
   "environment",
+  "poi",
   "surveillance",
   "aviation",
   "live",
@@ -52,6 +57,36 @@ const GRADE_CLASS: Record<string, string> = {
   C: "text-warn",
   D: "text-danger",
 };
+
+const EXPANDED_KEY = "om:layerGroupsExpanded";
+
+function getDefaultExpanded(): Set<LayerGroup> {
+  // Default to all groups expanded
+  return new Set(GROUP_ORDER);
+}
+
+function loadExpanded(): Set<LayerGroup> {
+  if (typeof window === "undefined") return getDefaultExpanded();
+  try {
+    const stored = localStorage.getItem(EXPANDED_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) return new Set(parsed);
+    }
+  } catch {
+    /* ignore */
+  }
+  return getDefaultExpanded();
+}
+
+function saveExpanded(expanded: Set<LayerGroup>) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(EXPANDED_KEY, JSON.stringify([...expanded]));
+  } catch {
+    /* ignore */
+  }
+}
 
 export function LayerPanel({
   layers,
@@ -74,7 +109,11 @@ export function LayerPanel({
   /** Flip every layer on or off in one switch. */
   onToggleAll?: (on: boolean) => void;
 }) {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [expandedGroups, setExpandedGroups] = useState<Set<LayerGroup>>(() => loadExpanded());
+
+  useEffect(() => {
+    saveExpanded(expandedGroups);
+  }, [expandedGroups]);
 
   const grouped = useMemo(() => {
     const map = new Map<LayerGroup, LayerDef[]>();
@@ -85,11 +124,11 @@ export function LayerPanel({
     return map;
   }, [layers]);
 
-  const toggleDetail = (id: string) =>
-    setExpanded((prev) => {
+  const toggleGroup = (group: LayerGroup) =>
+    setExpandedGroups((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(group)) next.delete(group);
+      else next.add(group);
       return next;
     });
 
@@ -123,160 +162,116 @@ export function LayerPanel({
       </div>
 
       <div className="scroll-thin flex-1 overflow-y-auto">
-        {GROUP_ORDER.filter((g) => grouped.has(g)).map((group) => (
-          <section key={group}>
-            <h3 className="sticky top-0 z-10 bg-page/95 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-ink-3 uppercase backdrop-blur">
-              {GROUP_LABELS[group]}
-            </h3>
+        {GROUP_ORDER.filter((g) => grouped.has(g)).map((group) => {
+          const isGroupExpanded = expandedGroups.has(group);
+          return (
+            <section key={group}>
+              <button
+                type="button"
+                onClick={() => toggleGroup(group)}
+                className="flex w-full items-center justify-between sticky top-0 z-10 bg-page/95 px-3 py-1.5 text-left text-[11px] font-semibold tracking-wide text-ink-3 uppercase backdrop-blur"
+                aria-expanded={isGroupExpanded}
+              >
+                <span className="flex items-center gap-1.5">
+                  <span className="text-accent">{isGroupExpanded ? "−" : "+"}</span>
+                  {GROUP_LABELS[group]}
+                </span>
+                <span className="text-[10px] text-ink-3">
+                  {grouped.get(group)!.filter((l) => enabled.has(l.id)).length} / {grouped.get(group)!.length}
+                </span>
+              </button>
 
-            {grouped.get(group)!.map((layer) => {
-              const isMissing = missing.has(layer.id);
-              const isLive = layer.kind === "live";
-              const feedError = isLive ? feedErrors[layer.id] : undefined;
-              const isOn = enabled.has(layer.id) && !isMissing;
-              const src = SOURCES[layer.sourceId];
-              const lic = src ? LICENCES[src.licence] : undefined;
-              const needsPermission = lic?.requiresPermission ?? false;
-              const isOpen = expanded.has(layer.id);
+              {isGroupExpanded && (
+                <div className="space-y-0.5">
+                  {grouped.get(group)!.map((layer) => {
+                    const isMissing = missing.has(layer.id);
+                    const isLive = layer.kind === "live";
+                    const feedError = isLive ? feedErrors[layer.id] : undefined;
+                    const isOn = enabled.has(layer.id) && !isMissing;
+                    const src = SOURCES[layer.sourceId];
+                    const lic = src ? LICENCES[src.licence] : undefined;
+                    const needsPermission = lic?.requiresPermission ?? false;
 
-              return (
-                <div key={layer.id} className="border-b border-line-soft">
-                  <div className="flex items-start gap-2 px-3 py-2">
-                    <input
-                      type="checkbox"
-                      id={`layer-${layer.id}`}
-                      checked={isOn}
-                      disabled={isMissing}
-                      onChange={() => onToggle(layer.id)}
-                      className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-accent disabled:opacity-40"
-                    />
+                    return (
+                      <div key={layer.id} className="border-b border-line-soft">
+                        <div className="flex items-start gap-2 px-3 py-2">
+                          <input
+                            type="checkbox"
+                            id={`layer-${layer.id}`}
+                            checked={isOn}
+                            disabled={isMissing}
+                            onChange={() => onToggle(layer.id)}
+                            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-accent disabled:opacity-40"
+                          />
 
-                    <label
-                      htmlFor={`layer-${layer.id}`}
-                      className="min-w-0 flex-1 cursor-pointer"
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <span
-                          className="icon-badge"
-                          style={{ background: layer.color }}
-                          aria-hidden
-                        />
-                        <span
-                          className={`truncate text-[13px] ${
-                            isMissing ? "text-ink-3 line-through" : "text-ink"
-                          }`}
-                        >
-                          {layer.label}
-                        </span>
-                      </span>
-
-                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-ink-3">
-                        <span className={`font-mono font-semibold ${GRADE_CLASS[layer.confidence]}`}>
-                          {layer.confidence}
-                        </span>
-                        {layer.featureCount !== undefined && (
-                          <span className="font-mono">{layer.featureCount.toLocaleString()}</span>
-                        )}
-                        {layer.minZoom !== undefined && layer.minZoom > 0 && (
-                          <span>z{layer.minZoom}+</span>
-                        )}
-                        {needsPermission && (
-                          <span className="chip bg-warn/10 text-warn">permission needed</span>
-                        )}
-                        {isLive && <span className="chip bg-info/10 text-info">live route</span>}
-                        {feedError && (
-                          <span
-                            className="chip bg-danger/10 text-danger"
-                            title={feedError}
+                          <label
+                            htmlFor={`layer-${layer.id}`}
+                            className="min-w-0 flex-1 cursor-pointer"
                           >
-                            feed offline
-                          </span>
-                        )}
-                        {isMissing && (
-                          <span className="chip bg-danger/10 text-danger">no data</span>
-                        )}
-                      </span>
-                    </label>
-
-                    <button
-                      type="button"
-                      onClick={() => toggleDetail(layer.id)}
-                      aria-label={`Details for ${layer.label}`}
-                      aria-pressed={isOpen}
-                      className="btn-icon !h-7 !w-7 !rounded-md text-xs"
-                    >
-                      {isOpen ? "−" : "+"}
-                    </button>
-                  </div>
-
-                  {isOpen && (
-                    <div className="space-y-2 px-3 pb-3 text-[12px] leading-relaxed text-ink-2">
-                      <p className="pl-8">{layer.description}</p>
-
-                      {feedError && (
-                        <div className="rounded-md border border-danger/30 bg-danger/5 p-2">
-                          <div className="mb-1 font-semibold text-danger">
-                            This live feed is not running
-                          </div>
-                          <p className="break-words">{feedError}</p>
-                        </div>
-                      )}
-
-                      {layer.caveats && layer.caveats.length > 0 && (
-                        <div className="rounded-md border border-warn/30 bg-warn/5 p-2">
-                          <div className="mb-1 font-semibold text-warn">
-                            Caveats — read before relying on this
-                          </div>
-                          <ul className="list-disc space-y-1 pl-4">
-                            {layer.caveats.map((c, i) => (
-                              <li key={i}>{c}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      <div className="border-t border-line pt-2 text-ink-3">
-                        <div>
-                          Source:{" "}
-                          {src ? (
-                            <a
-                              href={src.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="link"
-                            >
-                              {src.name}
-                            </a>
-                          ) : (
-                            <span className="text-danger">unregistered: {layer.sourceId}</span>
-                          )}
-                        </div>
-                        {lic && (
-                          <div className="mt-0.5">
-                            Licence:{" "}
-                            {lic.url ? (
-                              <a
-                                href={lic.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="link"
+                            <span className="flex items-center gap-1.5">
+                              <span
+                                className="icon-badge"
+                                style={{ background: layer.color }}
+                                aria-hidden
+                              />
+                              <span
+                                className={`truncate text-[13px] ${
+                                  isMissing ? "text-ink-3 line-through" : "text-ink"
+                                }`}
                               >
-                                {lic.name}
-                              </a>
-                            ) : (
-                              lic.name
-                            )}
-                          </div>
-                        )}
-                        {lic && <div className="mt-0.5">{lic.obligation}</div>}
-                      </div>
-                    </div>
-                  )}
+                                {layer.label}
+                              </span>
+                            </span>
+
+                            <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-ink-3">
+                              <span className={`font-mono font-semibold ${GRADE_CLASS[layer.confidence]}`}>
+                                {layer.confidence}
+                              </span>
+                              {layer.featureCount !== undefined && (
+                                <span className="font-mono">{layer.featureCount.toLocaleString()}</span>
+                              )}
+                              {layer.minZoom !== undefined && layer.minZoom > 0 && (
+                                <span>z{layer.minZoom}+</span>
+                              )}
+                              {needsPermission && (
+                                <span className="chip bg-warn/10 text-warn">permission needed</span>
+                              )}
+                              {isLive && <span className="chip bg-info/10 text-info">live route</span>}
+                              {feedError && (
+                                <span
+                                  className="chip bg-danger/10 text-danger"
+                                  title={feedError}
+                                >
+                                  feed offline
+                                </span>
+                              )}
+                              {isMissing && (
+                                <span className="chip bg-danger/10 text-danger">no data</span>
+                              )}
+                            </span>
+                          </label>
+                        </div>
+
+<div className="space-y-2 px-3 pb-3 text-[12px] leading-relaxed text-ink-2">
+
+                          {feedError && (
+                            <div className="rounded-md border border-danger/30 bg-danger/5 p-2 pl-8">
+                              <div className="mb-1 font-semibold text-danger">
+                                This live feed is not running
+                              </div>
+                              <p className="break-words">{feedError}</p>
+                            </div>
+                          )}
+
+</div>
+                       </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </section>
-        ))}
+              )}
+            </section>
+          );
+        })}
       </div>
     </div>
   );

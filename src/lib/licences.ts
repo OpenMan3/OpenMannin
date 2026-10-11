@@ -41,14 +41,6 @@ export const LICENCES: Record<LicenceId, Licence> = {
     requiresPermission: false,
     obligation: "Attribution with link to licence.",
   },
-  "CC-BY-NC-4.0": {
-    id: "CC-BY-NC-4.0",
-    name: "Creative Commons Attribution-NonCommercial 4.0",
-    url: "https://creativecommons.org/licenses/by-nc/4.0/",
-    commercial: false,
-    requiresPermission: false,
-    obligation: "Attribution. Non-commercial use only — blocks monetised deployment.",
-  },
   "PUBLIC-DOMAIN": {
     id: "PUBLIC-DOMAIN",
     name: "Public domain / no known copyright",

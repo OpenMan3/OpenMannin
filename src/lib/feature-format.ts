@@ -16,6 +16,9 @@ export const HIDDEN_KEYS = new Set([
   "page",
   "note",
   "coordSource",
+  // Rendered as a dedicated hazard banner in the feature popup rather than as
+  // one more attribute row, so it cannot be skimmed past.
+  "safety",
 ]);
 
 /** Hard cap on a formatted value, so one huge nested property cannot fill a card. */

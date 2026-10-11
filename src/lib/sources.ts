@@ -46,16 +46,6 @@ export const SOURCES: Record<string, Source> = {
     notes:
       "Two-line element sets for the ISS and crewed spacecraft. Published by the US Space Force as public domain and redistributed by CelesTrak with no key, no login and no terms restricting use. Propagated with SGP4 via satellite.js (MIT). This is the only live feed here that needs nobody's permission, which is why it is the only one enabled.",
   },
-  openmeteo: {
-    id: "openmeteo",
-    name: "Open-Meteo weather and marine API",
-    publisher: "Open-Meteo",
-    url: "https://open-meteo.com/",
-    licence: "CC-BY-4.0",
-    lastChecked: "2026-10-04",
-    notes:
-      "No key. 10,000 calls/day and 300,000/month. CORS *. Free tier is NON-COMMERCIAL ONLY — their terms count subscriptions or advertising as commercial. Has waves and sea surface temperature but NO tide or sea-level-height product.",
-  },
   manxutilities: {
     id: "manxutilities",
     name: "Manx Utilities asset disclosures",
@@ -191,6 +181,16 @@ export const SOURCES: Record<string, Source> = {
     notes:
       "Free, keyless, CORS *. The old services.emodnet-geoservices host no longer resolves — moved to tiles.emodnet-bathymetry.eu. Gotcha: the WMTS layer id (mean_multicolour_latest) differs from the URL path segment (latest/mean_multicolour); use the path.",
   },
+  awsTerrain: {
+    id: "awsTerrain",
+    name: "AWS Open Data — Terrain Tiles (Mapzen/Joerd)",
+    publisher: "Mapzen (Linux Foundation) / AWS Open Data",
+    url: "https://registry.opendata.aws/terrain-tiles/",
+    licence: "COPERNICUS",
+    lastChecked: "2026-10-11",
+    notes:
+      "Keyless global bare-earth elevation tiles on S3 (elevation-tiles-prod), CORS *. Terrarium encoding, maxzoom 15. Over the Isle of Man the contributing layers are Copernicus EU-DEM (Europe) and SRTM (public domain, USGS); attribution: 'Produced using Copernicus data and information funded by the European Union - EU-DEM layers' plus 'SRTM data courtesy of the U.S. Geological Survey'.",
+  },
   openmannin: {
     id: "openmannin",
     name: "OpenMannin compilation",
@@ -199,25 +199,5 @@ export const SOURCES: Record<string, Source> = {
     licence: "OGL-IoM",
     lastChecked: "2026-10-04",
     notes: "Our own compilation from the registered sources above.",
-  },
-  webcamsGov: {
-    id: "webcamsGov",
-    name: "Isle of Man Government public webcams",
-    publisher: "Isle of Man Government (images.gov.im)",
-    url: "https://www.gov.im/webcams/",
-    licence: "OGL-IoM",
-    lastChecked: "2026-10-04",
-    notes:
-      "10 snapshot JPEGs, no key, hotlinking works, no referrer check. No CORS headers (so <img> works, canvas pixel readback does not). Cache-Control: no-cache. AWS WAF challenge fires on ~50-70% of non-browser requests. No published grant for third-party reuse of the IMAGES specifically. No MJPEG/HLS stream exists. Published coordinates not found — our pins are geolocated by eye from the pages and must be treated as approximate.",
-  },
-  metoffice: {
-    id: "metoffice",
-    name: "UK Met Office DataHub",
-    publisher: "UK Met Office",
-    url: "https://datahub.metoffice.gov.uk/",
-    licence: "CC-BY-4.0",
-    lastChecked: "2026-10-04",
-    notes:
-      "Requires an API key AND an active plan subscription; there is no anonymous tier. 'Powered by Met Office data' attribution is mandatory. API v1 is being retired 2026-11-11 and v2 needs a brand new key. Ronaldsway observations run hourly and continuously since 7 May 1946.",
   },
 };

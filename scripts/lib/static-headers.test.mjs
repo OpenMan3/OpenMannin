@@ -30,10 +30,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", ".
 
 test("the CSP names every origin the browser actually fetches from", () => {
   // Each of these failing in production looks like an app bug: a blank
-  // basemap, an empty weather layer, TLEs that never arrive.
+  // basemap, TLEs that never arrive.
   for (const origin of [
-    "https://api.open-meteo.com",
-    "https://marine-api.open-meteo.com",
     "https://celestrak.org",
     "https://a.tile.openstreetmap.org",
     "https://a.tile.opentopomap.org",
@@ -46,7 +44,7 @@ test("the CSP names every origin the browser actually fetches from", () => {
     );
   }
   assert.match(CONTENT_SECURITY_POLICY, /worker-src 'self' blob:/);
-  assert.match(CONTENT_SECURITY_POLICY, /img-src [^;]*https:\/\/images\.gov\.im/);
+  assert.match(CONTENT_SECURITY_POLICY, /img-src 'self' data: blob:/);
   // No eval in the app or maplibre (grep-verified when this was written), so
   // do not pay for it. If a dependency starts needing it, `npm run smoke`
   // reports the violation - widen this consciously, not by accident.

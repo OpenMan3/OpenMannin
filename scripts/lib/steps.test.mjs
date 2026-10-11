@@ -55,10 +55,11 @@ test("cardinal names the 16-point compass", () => {
   assert.equal(cardinal(350), "north");
 });
 
-test("formatStepDistance prefers km once past 1 km", () => {
-  assert.equal(formatStepDistance(300), "300 m");
-  assert.equal(formatStepDistance(1200), "1.2 km");
-  assert.equal(formatStepDistance(12300), "12 km");
+test("formatStepDistance reports the island's road units", () => {
+  assert.equal(formatStepDistance(30), "100 ft");
+  assert.equal(formatStepDistance(300), "330 yd");
+  assert.equal(formatStepDistance(1200), "0.7 mi");
+  assert.equal(formatStepDistance(12300), "7.6 mi");
 });
 
 test("a one-segment straight route is a single step", () => {
@@ -68,7 +69,7 @@ test("a one-segment straight route is a single step", () => {
   ];
   const steps = deriveSteps(coords);
   assert.equal(steps.length, 1);
-  assert.equal(steps[0].instruction, "Head north for 111 m");
+  assert.equal(steps[0].instruction, "Head north for 120 yd");
   assert.ok(steps[0].distanceM > 105 && steps[0].distanceM < 120);
   assert.equal(steps[0].bearing, 0);
 });
@@ -82,12 +83,41 @@ test("an L-shaped route yields a second step with a turn", () => {
   ];
   const steps = deriveSteps(coords);
   assert.equal(steps.length, 2, "two legs across a right-angle turn");
-  assert.match(steps[0].instruction, /^Head north for \d+ m$/);
+  assert.match(steps[0].instruction, /^Head north for \d+ yd$/);
   const first = steps[0].distanceM;
   assert.ok(first > 215 && first < 230, `first leg ${first} m`);
-  assert.match(steps[1].instruction, /^Turn right, heading east for \d+ m$/);
+  assert.match(steps[1].instruction, /^Turn right, heading east for \d+ yd$/);
   const east = steps[1].distanceM;
   assert.ok(east > 60 && east < 70, `second leg ${east} m`);
+});
+
+test("street names are carried onto the legs that use them", () => {
+  const coords = [
+    [-4.48, 54.16],
+    [-4.48, 54.162],
+    [-4.479, 54.162],
+  ];
+  // Segment 0 (north) is "Main Street"; segment 1 (east) is unnamed.
+  const steps = deriveSteps(coords, ["Main Street", null]);
+  assert.equal(steps.length, 2);
+  assert.equal(steps[0].streetName, "Main Street");
+  assert.equal(steps[0].instruction, "Head north on Main Street for 240 yd");
+  assert.match(steps[1].instruction, /^Turn right, heading east for \d+ yd$/);
+  assert.equal(steps[1].streetName, null);
+});
+
+test("a leg keeps the name of its longest named segment", () => {
+  // Two collinear segments, the first much shorter than the second. The leg
+  // should not be named after the fleeting first segment.
+  const coords = [
+    [-4.48, 54.16],
+    [-4.48, 54.1605],
+    [-4.48, 54.162],
+  ];
+  const steps = deriveSteps(coords, ["Side Alley", "Cathedral Road"]);
+  assert.equal(steps.length, 1);
+  assert.equal(steps[0].streetName, "Cathedral Road");
+  assert.match(steps[0].instruction, /^Head north on Cathedral Road for .+$/);
 });
 
 test("a gentle curve stays one step, a sharp turn splits", () => {
@@ -107,7 +137,7 @@ test("a gentle curve stays one step, a sharp turn splits", () => {
   ];
   const steps = deriveSteps(sharp);
   assert.ok(steps.length >= 2, "hard turns split the route");
-  assert.match(steps[1].instruction, /^Turn right, heading east for \d+ m$/);
+  assert.match(steps[1].instruction, /^Turn right, heading east for \d+ yd$/);
 });
 
 test("tiny routes and degenerate inputs do not throw", () => {

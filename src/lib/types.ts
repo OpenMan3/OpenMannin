@@ -11,7 +11,6 @@ export type LicenceId =
   | "OGL-IoM-DERIVED"
   | "ODbL"
   | "CC-BY-4.0"
-  | "CC-BY-NC-4.0"
   | "PUBLIC-DOMAIN"
   | "CC0-1.0"
   | "PD-OURAIRPORTS"
@@ -64,6 +63,7 @@ export type LayerGroup =
   | "cables"
   | "energy"
   | "environment"
+  | "poi"
   | "aviation"
   | "surveillance"
   | "live"
@@ -130,3 +130,5 @@ export interface FeedStatus {
   source: string;
   fetchedAt: string;
 }
+
+export type { Feature } from "./layer-data";

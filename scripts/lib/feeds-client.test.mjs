@@ -238,7 +238,7 @@ test("only genuinely client-safe feeds are in the client allowlist", () => {
 
   assert.deepEqual(
     ids.sort(),
-    ["satellite-passes", "weather"],
-    "the client allowlist changed; every entry must be checked for CORS `*` AND no credential",
+    ["satellite-passes"],
+    "the client allowlist changed; every entry must be checked for CORS `*` AND no credential AND a licence permitting any use including commercial",
   );
 });

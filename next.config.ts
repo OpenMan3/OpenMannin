@@ -7,11 +7,12 @@ const nextConfig: NextConfig = {
    * a Next server in. This is what makes the deploy hands-free.
    *
    * The cost, stated plainly: anything that needed a server simply does not
-   * ship. Weather and satellite passes moved into the browser because their
-   * upstreams send `Access-Control-Allow-Origin: *`, need no credential, and
-   * carry an open licence. Anything not meeting those three conditions - no
-   * CORS, a free-tier key, or a licence we cannot rely on - has been removed
-   * outright. The only remaining sources are open-licensed.
+   * ship. Satellite passes moved into the browser because its upstream sends
+   * `Access-Control-Allow-Origin: *`, needs no credential, and carries an open
+   * licence. Anything not meeting those conditions - no CORS, a free-tier key,
+   * a paid subscription, or a licence we cannot rely on for commercial use -
+   * has been removed outright. The only remaining sources are open-licensed
+   * and free for any use.
    *
    * `images.unoptimized` is required rather than optional: the image optimizer
    * is a server route, and a static export silently drops images that route

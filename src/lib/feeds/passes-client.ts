@@ -281,7 +281,7 @@ let workerPromise: Promise<Worker> | null = null;
  * entry, a worker failure rejects every entry still open. That is the whole
  * contract - see the note where the listener is attached.
  */
-const pending = new Map<number, { resolve: (v: any) => void; reject: (e: Error) => void }>();
+const pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
 
 async function getWorker(): Promise<Worker> {
   if (worker) return worker;
@@ -385,7 +385,7 @@ export async function fetchPasses(stationKey = "spaceman"): Promise<PassesResult
     // still to come is still useful, and the payload carries its own timestamp.
     // It must say so, though - `stale` is what puts the badge on the panel, and
     // without it yesterday's rise times are presented as a fresh answer with the
-    // error cleared. This is the same contract weather already honours.
+    // error cleared. This is the same contract the live feeds honour.
     if (cached) return { fc: cached.body, stale: true };
     return {
       failure: {

@@ -171,6 +171,26 @@ export const SOURCES: Record<string, Source> = {
     lastChecked: "2026-10-04",
     notes: "CC-BY-SA derived map data on ODbL geometry. Raster, keyless, ACAO *.",
   },
+  openstreetmap: {
+    id: "openstreetmap",
+    name: "OpenStreetMap standard tiles",
+    publisher: "OpenStreetMap Foundation",
+    url: "https://www.openstreetmap.org/",
+    licence: "OS-TM-POLICY",
+    lastChecked: "2026-10-11",
+    notes:
+      "The standard OSM raster basemap (tile.openstreetmap.org). The data is ODbL, but the tiles are served under the OSM Foundation tile usage policy: keyless, yet it demands a distinctive User-Agent, caching, and no bulk downloading or prefetching, and OSM may block without notice. Offered only as an optional basemap, never as an ingest source.",
+  },
+  openfreemap: {
+    id: "openfreemap",
+    name: "OpenFreeMap styles (Liberty, bright, positron, dark)",
+    publisher: "OpenFreeMap",
+    url: "https://openfreemap.org/",
+    licence: "ODbL",
+    lastChecked: "2026-10-11",
+    notes:
+      "Keyless vector basemap and style set on ODbL OpenStreetMap data, CORS *. Backs the OpenFreeMap light and dark basemaps. The dark style replaced the removed Stadia Maps raster basemaps, which required an API key and returned 401 without one.",
+  },
   emodnet: {
     id: "emodnet",
     name: "EMODnet Bathymetry",

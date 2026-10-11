@@ -18,6 +18,7 @@ import { SOURCES } from "@/lib/sources";
 import { LICENCES } from "@/lib/licences";
 import { LAYERS } from "@/lib/layers";
 import { CommunityFeed } from "./CommunityFeed";
+import { LicenceBadge } from "./LicenceBadge";
 
 /**
  * Third-party libraries shipped to the browser, with licences verified against
@@ -62,30 +63,6 @@ const LIBRARIES: { name: string; licence: string; url: string; licenceUrl: strin
     licenceUrl: "https://github.com/proj4js/proj4js/blob/master/LICENSE.md",
   },
 ];
-
-const LICENCE_CLASS: Record<string, string> = {
-  "OGL-IoM": "bg-ok/10 text-ok",
-  "OGL-IoM-DERIVED": "bg-ok/10 text-ok",
-  ODbL: "bg-ok/10 text-ok",
-  "CC-BY-4.0": "bg-ok/10 text-ok",
-  "PUBLIC-DOMAIN": "bg-ok/10 text-ok",
-  "CC0-1.0": "bg-ok/10 text-ok",
-  "PD-OURAIRPORTS": "bg-ok/10 text-ok",
-  COPERNICUS: "bg-ok/10 text-ok",
-  "OS-TM-POLICY": "bg-warn/10 text-warn",
-  "NO-LICENCE": "bg-danger/10 text-danger",
-  UNKNOWN: "bg-danger/10 text-danger",
-};
-
-function LicenceBadge({ id }: { id: string }) {
-  return (
-    <span
-      className={`chip font-mono ${LICENCE_CLASS[id] ?? "bg-danger/10 text-danger"}`}
-    >
-      {id}
-    </span>
-  );
-}
 
 export function TransparencyPanel() {
   const liveLayers = LAYERS.filter((l) => l.kind === "live");
@@ -211,9 +188,10 @@ export function TransparencyPanel() {
           ))}
         </div>
         <p className="mt-3 text-[11px] leading-snug text-ink-3">
-          Basemap tiles: OpenTopoMap (CC-BY-SA), OpenStreetMap standard (ODbL),
-          OpenFreeMap/OpenMapTiles (ODbL). Tile attributions render
-          on the map itself.
+          Basemap tiles: OpenTopoMap (CC-BY-SA) and OpenFreeMap (ODbL, light and
+          dark). The OpenStreetMap Foundation&apos;s own raster tiles are not
+          offered; their usage policy is incompatible with an always-on app.
+          Tile attributions render on the map itself.
         </p>
       </section>
 

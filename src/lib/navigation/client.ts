@@ -26,6 +26,11 @@ export interface RouteLeg {
    * unnamed. Empty when no names are known.
    */
   segmentNames: (string | null)[];
+  /**
+   * OSM junction=* of each segment, parallel to `coordinates`. Lets the step
+   * builder call out roundabouts. `null` where the segment had no junction tag.
+   */
+  segmentJunctions: (string | null)[];
 }
 
 export type RouteMap = Partial<Record<RouteMode, RouteLeg | null>>;

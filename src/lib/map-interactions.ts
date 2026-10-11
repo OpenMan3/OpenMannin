@@ -82,6 +82,24 @@ export function attachMapInteractions(
     });
   };
 
+  // Fit-to-layer handler (window event). Used by the layer detail drawer's
+  // "Zoom to layer" button: the drawer knows the layer's bbox from the manifest,
+  // the map owns the camera.
+  const handleFitLayer = (e: Event) => {
+    const { bbox } = (e as CustomEvent).detail as {
+      bbox: [number, number, number, number];
+    };
+    if (!Array.isArray(bbox) || bbox.length !== 4) return;
+    const [minX, minY, maxX, maxY] = bbox;
+    map.fitBounds(
+      [
+        [minX, minY],
+        [maxX, maxY],
+      ],
+      { padding: 48, duration: 700, maxZoom: 16 },
+    );
+  };
+
   // Highlight handler (window event)
   const handleHighlight = async (e: Event) => {
     const { feature } = (e as CustomEvent).detail as {
@@ -102,6 +120,7 @@ export function attachMapInteractions(
   map.on("mousemove", handleMouseMove);
   map.on("moveend", handleMoveEnd);
   window.addEventListener("openmannin:fly-to", handleFlyTo);
+  window.addEventListener("openmannin:fit-layer", handleFitLayer);
   window.addEventListener("openmannin:highlight-feature", handleHighlight);
   window.addEventListener("openmannin:clear-highlight", handleClearHighlight);
 
@@ -111,6 +130,7 @@ export function attachMapInteractions(
     map.off("mousemove", handleMouseMove);
     map.off("moveend", handleMoveEnd);
     window.removeEventListener("openmannin:fly-to", handleFlyTo);
+    window.removeEventListener("openmannin:fit-layer", handleFitLayer);
     window.removeEventListener("openmannin:highlight-feature", handleHighlight);
     window.removeEventListener("openmannin:clear-highlight", handleClearHighlight);
   };

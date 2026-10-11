@@ -1,13 +1,11 @@
 "use client";
 
 /**
- * Floating map controls.
+ * Floating map controls: basemap theme + 3D terrain toggles.
  *
- * A single positioned cluster for the basemap and 3D-terrain toggles. They were
- * rendered loose in the map section before, which left them in normal flow
- * below a full-height canvas — technically present, visually off-screen. The
- * cluster sits top-centre so it clears the compass and locate stack on the
- * right and the feature popup in the top-left corner.
+ * A vertical mini-cluster that lives at the bottom of the right-hand control
+ * rail (under the locate/follow buttons; see page.tsx). OpenTopoMap is
+ * raster-only so the light/dark toggle hides itself when it is active.
  */
 
 import type { BasemapId } from "@/components/MapView";
@@ -26,7 +24,7 @@ export function MapControls({
   onTerrainChange: (on: boolean) => void;
 }) {
   return (
-    <div className="absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center gap-2">
+    <div className="flex flex-col items-center gap-2">
       <BasemapToggle basemap={basemap} onBasemapChange={onBasemapChange} />
       <TerrainToggle enabled={terrain3d} onToggle={onTerrainChange} />
     </div>

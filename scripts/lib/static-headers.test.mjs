@@ -33,7 +33,6 @@ test("the CSP names every origin the browser actually fetches from", () => {
   // basemap, TLEs that never arrive.
   for (const origin of [
     "https://celestrak.org",
-    "https://a.tile.openstreetmap.org",
     "https://a.tile.opentopomap.org",
     "https://tiles.openfreemap.org",
     "https://tiles.basemaps.cartocdn.com",
@@ -45,6 +44,12 @@ test("the CSP names every origin the browser actually fetches from", () => {
   }
   assert.match(CONTENT_SECURITY_POLICY, /worker-src 'self' blob:/);
   assert.match(CONTENT_SECURITY_POLICY, /img-src 'self' data: blob:/);
+  // The OSM Foundation's own tile servers are removed and must never creep
+  // back: their tile usage policy is incompatible with an always-on viewer.
+  assert.ok(
+    !CONTENT_SECURITY_POLICY.includes("tile.openstreetmap.org"),
+    "OSM standard tiles are removed; do not re-add their origins to connect-src",
+  );
   // No eval in the app or maplibre (grep-verified when this was written), so
   // do not pay for it. If a dependency starts needing it, `npm run smoke`
   // reports the violation - widen this consciously, not by accident.

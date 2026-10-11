@@ -76,14 +76,14 @@ export function LocateButton({ state, onToggle }: { state: NavigationState; onTo
   };
 
   return (
-    <div className="absolute top-[150px] right-3 z-10 flex flex-col items-end gap-2 md:top-[74px]">
+    <div className="flex flex-col items-center gap-2">
       {locationStatus === "active" && recenterPending && (
         <button
           type="button"
           onClick={onToggle}
           aria-label="Recenter on my location"
           title="Recenter on my location"
-          className="flex items-center gap-1.5 rounded-full border border-line bg-page/95 px-2.5 py-1 text-[11px] font-medium text-gps-soft shadow-lg backdrop-blur transition-colors hover:bg-raised hover:text-gps"
+          className="flex items-center gap-1.5 rounded-full border border-line bg-panel/95 px-2.5 py-1 text-[11px] font-medium text-gps-soft shadow-lg backdrop-blur transition-colors hover:bg-raised hover:text-gps"
         >
           <CrosshairIcon className="h-3.5 w-3.5" />
           Recenter

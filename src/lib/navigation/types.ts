@@ -9,7 +9,7 @@ import type { NavigationStep } from "./steps";
 export type RouteMode = "driving" | "walking" | "cycling";
 export type FollowMode = "none" | "follow" | "heading";
 export type LocationStatus = "idle" | "locating" | "active" | "error";
-export type RouteStatus = "idle" | "loading" | "ready" | "no-route" | "error" | "recalculating";
+export type RouteStatus = "idle" | "loading" | "ready" | "no-route" | "error" | "recalculating" | "arrived";
 
 export interface UserLocation {
   lon: number;
@@ -37,6 +37,12 @@ export interface NavigationState {
   routes: Partial<Record<RouteMode, { distanceM: number; durationS: number } | null>>;
   /** Geometry-derived turn-by-turn legs for the active route. */
   steps: NavigationStep[];
+  /** Live speed derived from successive GPS fixes, mph. null before two fixes. */
+  speedMph: number | null;
+  /** Index of the next unfinished turn-by-turn leg (0 = the current one). */
+  stepIndex: number;
+  /** Straight-line distance to the next maneuver, metres. */
+  nextStepM: number;
   /**
    * True when live tracking is on but the user has dragged the map away from
    * their position, so the UI can surface a "Recenter" affordance. Cleared by
@@ -65,6 +71,9 @@ export interface Internal {
   routeError: string | null;
   routes: Partial<Record<RouteMode, { distanceM: number; durationS: number } | null>>;
   steps: NavigationStep[];
+  speedMph: number | null;
+  stepIndex: number;
+  nextStepM: number;
   lastSignature: string;
   firstFlyPending: boolean;
   routesFresh: boolean;
@@ -74,6 +83,8 @@ export interface Internal {
   offRoute: boolean;
   progressM: number;
   remainingM: number;
+  baseSteps: NavigationStep[];
+  headingDeg: number | null;
 }
 
 export interface Destination {

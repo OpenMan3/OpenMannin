@@ -35,6 +35,8 @@ const OUT = path.join(ROOT, "public", "health.json");
 
 /** @type {string[]} */
 const problems = [];
+/** @type {string[]} */
+const warnings = [];
 
 // 1. The worker. Without it MapLibre cannot process GeoJSON, so every data layer
 //    silently disappears while the basemap still renders.
@@ -63,6 +65,26 @@ try {
   if (!layers) problems.push("manifest lists no layers - run `npm run ingest:all`.");
   if (absent.length) {
     problems.push(`${absent.length} layer(s) have no data: ${absent.join(", ")}`);
+  }
+
+  // 2b. Data freshness: warn if any layer's generated stamp is older than 14 days.
+  //     This is a build-time signal, not a failure — the map still renders.
+  try {
+    const m = JSON.parse(fs.readFileSync(path.join(DATA, "manifest.json"), "utf8"));
+    const now = Date.now();
+    const STALE_DAYS = 14;
+    for (const [id, v] of Object.entries(m.layers ?? {})) {
+      if (!v || typeof v !== "object") continue;
+      const g = v.generated;
+      if (typeof g === "string") {
+        const age = (now - Date.parse(g)) / 86400000;
+        if (age > STALE_DAYS) {
+          warnings.push(`${id} data is ${Math.round(age)} days old (generated ${g.slice(0, 10)})`);
+        }
+      }
+    }
+  } catch {
+    // manifest already checked above; if it fails here we already have a problem
   }
 } catch {
   problems.push("public/data/manifest.json missing - run `npm run ingest:all`.");
@@ -125,11 +147,7 @@ const report = {
     clientFeeds: ["satellite-passes"],
   },
   problems,
-  warnings: [
-    "This is a BUILD-TIME report. It says the map is structurally complete, not that any upstream is reachable.",
-    "Live-feed state is observed in the browser, not here: satellite passes are fetched client-side.",
-    "Satellite passes need public/passes-worker.mjs, bundled from src/lib/feeds/passes-worker.ts by scripts/build-passes-worker.mjs before next build. If that file is missing or stale, the layer is silently empty - there is no console error to see. (Its presence is checked above; staleness is checked by scripts/lib/passes-worker-build.test.mjs.)",
-  ],
+  warnings,
 };
 
 writeJSON(OUT, report, { pretty: true, trailingNewline: true });

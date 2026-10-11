@@ -12,7 +12,7 @@
  * Run with:  node --experimental-strip-types scripts/build-manifest.mjs
  */
 
-import { writeJSON } from "./lib/fetch.mjs";
+import { writeJSON, bboxOf } from "./lib/fetch.mjs";
 
 import fs from "node:fs";
 import path from "node:path";
@@ -39,9 +39,16 @@ for (const l of LAYERS) {
 
   const stat = fs.statSync(p);
   let features;
+  let generated;
+  let bbox;
   try {
     const g = JSON.parse(fs.readFileSync(p, "utf8"));
     features = Array.isArray(g.features) ? g.features.length : 0;
+    // The ingest stamps the capture date on the collection; the drawer shows it
+    // as "data as of" so freshness is visible without opening the file.
+    generated = typeof g.properties?.generated === "string" ? g.properties.generated : undefined;
+    // Bounding box lets the UI zoom to a layer without fetching its file.
+    bbox = bboxOf(g) ?? undefined;
   } catch (e) {
     layers[l.id] = { file: l.file, present: false, error: `invalid JSON: ${e.message}` };
     absent.push(l.id);
@@ -53,6 +60,8 @@ for (const l of LAYERS) {
     present: features > 0,
     features,
     bytes: stat.size,
+    generated,
+    bbox,
   };
   if (features > 0) ok++;
 }

@@ -22,7 +22,7 @@ import { LICENCES } from "@/lib/licences";
 import { featureLabel } from "@/lib/layer-data";
 import { formatValue, humanise, HIDDEN_KEYS } from "@/lib/feature-format";
 import type { PickedFeature } from "./MapView";
-import { CloseIcon } from "./Icons";
+import { CloseIcon, DirectionsIcon } from "./Icons";
 
 /** Attribute rows shown before the "and N more" line. */
 const MAX_ENTRIES = 14;
@@ -165,6 +165,29 @@ export function FeaturePopup({
             </ul>
           </div>
         )}
+
+        <div className="border-t border-line px-3 py-2">
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              window.dispatchEvent(
+                new CustomEvent("openmannin:set-destination", {
+                  detail: {
+                    lon,
+                    lat,
+                    title: featureLabel(properties),
+                    detail: layer.label,
+                  },
+                }),
+              );
+            }}
+            className="btn btn-primary w-full"
+          >
+            <DirectionsIcon className="h-4 w-4" />
+            Directions to here
+          </button>
+        </div>
 
         <div className="space-y-1 border-t border-line px-3 py-2 text-[11px] text-ink-3">
           {picked.asOf && (

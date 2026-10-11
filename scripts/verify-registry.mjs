@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import { LAYERS, GAPS } from "../src/lib/layers.ts";
 import { SOURCES } from "../src/lib/sources.ts";
 import { LICENCES } from "../src/lib/licences.ts";
+import { CATEGORY_ORDER, SUBCATEGORY_LABELS } from "../src/lib/taxonomy.ts";
 import { registryProvenance } from "./lib/registry-provenance.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -49,6 +50,30 @@ for (const l of LAYERS) {
   else {
     const lic = LICENCES[SOURCES[l.sourceId].licence];
     if (!lic) fail(l, `source "${l.sourceId}" references unknown licence "${SOURCES[l.sourceId].licence}"`);
+    // Open-licence guarantee. The whole project rests on reuse being
+    // unambiguous, so no rendered layer may sit on a licence that does not
+    // clearly grant it. A layer that needs written permission does not belong
+    // on an open map.
+    else if (lic.requiresPermission)
+      fail(l, `licence "${lic.id}" requires permission — every layer must be unambiguously open`);
+  }
+
+  // Every layer must state the zoom at which it first appears, so the renderer
+  // can gate it instead of painting an island-wide blanket of detail at z3.
+  if (l.minZoom === undefined) {
+    fail(l, `no minZoom — every layer must state the zoom it appears at`);
+  } else if (!Number.isInteger(l.minZoom) || l.minZoom < 0 || l.minZoom > 20) {
+    fail(l, `minZoom ${l.minZoom} is not an integer 0-20`);
+  }
+
+  // Taxonomy: category and subcategory travel together, and both must be known
+  // so the layer tree never renders a drawer with no label.
+  if (l.subcategory && !l.category) fail(l, `subcategory set without a category`);
+  if (l.category) {
+    if (!CATEGORY_ORDER.includes(l.category)) fail(l, `unknown category "${l.category}"`);
+    if (!l.subcategory) fail(l, `category "${l.category}" without a subcategory`);
+    else if (!SUBCATEGORY_LABELS[l.subcategory])
+      fail(l, `unknown subcategory "${l.subcategory}"`);
   }
 
   if (l.kind === "geojson") {
@@ -104,17 +129,16 @@ for (const l of LAYERS) {
                 fail(l, `${l.file} provenance sourceId "${props.sourceId}" != registry "${expected.sourceId}"`);
                 ok = false;
               }
-              if (props.licenceId !== undefined && props.licenceId !== expected.licenceId) {
+              // licenceId is REQUIRED, not optional: it is the machine-readable
+              // link between the shipped file and the open-licence register. A
+              // bare licence NAME cannot be checked against the register, so
+              // allowing it was exactly the ambiguity this project forbids.
+              if (props.licenceId === undefined) {
+                fail(l, `${l.file} provenance has no licenceId — run scripts/backfill-provenance.mjs`);
+                ok = false;
+              } else if (props.licenceId !== expected.licenceId) {
                 fail(l, `${l.file} provenance licenceId "${props.licenceId}" != registry "${expected.licenceId}"`);
                 ok = false;
-              } else if (props.licenceId === undefined) {
-                const hay = String(props.licence).toLowerCase();
-                const needId = String(expected.licenceId).toLowerCase();
-                const needName = String(expected.licence ?? "").toLowerCase();
-                if (!hay.includes(needId) && !(needName && hay.includes(needName))) {
-                  fail(l, `${l.file} provenance licence "${props.licence}" not traceable to registry "${expected.licence}"`);
-                  ok = false;
-                }
               }
             }
             if (ok) provenanceOk += 1;
@@ -153,6 +177,11 @@ console.log(`  data files  ${present.length}/${geo.length} present`);
 console.log(`  provenance  ${provenanceOk}/${provenanceChecked} blocks checked agree with the registers`);
 console.log(`  grades      ${Object.entries(byGrade).sort().map(([k, v]) => `${k}:${v}`).join("  ")}`);
 console.log(`  default-on  ${LAYERS.filter((l) => l.defaultOn).length}`);
+console.log(
+  `  taxonomy    ${LAYERS.filter((l) => l.category).length} themed across ${
+    CATEGORY_ORDER.filter((c) => LAYERS.some((l) => l.category === c)).length
+  } categories, ${LAYERS.filter((l) => !l.category).length} unthemed`,
+);
 
 if (problems.length) {
   console.error(`\nFAIL — ${problems.length} problem(s):`);

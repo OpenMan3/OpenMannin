@@ -72,6 +72,12 @@ export interface RouteResult {
    * unnamed. Empty when no names are known.
    */
   segmentNames: (string | null)[];
+  /**
+   * OSM junction=* of each segment, parallel to `coordinates`. Lets the step
+   * builder recognise roundabouts ("leave the roundabout onto X"). `null`
+   * where the segment had no junction tag.
+   */
+  segmentJunctions: (string | null)[];
 }
 
 interface Feature {
@@ -165,6 +171,7 @@ function parseRoadTags(props: Record<string, unknown> | null | undefined): RoadT
   const bicycle = asString(props?.bicycle);
   const service = asString(props?.service);
   const maxspeed = asString(props?.maxspeed);
+  const junction = asString(props?.junction)?.toLowerCase() ?? null;
   if (
     !name &&
     oneway === 0 &&
@@ -175,11 +182,12 @@ function parseRoadTags(props: Record<string, unknown> | null | undefined): RoadT
     !foot &&
     !bicycle &&
     !service &&
-    !maxspeed
+    !maxspeed &&
+    !junction
   ) {
     return null;
   }
-  return { name, oneway, access, motorVehicle, motorcar, vehicle, foot, bicycle, service, maxspeed };
+  return { name, oneway, access, motorVehicle, motorcar, vehicle, foot, bicycle, service, maxspeed, junction };
 }
 
 export function buildGraph(fc: {
@@ -531,19 +539,24 @@ export function routeBetween(
   if (!startSnap || !goalSnap) return null;
 
   const roadName = (e: number): string | null => graph.edgeRoad[e]?.name ?? null;
+  const roadJunction = (e: number): string | null => graph.edgeRoad[e]?.junction ?? null;
   const startName = roadName(startSnap.edge);
   const goalName = roadName(goalSnap.edge);
+  const startJunction = roadJunction(startSnap.edge);
+  const goalJunction = roadJunction(goalSnap.edge);
 
   // Coordinates and the parallel segment-name list are built together and
   // de-duplicated together, so names[k] always names the segment from
   // coordinates[k] to coordinates[k+1].
   const coords: [number, number][] = [[start.lon, start.lat]];
   const names: (string | null)[] = [];
-  const push = (pt: [number, number], name: string | null): void => {
+  const junctions: (string | null)[] = [];
+  const push = (pt: [number, number], name: string | null, junction: string | null): void => {
     const prev = coords[coords.length - 1];
     if (Math.abs(prev[0] - pt[0]) <= 1e-9 && Math.abs(prev[1] - pt[1]) <= 1e-9) return;
     coords.push(pt);
     names.push(name);
+    junctions.push(junction);
   };
 
   let timeS = 0;
@@ -566,20 +579,20 @@ export function routeBetween(
   }
 
   if (sameEdge) {
-    push([startSnap.lon, startSnap.lat], startName);
-    push([goalSnap.lon, goalSnap.lat], startName);
-    push([dest.lon, dest.lat], goalName);
+    push([startSnap.lon, startSnap.lat], startName, startJunction);
+    push([goalSnap.lon, goalSnap.lat], startName, startJunction);
+    push([dest.lon, dest.lat], goalName, goalJunction);
   } else {
     const res = search(graph, startSnap, goalSnap, profile);
     if (!res) return null;
     timeS = res.timeS;
-    push([startSnap.lon, startSnap.lat], startName);
+    push([startSnap.lon, startSnap.lat], startName, startJunction);
     for (let i = 0; i < res.path.length; i++) {
       const n = res.path[i];
-      push([graph.lon[n], graph.lat[n]], roadName(res.edges[i]));
+      push([graph.lon[n], graph.lat[n]], roadName(res.edges[i]), roadJunction(res.edges[i]));
     }
-    push([goalSnap.lon, goalSnap.lat], goalName);
-    push([dest.lon, dest.lat], goalName);
+    push([goalSnap.lon, goalSnap.lat], goalName, goalJunction);
+    push([dest.lon, dest.lat], goalName, goalJunction);
   }
 
   let distanceM = 0;
@@ -610,5 +623,6 @@ export function routeBetween(
     durationS: Math.round(timeS + connector),
     coordinates: coords,
     segmentNames: names,
+    segmentJunctions: junctions,
   };
 }

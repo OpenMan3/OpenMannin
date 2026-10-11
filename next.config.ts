@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   /**
-   * Static export. Firebase Hosting serves files, so there is no runtime to run
+   * Static export. Cloudflare Pages serves files, so there is no runtime to run
    * a Next server in. This is what makes the deploy hands-free.
    *
    * The cost, stated plainly: anything that needed a server simply does not

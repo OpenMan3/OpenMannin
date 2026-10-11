@@ -36,6 +36,8 @@ export interface RoadTags {
   bicycle: string | null;
   service: string | null;
   maxspeed: string | null;
+  /** OSM junction=* ("roundabout", "circular", ...), for turn phrasing. */
+  junction: string | null;
 }
 
 export interface Profile {

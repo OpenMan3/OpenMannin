@@ -7,30 +7,34 @@
  * variables (or the component classes below) so a palette change lands in one
  * place instead of a thousand arbitrary `#hex` literals. Names are prefixed to
  * stay clear of Tailwind's own palette (no `blue`/`rose`/`line` collisions).
+ *
+ * The palette is a light, Google-Maps-flavoured surface: clean white
+ * panels, #1a73e8 Google-blue accents, and the familiar red pin and blue
+ * GPS dot. Map data layers keep their own registry colours on top.
  */
 
 @theme {
-  --color-page: #0b0f14;
-  --color-panel: #0e151c;
-  --color-raised: #14202b;
-  --color-soft: #182431;
-  --color-line: #1e2a35;
-  --color-line-soft: #16212c;
+  --color-page: #f4f6f9;
+  --color-panel: #ffffff;
+  --color-raised: #f1f3f4;
+  --color-soft: #e8eaed;
+  --color-line: #dadce0;
+  --color-line-soft: #eef0f3;
 
-  --color-ink: #e6eef5;
-  --color-ink-2: #a9b9c7;
-  --color-ink-3: #76899a;
+  --color-ink: #202124;
+  --color-ink-2: #5f6368;
+  --color-ink-3: #80868b;
 
-  --color-accent: #35c9d4;
-  --color-accent-ink: #061419;
+  --color-accent: #1a73e8;
+  --color-accent-ink: #ffffff;
 
-  --color-ok: #34d399;
-  --color-info: #7dd3fc;
-  --color-warn: #fbbf24;
-  --color-danger: #f87171;
-  --color-pin: #f43f5e;
-  --color-gps: #3b82f6;
-  --color-gps-soft: #60a5fa;
+  --color-ok: #188038;
+  --color-info: #1a73e8;
+  --color-warn: #b06000;
+  --color-danger: #d93025;
+  --color-pin: #d93025;
+  --color-gps: #1a73e8;
+  --color-gps-soft: #4285f4;
 }
 
 /*
@@ -39,22 +43,22 @@
  */
 @layer components {
   .card {
-    @apply rounded-xl border border-line bg-panel/95 shadow-xl backdrop-blur;
+    @apply rounded-xl border border-line bg-panel shadow-xl backdrop-blur;
   }
   .chip {
     @apply inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium;
   }
   .btn {
-    @apply inline-flex touch-manipulation items-center justify-center gap-1.5 rounded-md border border-line bg-raised px-3 py-2 text-xs font-medium text-ink-2 transition-colors hover:bg-soft hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40;
+    @apply inline-flex touch-manipulation items-center justify-center gap-1.5 rounded-lg border border-line bg-raised px-3 py-2 text-xs font-medium text-ink-2 shadow-sm transition-colors hover:bg-soft hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40;
   }
   .btn-primary {
-    @apply border-accent/50 bg-accent font-semibold text-accent-ink hover:bg-accent/90 hover:text-accent-ink;
+    @apply border-accent bg-accent font-semibold text-accent-ink hover:bg-accent/90 hover:text-accent-ink;
   }
   .btn-icon {
-    @apply inline-flex h-9 w-9 touch-manipulation items-center justify-center rounded-md border border-line bg-panel/95 text-ink-2 shadow-md backdrop-blur transition-colors hover:bg-raised hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95;
+    @apply inline-flex h-9 w-9 touch-manipulation items-center justify-center rounded-lg border border-line bg-panel text-ink-2 shadow-md transition-colors hover:bg-raised hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 active:scale-95;
   }
   .field {
-    @apply w-full rounded-md border border-line bg-page px-2.5 py-2 text-[13px] text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/40;
+    @apply w-full rounded-lg border border-line bg-panel px-2.5 py-2 text-[13px] text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/40;
   }
   .label {
     @apply text-[10px] font-semibold uppercase tracking-wider text-ink-3;
@@ -89,19 +93,21 @@ body {
   overscroll-behavior: none;
 }
 
-/* MapLibre ships its own light UI; force it dark so it matches the panels. */
+/* MapLibre ships its own light UI; tune it to the app's light chrome. */
 .maplibregl-ctrl-group {
-  background: #131b23 !important;
+  background: #ffffff !important;
   border: 1px solid var(--color-line);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
 }
 .maplibregl-ctrl-group button + button {
-  border-top: 1px solid var(--color-line) !important;
+  border-top: 1px solid var(--color-line-soft) !important;
 }
 .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
-  filter: invert(1) brightness(1.6);
+  filter: none;
 }
 .maplibregl-ctrl-attrib {
-  background: rgba(11, 15, 20, 0.85) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
   color: var(--color-ink-3) !important;
 }
 .maplibregl-ctrl-attrib a {
@@ -111,10 +117,10 @@ body {
   background: var(--color-panel);
   color: var(--color-ink);
   border: 1px solid var(--color-line);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 12px;
   max-width: 320px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 .maplibregl-popup-tip {
   border-top-color: var(--color-panel) !important;
@@ -127,33 +133,32 @@ body {
 }
 
 /*
- * On small screens we draw our own top app bar and bottom tab bar over the
- * map, so MapLibre's own corner chrome must duck below them.
+ * On small screens the top search pill and bottom tab bar sit over the
+ * map, so MapLibre's own corner chrome must duck below/above them.
  */
 @media (max-width: 767px) {
   .maplibregl-ctrl-top-right {
-    top: 60px;
+    top: 66px;
   }
-  .maplibregl-ctrl-bottom-left,
   .maplibregl-ctrl-bottom-right {
-    bottom: 64px;
+    bottom: 74px;
   }
 }
 
 /* Thin scrollbars so long lists do not dominate the layout. */
 .scroll-thin {
   scrollbar-width: thin;
-  scrollbar-color: #2a3947 transparent;
+  scrollbar-color: #c8d0d8 transparent;
 }
 .scroll-thin::-webkit-scrollbar {
   width: 8px;
 }
 .scroll-thin::-webkit-scrollbar-thumb {
-  background: #2a3947;
+  background: #c8d0d8;
   border-radius: 4px;
 }
 .scroll-thin::-webkit-scrollbar-thumb:hover {
-  background: #33475a;
+  background: #a9b4bf;
 }
 
 /* Slide-up used by the destination sheet and mobile popups. */

@@ -6,7 +6,7 @@ OpenMannin renders only data that can be traced to a source, a licence and a con
 
 This project does **not** ingest, cache, trace or derive anything from government maps or map-derived products. The IoM Open Government Licence explicitly **excludes maps and map-derived products** ([OGL](https://www.gov.im/about-this-site/open-government-licence/), [maps exclusion](https://www.gov.im/about-this-site/terms-and-conditions/maps/)), and the Isle of Man Survey base cartography is sold commercially. All island-wide vector coverage is built from independently licensed sources — principally OpenStreetMap (ODbL) and Wikidata (CC0). Coverage that could not be independently sourced is recorded as a gap rather than relicensed.
 
-## Licence register (11)
+## Licence register (10)
 
 | Licence | Commercial | Permission required | Obligation |
 | --- | --- | --- | --- |
@@ -18,11 +18,10 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Creative Commons CC0 1.0 (public domain dedication) ([link](https://creativecommons.org/publicdomain/zero/1.0/)) | yes | no | No rights reserved. Attribution optional. |
 | OurAirports public domain dedication ([link](https://ourairports.com/data/)) | yes | no | OurAirports publishes its airport, runway and heliport tables under a public domain dedication. No attribution required, though crediting OurAirports is appreciated. Note this covers the DATA, not the website's own compiled map styling. |
 | Copernicus / ESA open data ([link](https://www.copernicus.eu/en/access-data/copyright-and-licences)) | yes | no | Free and full open. Attribution to Copernicus/ESA appreciated. |
-| OpenStreetMap tile usage policy ([link](https://operations.osmfoundation.org/policies/tiles/)) | yes | yes | Requires distinctive User-Agent, >=7 day caching, Referer preserved. Forbids bulk downloading and prefetching. OSM may block without notice. |
 | No published licence | no | yes | No terms of use, robots.txt or licence found. Absence of a licence is not a grant. Do not republish without written permission. |
 | Licence not established | no | yes | Verify before use. |
 
-## Source register (22)
+## Source register (21)
 
 | Source | Publisher | Licence | Last checked |
 | --- | --- | --- | --- |
@@ -43,7 +42,6 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | [The Crown Estate offshore wind leasing](https://www.thecrownestate.co.uk/our-business/marine/offshore-wind/morgan-offshore-wind-site) | The Crown Estate | PUBLIC-DOMAIN | 2026-10-04 |
 | [Spaceman teleport / aql Space Services](https://spaceman.im/) | aql (formerly BlueWave Communications) | PUBLIC-DOMAIN | 2026-10-04 |
 | [OpenTopoMap tiles](https://opentopomap.org/) | OpenTopoMap (based on OpenStreetMap, SRTM) | CC-BY-4.0 | 2026-10-04 |
-| [OpenStreetMap standard tiles](https://www.openstreetmap.org/) | OpenStreetMap Foundation | OS-TM-POLICY | 2026-10-11 |
 | [OpenFreeMap styles (Liberty, bright, positron, dark)](https://openfreemap.org/) | OpenFreeMap | ODbL | 2026-10-11 |
 | [EMODnet Bathymetry](https://emodnet.ec.europa.eu/en/bathymetry) | EMODnet / European Commission | CC-BY-4.0 | 2026-10-04 |
 | [AWS Open Data — Terrain Tiles (Mapzen/Joerd)](https://registry.opendata.aws/terrain-tiles/) | Mapzen (Linux Foundation) / AWS Open Data | COPERNICUS | 2026-10-11 |
@@ -108,6 +106,19 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Offshore wind projects (`offshore-wind`) | orsted | PUBLIC-DOMAIN | D | 1 |
 | Reservoirs & water (`reservoirs`) | osmIOM | ODbL | C | 17 |
 | Power stations & substations (`power`) | osmPower | ODbL | B | 107 |
+| Power lines & transformers (`power-lines`) | osmIOM | ODbL | C | 4186 |
+| Water works & pumping stations (`water-works`) | osmIOM | ODbL | C | 10 |
+
+### poi
+
+| Layer | Source | Licence | Grade | Features |
+| --- | --- | --- | --- | --- |
+| Monuments & archaeology (`archaeology`) | osmIOM | ODbL | C | 189 |
+| Mine shafts, adits & mines (`mine-infrastructure`) | osmIOM | ODbL | C | 19 |
+| Tholtans & ruined buildings (`tholtans-ruins`) | osmIOM | ODbL | C | 848 |
+| Essential utilities & services (`essential-utilities`) | osmIOM | ODbL | C | 187 |
+| Food & drink (`food-drink`) | osmIOM | ODbL | C | 308 |
+| Coastal & outdoor (`coastal-outdoor`) | osmIOM | ODbL | C | 1065 |
 
 ### environment
 
@@ -127,16 +138,6 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Layer | Source | Licence | Grade | Features |
 | --- | --- | --- | --- | --- |
 | Tide reference stations (`tide-stations`) | mea | OGL-IoM | A | 6 |
-
-### poi
-
-| Layer | Source | Licence | Grade | Features |
-| --- | --- | --- | --- | --- |
-| Mine shafts, adits & mines (`mine-infrastructure`) | osmIOM | ODbL | C | 19 |
-| Tholtans & ruined buildings (`tholtans-ruins`) | osmIOM | ODbL | C | 848 |
-| Essential utilities & services (`essential-utilities`) | osmIOM | ODbL | C | 187 |
-| Food & drink (`food-drink`) | osmIOM | ODbL | C | 308 |
-| Coastal & outdoor (`coastal-outdoor`) | osmIOM | ODbL | C | 1065 |
 
 ### live
 

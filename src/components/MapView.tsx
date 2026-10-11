@@ -317,6 +317,9 @@ export function MapView({
         startLivePolls(enabledRef, layersRef, mapRef, setFeedError);
         // Notify parent that the map is ready
         onMapReady?.(map);
+        // E2E hook: the verify/smoke scripts inspect layer order through this
+        // handle (scripts/verify-basemap.mjs, scripts/smoke-live.mjs).
+        (window as unknown as { __openmanninMap?: MapLibreMap }).__openmanninMap = map;
       });
 
       map.on("style.load", () => {

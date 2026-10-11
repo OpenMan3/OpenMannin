@@ -97,36 +97,52 @@ function turnPhrase(fromBearing: number, toBearing: number): string {
   const abs = Math.abs(d);
   if (abs < 20) return "Continue";
   const side = d > 0 ? "right" : "left";
+  if (abs >= 160) return "Make a U-turn";
   if (abs >= 135) return `Turn sharp ${side}`;
   if (abs >= 60) return `Turn ${side}`;
   if (abs >= 20) return `Bear ${side}`;
   return "Continue";
 }
 
+/** OSM junction values that mean "this segment is part of a roundabout". */
+function isRoundabout(junction: string | null | undefined): boolean {
+  const j = typeof junction === "string" ? junction.trim().toLowerCase() : "";
+  return j === "roundabout" || j === "circular";
+}
+
 /**
  * Recompute the displayed legs for whichever route is active right now.
  */
-export function syncSteps(route?: { coordinates: readonly (readonly [number, number])[]; segmentNames?: (string | null)[] } | null): NavigationStep[] {
+export function syncSteps(route?: {
+  coordinates: readonly (readonly [number, number])[];
+  segmentNames?: (string | null)[];
+  segmentJunctions?: (string | null)[];
+} | null): NavigationStep[] {
   return route && route.coordinates.length > 1
-    ? deriveSteps(route.coordinates, route.segmentNames)
+    ? deriveSteps(route.coordinates, route.segmentNames, route.segmentJunctions)
     : [];
 }
   /**
- * Split a route polyline into straight-ish legs. Segments whose bearing stays
- * near the leg's running direction accumulate; a change past
- * TURN_THRESHOLD_DEG closes the leg and starts the next.
- *
- * `names` (optional) is parallel to the segment index: names[k] is the street
- * name of the segment from coordinates[k] to coordinates[k+1]. Each leg takes
- * the name of its longest named segment, so a brief crossing of an unnamed
- * connector does not erase the street you are actually on.
- */
+   * Split a route polyline into straight-ish legs. Segments whose bearing stays
+   * near the leg's running direction accumulate; a change past
+   * TURN_THRESHOLD_DEG closes the leg and starts the next.
+   *
+   * `names` (optional) is parallel to the segment index: names[k] is the street
+   * name of the segment from coordinates[k] to coordinates[k+1]. Each leg takes
+   * the name of its longest named segment, so a brief crossing of an unnamed
+   * connector does not erase the street you are actually on.
+   *
+   * `junctions` (optional) is parallel too: junctions[k] is the OSM junction=*
+   * of that segment. A leg mostly on a roundabout is phrased as such ("leave
+   * the roundabout onto X") rather than as a generic turn.
+   */
 export function deriveSteps(
   coordinates: readonly (readonly [number, number])[],
   names?: readonly (string | null | undefined)[],
+  junctions?: readonly (string | null | undefined)[],
 ): NavigationStep[] {
 
-  const segs: { bearing: number; distanceM: number; name: string | null }[] = [];
+  const segs: { bearing: number; distanceM: number; name: string | null; roundabout: boolean }[] = [];
   for (let i = 1; i < coordinates.length; i++) {
     const [x1, y1] = coordinates[i - 1];
     const [x2, y2] = coordinates[i];
@@ -138,6 +154,7 @@ export function deriveSteps(
       bearing: bearingDeg(x1, y1, x2, y2),
       distanceM: d,
       name: typeof rawName === "string" && rawName.trim() ? rawName.trim() : null,
+      roundabout: isRoundabout(junctions?.[i - 1]),
     });
   }
   if (segs.length === 0) return [];
@@ -145,12 +162,13 @@ export function deriveSteps(
   // Walk the segments, folding each into the current leg while its bearing
   // stays near the leg's running (mean) direction. The leg's name is that of
   // its longest named segment.
-  const legs: { bearing: number; distanceM: number; name: string | null }[] = [];
+  const legs: { bearing: number; distanceM: number; name: string | null; roundabout: boolean }[] = [];
   let sumX = 0;
   let sumY = 0;
   let distanceM = 0;
   let name: string | null = null;
   let nameLen = -1;
+  let roundM = 0;
 
   const reset = () => {
     sumX = 0;
@@ -158,11 +176,14 @@ export function deriveSteps(
     distanceM = 0;
     name = null;
     nameLen = -1;
+    roundM = 0;
   };
 
   const closeLeg = () => {
     const bearing = normalizeDeg(Math.atan2(sumY, sumX) * DEG);
-    if (distanceM >= MIN_LEG_M) legs.push({ bearing, distanceM, name });
+    if (distanceM >= MIN_LEG_M) {
+      legs.push({ bearing, distanceM, name, roundabout: roundM > distanceM / 2 });
+    }
   };
 
   let prevBearing = segs[0].bearing;
@@ -181,6 +202,7 @@ export function deriveSteps(
     sumX += Math.cos(b);
     sumY += Math.sin(b);
     distanceM += seg.distanceM;
+    if (seg.roundabout) roundM += seg.distanceM;
     if (seg.name && seg.distanceM > nameLen) {
       name = seg.name;
       nameLen = seg.distanceM;
@@ -212,19 +234,34 @@ export function deriveSteps(
       bearing: last.bearing,
       distanceM: last.distanceM + rest.reduce((n, l) => n + l.distanceM, 0),
       name: last.name,
+      roundabout: last.roundabout,
     };
   }
 
   return folded.map((leg, i) => {
     const dist = formatStepDistance(leg.distanceM);
-    const instruction =
-      i === 0
-        ? leg.name
-          ? `Head ${cardinal(leg.bearing)} on ${leg.name} for ${dist}`
-          : `Head ${cardinal(leg.bearing)} for ${dist}`
-        : leg.name
-          ? `${turnPhrase(folded[i - 1].bearing, leg.bearing)} onto ${leg.name} for ${dist}`
-          : `${turnPhrase(folded[i - 1].bearing, leg.bearing)}, heading ${cardinal(leg.bearing)} for ${dist}`;
+    const prev = i > 0 ? folded[i - 1] : null;
+    const heading = cardinal(leg.bearing);
+    let instruction: string;
+    if (i === 0) {
+      instruction = leg.name
+        ? `Head ${heading} on ${leg.name} for ${dist}`
+        : `Head ${heading} for ${dist}`;
+    } else if (leg.roundabout && !prev!.roundabout) {
+      // Entering a roundabout: no exit count is invented from geometry alone.
+      instruction = leg.name
+        ? `At the roundabout, continue onto ${leg.name} for ${dist}`
+        : `At the roundabout, continue for ${dist}`;
+    } else if (!leg.roundabout && prev!.roundabout) {
+      instruction = leg.name
+        ? `Leave the roundabout onto ${leg.name} for ${dist}`
+        : `Leave the roundabout, heading ${heading} for ${dist}`;
+    } else {
+      const phrase = turnPhrase(prev!.bearing, leg.bearing);
+      instruction = leg.name
+        ? `${phrase} onto ${leg.name} for ${dist}`
+        : `${phrase}, heading ${heading} for ${dist}`;
+    }
     return {
       instruction,
       distanceM: Math.round(leg.distanceM),

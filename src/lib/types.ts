@@ -15,7 +15,6 @@ export type LicenceId =
   | "CC0-1.0"
   | "PD-OURAIRPORTS"
   | "COPERNICUS"
-  | "OS-TM-POLICY"
   | "NO-LICENCE"
   | "UNKNOWN";
 
@@ -69,6 +68,54 @@ export type LayerGroup =
   | "live"
   | "gaps";
 
+/**
+ * The reader-facing theme a layer belongs to.
+ *
+ * This is deliberately SEPARATE from LayerGroup. A group is a register key:
+ * it is written into SOURCES.md and the ingest provenance and moves only with
+ * care. A category is navigation — it answers "which drawer would a reader look
+ * in for this?" Layers outside the five themes (aviation, live feeds, the
+ * sea-borne and environmental layers) carry no category and keep their group
+ * section, so the taxonomy never has to invent a home for them.
+ */
+export type LayerCategory =
+  | "heritage"
+  | "prow"
+  | "infrastructure"
+  | "civic"
+  | "poi";
+
+/**
+ * The drawer a layer sits in within its category. Required whenever `category`
+ * is set; the panel renders it as the second level of the tree.
+ */
+export type LayerSubcategory =
+  | "designated"
+  | "tholtans-ruins"
+  | "mine-infrastructure"
+  | "archaeology"
+  | "rights-of-way"
+  | "trails"
+  | "heritage-railways"
+  | "energy-grid"
+  | "telecom"
+  | "ev-charging"
+  | "water"
+  | "ports"
+  | "ground-stations"
+  | "seamarks"
+  | "subsea-cables"
+  | "boundaries"
+  | "addresses"
+  | "emergency-services"
+  | "food-drink"
+  | "amenities"
+  | "outdoor"
+  | "tourism"
+  | "worship"
+  | "public-transport"
+  | "services";
+
 export type LayerKind =
   /** Static GeoJSON produced by an ingest script into /public/data */
   | "geojson"
@@ -83,6 +130,10 @@ export interface LayerDef {
   id: string;
   label: string;
   group: LayerGroup;
+  /** Reader-facing theme, shown as the top of the layer tree. Optional. */
+  category?: LayerCategory;
+  /** Drawer within the theme. Required when `category` is set. */
+  subcategory?: LayerSubcategory;
   kind: LayerKind;
   /** Path under /data, for kind === "geojson" */
   file?: string;

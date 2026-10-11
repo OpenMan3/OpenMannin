@@ -28,7 +28,7 @@ import { featureCentre } from "../feature-index";
 import { resolveFeatureLabel } from "../feature-label";
 import { computeRoutes, type RouteLeg, type RouteMap } from "./client";
 import { ROUTE_MODES, type RouteMode } from "./profiles";
-import { deriveSteps, type NavigationStep } from "./steps";
+import { deriveSteps, type NavigationStep, bearingDeg, haversineM } from "./steps";
 import type { UserLocation, Destination, LocationStatus, RouteStatus, NavigationState, FollowMode } from "./types";
 
 // Re-export types for consumers
@@ -57,13 +57,25 @@ const SNAP_RADIUS_PX = 15;
 const SUPPRESS_CLICK_MS = 700;
 
 /** Orange pin colours (#f43f5e is the subsea-cable rose, kept for the pin). */
-const PIN_COLOR = "#f43f5e";
-const PIN_RING = "rgba(244, 63, 94, 0.22)";
-const DOT_COLOR = "#3b82f6";
-const DOT_HALO = "#60a5fa";
-const ACCURACY_FILL = "rgba(59, 130, 246, 0.12)";
-const ACCURACY_STROKE = "rgba(59, 130, 246, 0.35)";
-const ROUTE_COLOR = "#35c9d4";
+/**
+ * Visual constants. The route is Google-blue, the pin Google-red and the
+ * live dot the light-palette GPS blue — they read well on both the light
+ * (Liberty) and dark OpenFreeMap styles as well as on OpenTopoMap.
+ */
+const PIN_COLOR = "#d93025";
+const PIN_RING = "rgba(217, 48, 37, 0.22)";
+const DOT_COLOR = "#1a73e8";
+const DOT_HALO = "#4285f4";
+const ACCURACY_FILL = "rgba(26, 115, 232, 0.10)";
+const ACCURACY_STROKE = "rgba(26, 115, 232, 0.35)";
+const ROUTE_COLOR = "#1a73e8";
+
+/** Lateral distance (m) beyond which the user is considered off-route. */
+const OFF_ROUTE_M: Record<RouteMode, number> = { driving: 35, cycling: 25, walking: 25 };
+/** Arrival radius (m). */
+const ARRIVED_M = 40;
+/** Delay before auto-recalculating after the first off-route detection. */
+const RECALC_DEBOUNCE_MS = 3500;
 
 /**
  * Layers whose features are worth snapping a long-press to. These carry a
@@ -160,6 +172,20 @@ type Internal = {
   progressM: number;
   /** Distance remaining to destination (metres). */
   remainingM: number;
+  /** Live speed from successive GPS fixes (mph). null until two fixes. */
+  speedMph: number | null;
+  /** Compass bearing between the two most recent GPS fixes, deg. */
+  headingDeg: number | null;
+  /** Full turn-by-turn legs as first derived (before live trimming). */
+  baseSteps: NavigationStep[];
+  /** Index of the next unfinished leg (0 = the first). */
+  stepIndex: number;
+  /** Distance to the next maneuver, metres. */
+  nextStepM: number;
+  /** Timestamps for speed/heading derivation. */
+  lastFixAt: number;
+  /** Previous GPS fix, used to derive speed + heading between fixes. */
+  prevFix: UserLocation | null;
 };
 
 function initialState(activeMode: RouteMode): Internal {
@@ -182,6 +208,13 @@ function initialState(activeMode: RouteMode): Internal {
     offRoute: false,
     progressM: 0,
     remainingM: 0,
+    speedMph: null,
+    headingDeg: null,
+    baseSteps: [],
+    stepIndex: 0,
+    nextStepM: 0,
+    lastFixAt: 0,
+    prevFix: null,
   };
 }
 
@@ -202,7 +235,103 @@ function signature(s: Internal): string {
     s.routes.walking ? `${Math.round(s.routes.walking.distanceM)},${Math.round(s.routes.walking.durationS)}` : "n",
     s.steps.map((step) => step.distanceM).join(","),
     s.recenterPending,
+    s.followMode,
+    s.offRoute,
+    Math.round(s.progressM),
+    Math.round(s.remainingM),
+    s.speedMph === null ? "n" : s.speedMph.toFixed(1),
+    s.stepIndex,
+    Math.round(s.nextStepM),
   ]);
+}
+
+// ---------------------------------------------------------------------------
+// Route-localisation helpers (pure, no map access)
+// ---------------------------------------------------------------------------
+
+/**
+ * Project a geo point onto a [lon,lat][] polyline.
+ *
+ * Returns the distance travelled along the polyline up to the closest point,
+ * and the lateral (perpendicular) distance from the polyline in metres.
+ */
+function projectOnRoute(coords: [number, number][], lon: number, lat: number) {
+  let alongM = 0;
+  let bestLateralM = Infinity;
+  let bestAlongM = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const [ax, ay] = coords[i - 1];
+    const [bx, by] = coords[i];
+    const segM = haversineM(ax, ay, bx, by);
+    if (segM < 1e-6) continue;
+    // param u of the point's projection onto segment AB, clamped.
+    const dx = (bx - ax) * 111_320 * Math.cos(((ay + by) / 2) * (Math.PI / 180));
+    const dy = (by - ay) * 111_320;
+    const px = (lon - ax) * 111_320 * Math.cos(((ay + by) / 2) * (Math.PI / 180));
+    const py = (lat - ay) * 111_320;
+    let u = (px * dx + py * dy) / (dx * dx + dy * dy);
+    u = Math.max(0, Math.min(1, u));
+    const projLon = ax + (u * (bx - ax));
+    const projLat = ay + (u * (by - ay));
+    const lateral = haversineM(lon, lat, projLon, projLat);
+    const cumulative = alongM + u * segM;
+    if (lateral < bestLateralM) {
+      bestLateralM = lateral;
+      bestAlongM = cumulative;
+    }
+    alongM += segM;
+  }
+  return { distanceM: bestAlongM, lateralM: bestLateralM };
+}
+
+/**
+ * Recompute live progress: trimmed steps, next-step countdown, remaining
+ * distance, arrival detection and the off-route flag. Uses the user's latest
+ * GPS fix projected onto the active route. Called on every fix and whenever a
+ * route is (re)computed, so state stays consistent without extra plumbing.
+ */
+function updateRouteProgress(s: Internal): void {
+  const route = s.routes[s.activeMode];
+  if (!route || !s.userLocation || !route.coordinates?.length) return;
+
+  const coords = safeCoords(route);
+  if (coords.length < 2) {
+    s.progressM = 0;
+    s.remainingM = route.distanceM ?? 0;
+    return;
+  }
+
+  const { distanceM, lateralM } = projectOnRoute(coords, s.userLocation.lon, s.userLocation.lat);
+  s.progressM = Math.max(0, distanceM);
+  s.remainingM = Math.max(0, (route.distanceM ?? 0) - s.progressM);
+
+  // Advance past legs whose cumulative length the user has covered.
+  let cum = 0;
+  let idx = 0;
+  for (let i = 0; i < s.baseSteps.length; i++) {
+    cum += s.baseSteps[i].distanceM;
+    if (cum > s.progressM) break;
+    idx = i + 1;
+  }
+  s.stepIndex = Math.min(idx, s.baseSteps.length);
+  const nextCumEnd = s.baseSteps
+    .slice(0, s.stepIndex)
+    .reduce((a, b) => a + b.distanceM, 0);
+  s.nextStepM = Math.max(0, nextCumEnd - s.progressM);
+
+  const off = lateralM > OFF_ROUTE_M[s.activeMode];
+  if (s.remainingM <= ARRIVED_M) {
+    s.routeStatus = "arrived";
+    s.offRoute = false;
+  } else {
+    s.offRoute = off;
+    if (!off && s.routeStatus === "arrived") s.routeStatus = "ready";
+  }
+}
+
+/** Guards against a route whose coordinates were never populated. */
+function safeCoords(route: { coordinates?: [number, number][] }): [number, number][] {
+  return Array.isArray(route.coordinates) ? route.coordinates : [];
 }
 
 // ---------------------------------------------------------------------------
@@ -301,8 +430,8 @@ function addNavLayers(map: Map): void {
       source: SOURCE_ROUTE,
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
-        "line-color": "#0b0f14",
-        "line-opacity": 0.9,
+        "line-color": "#ffffff",
+        "line-opacity": 0.95,
         "line-width": ["interpolate", ["linear"], ["zoom"], 8, 9, 14, 14, 18, 18],
       },
     });
@@ -398,6 +527,10 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
   const state: Internal = initialState("driving");
 
   const publish = () => {
+    // GPS-driven progress (progress/remaining/off-route/arrived/next step)
+    // is derived state, recomputed here so every published snapshot is fresh
+    // no matter which event triggered it.
+    updateRouteProgress(state);
     const sig = signature(state);
     if (sig === state.lastSignature) return;
     state.lastSignature = sig;
@@ -411,6 +544,9 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       routeError: state.routeError,
       routes: state.routes,
       steps: state.steps,
+      speedMph: state.speedMph,
+      stepIndex: state.stepIndex,
+      nextStepM: state.nextStepM,
       recenterPending: state.recenterPending,
       followMode: state.followMode,
       offRoute: state.offRoute,
@@ -421,7 +557,13 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
 
   /** Recompute the displayed legs for whichever route is active right now. */
   const syncSteps = (route?: RouteLeg | null) => {
-    state.steps = route && route.coordinates.length > 1 ? deriveSteps(route.coordinates) : [];
+    state.baseSteps =
+      route && route.coordinates.length > 1
+        ? deriveSteps(route.coordinates, route.segmentNames, route.segmentJunctions)
+        : [];
+    state.steps = state.baseSteps;
+    state.stepIndex = 0;
+    state.nextStepM = state.baseSteps[0]?.distanceM ?? 0;
   };
 
   // ---- GPS ---------------------------------------------------------------
@@ -488,10 +630,36 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     setUserData(loc);
     startPulse();
 
+    // ---- Live speed + heading from successive fixes ----------------------
+    const dtS = (pos.timestamp - state.lastFixAt) / 1000;
+    state.lastFixAt = pos.timestamp;
+    const prevLoc = state.prevFix;
+    state.prevFix = loc;
+    if (prevLoc && dtS > 0.3 && dtS < 30) {
+      const dist = haversineM(prevLoc.lat, prevLoc.lon, lat, lon);
+      if (dist > 2.5) {
+        state.speedMph = (dist / dtS) * 2.2369363;
+        state.headingDeg = bearingDeg(prevLoc.lon, prevLoc.lat, lon, lat);
+      }
+    }
+
+    // ---- Camera: follow the dot / rotate to course -----------------------
+    // In "none" mode the map is never yanked (the button-driven Recenter flow
+    // still works). In follow/heading modes the camera tracks the GPS dot
+    // unless the user dragged the map away, which parks until they Recentre.
+    state.recenterPending =
+      state.followMode !== "none" ? state.recenterPending : false;
+    if (state.followMode !== "none" && !state.recenterPending) {
+      if (state.followMode === "heading" && state.headingDeg !== null) {
+        map.easeTo({ bearing: state.headingDeg, duration: 550 });
+      } else {
+        map.easeTo({ center: [lon, lat], duration: 550 });
+      }
+    }
+
     // First fix after the button press pans to the user; later fixes just move
     // the dot so the map is never yanked away while they are looking. A press
     // inside the recenter flow also parked the map back on the dot here.
-    state.recenterPending = false;
     if (state.firstFlyPending) {
       state.firstFlyPending = false;
       map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 16), duration: 700 });
@@ -499,6 +667,12 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
 
     if (state.destination && !state.routesFresh) void requestRoutes();
     publish();
+
+    // Driving off the drawn line: hand off to an auto-recalculate. Status is
+    // bumped here (not in requestRoutes) so the UI shows "recalculating".
+    if (state.offRoute && state.routeStatus === "ready") {
+      scheduleRecalc();
+    }
   };
 
   const onGeolocationError = (err: GeolocationPositionError) => {
@@ -541,11 +715,19 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     }
     stopPulse();
     reqToken++;
+    clearRecalc();
     state.userLocation = null;
     state.firstFlyPending = false;
     state.recenterPending = false;
+    state.speedMph = null;
+    state.headingDeg = null;
+    state.prevFix = null;
+    state.lastFixAt = 0;
     state.routes = {};
     state.steps = [];
+    state.baseSteps = [];
+    state.stepIndex = 0;
+    state.nextStepM = 0;
     state.routesFresh = false;
     if (state.locationStatus === "active" || state.locationStatus === "locating") {
       state.locationStatus = "idle";
@@ -625,7 +807,36 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     });
   };
 
-    const requestRoutes = async (): Promise<void> => {
+    // ---- Auto-recalculate after driving off route -------------------------
+
+  let recalcTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const clearRecalc = () => {
+    if (recalcTimer) {
+      clearTimeout(recalcTimer);
+      recalcTimer = null;
+    }
+  };
+
+  /**
+   * Turn an off-route detection into a "recalculating" status and, after a
+   * short glance-free grace period (enough to notice and correct a wrong turn
+   * without the route thrashing on GPS jitter), re-run the routing. Only
+   * fires once per off-route event; the new route starts from the current fix
+   * and is drawn already snapped to the road, so the flag clears itself.
+   */
+  const scheduleRecalc = () => {
+    if (state.routeStatus !== "ready") return;
+    state.routeStatus = "recalculating";
+    clearRecalc();
+    recalcTimer = setTimeout(() => {
+      recalcTimer = null;
+      void requestRoutes();
+    }, RECALC_DEBOUNCE_MS);
+    publish();
+  };
+
+  const requestRoutes = async (): Promise<void> => {
     const dest = state.destination;
     const loc = state.userLocation;
     if (!dest || !loc) return;
@@ -642,6 +853,9 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       state.routeError = reply.error ?? "Routing failed.";
       state.routes = {};
       state.steps = [];
+      state.baseSteps = [];
+      state.stepIndex = 0;
+      state.nextStepM = 0;
       publish();
       return;
     }
@@ -680,12 +894,17 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
 
   const clearDestination = () => {
     reqToken++;
+    clearRecalc();
     state.destination = null;
     state.routes = {};
     state.steps = [];
+    state.baseSteps = [];
+    state.stepIndex = 0;
+    state.nextStepM = 0;
     state.routesFresh = false;
     state.routeStatus = "idle";
     state.routeError = null;
+    state.offRoute = false;
     state.fitPending = false;
     setDestinationData(0, 0);
     clearRouteLayer();
@@ -915,6 +1134,11 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     ensureLayers();
     if (!state.destination) return;
     state.fitPending = true;
+    // Jump into tracking so the view follows the car once the route is live;
+    // the user dials heading-up from the follow button if they want it. A
+    // fresh Navigate also clears any parked "Recenter" so following resumes.
+    state.followMode = "follow";
+    state.recenterPending = false;
     if (!state.userLocation) {
       // No fix yet: ask for one; requestRoutes fires when the fix lands.
       state.routeError = null;
@@ -939,6 +1163,48 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     }
   };
 
+  /**
+   * openmannin:set-destination — a "Directions" press anywhere in the app (in
+   * particular the feature popup) turns the picked feature into a destination
+   * pin and computes routes to it, exactly like a long-press drop.
+   */
+  const onSetDestinationWindow = (e: Event) => {
+    e.stopPropagation();
+    const d = ((e as CustomEvent).detail ?? {}) as {
+      lon?: unknown;
+      lat?: unknown;
+      title?: unknown;
+      detail?: unknown;
+    };
+    if (typeof d.lon !== "number" || typeof d.lat !== "number") return;
+    ensureLayers();
+    dropDestination(
+      d.lon,
+      d.lat,
+      typeof d.title === "string" && d.title ? d.title : "Pinned location",
+      typeof d.detail === "string" ? d.detail : "",
+    );
+  };
+
+  /**
+   * openmannin:nav-follow modes: "none" frees the camera, "follow" pins it to
+   * the live dot, "heading" additionally rotates the map so the current course
+   * points up. Picks up the next GPS fix if there is no heading to rotate to
+   * yet.
+   */
+  const onFollowEvent = (mode: FollowMode) => {
+    state.followMode = mode;
+    if (mode === "heading" && state.headingDeg !== null) {
+      map.easeTo({ bearing: state.headingDeg, duration: 500 });
+    }
+    publish();
+  };
+
+  const onFollowWindow = (e: Event) => {
+    e.stopPropagation();
+    onFollowEvent(((e as CustomEvent).detail as { mode?: FollowMode })?.mode ?? "follow");
+  };
+
   const onLocateWindow = (e: Event) => {
     e.stopPropagation();
     onLocateEvent();
@@ -959,7 +1225,9 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
   window.addEventListener("openmannin:locate", onLocateWindow);
   window.addEventListener("openmannin:navigate", onNavigateWindow);
   window.addEventListener("openmannin:nav-mode", onModeWindow);
+  window.addEventListener("openmannin:nav-follow", onFollowWindow);
   window.addEventListener("openmannin:clear-nav", onClearWindow);
+  window.addEventListener("openmannin:set-destination", onSetDestinationWindow);
 
   // Publish the initial state so the UI renders the controls (the locate
   // button, the dormant destination panel) before any interaction happens.
@@ -989,7 +1257,10 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       window.removeEventListener("openmannin:locate", onLocateWindow);
       window.removeEventListener("openmannin:navigate", onNavigateWindow);
       window.removeEventListener("openmannin:nav-mode", onModeWindow);
+      window.removeEventListener("openmannin:nav-follow", onFollowWindow);
       window.removeEventListener("openmannin:clear-nav", onClearWindow);
+      window.removeEventListener("openmannin:set-destination", onSetDestinationWindow);
+      clearRecalc();
     },
   };
 }

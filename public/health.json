@@ -1,11 +1,11 @@
 {
   "ok": true,
   "worker": true,
-  "layers": 37,
-  "features": 53031,
+  "layers": 40,
+  "features": 57416,
   "absent": [],
   "check": "static-build",
-  "generated": "2026-10-11T06:29:18.012Z",
+  "generated": "2026-10-11T23:25:16.475Z",
   "hosting": {
     "static": true,
     "clientFeeds": [
@@ -13,9 +13,5 @@
     ]
   },
   "problems": [],
-  "warnings": [
-    "This is a BUILD-TIME report. It says the map is structurally complete, not that any upstream is reachable.",
-    "Live-feed state is observed in the browser, not here: satellite passes are fetched client-side.",
-    "Satellite passes need public/passes-worker.mjs, bundled from src/lib/feeds/passes-worker.ts by scripts/build-passes-worker.mjs before next build. If that file is missing or stale, the layer is silently empty - there is no console error to see. (Its presence is checked above; staleness is checked by scripts/lib/passes-worker-build.test.mjs.)"
-  ]
+  "warnings": []
 }

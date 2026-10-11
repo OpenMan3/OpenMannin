@@ -3,6 +3,14 @@
 /**
  * Layer list.
  *
+ * Two navigations live side by side. The five reader-facing categories
+ * (heritage, rights of way, infrastructure, civic, points of interest) form a
+ * two-level tree — theme, then drawer — because that is how a person looking
+ * for "the old mine shafts" or "public footpaths" actually searches. Layers
+ * that belong to no theme (aviation, live feeds, the sea-borne and
+ * environmental layers) keep their stable register group as a section, so the
+ * taxonomy never invents a home for them.
+ *
  * The point of this panel is not just to switch things on and off. Every layer
  * shows its confidence grade and licence state, because a reader deciding
  * whether to trust a line on the map needs to know whether it came from the
@@ -13,14 +21,25 @@
  * layer that does not exist are different problems and the user should see
  * which is which.
  *
- * Groups are collapsible/expandable and remember their state in localStorage.
- * Default: all groups expanded on first visit; user preference persists.
+ * Sections remember their collapse state in localStorage. Default: everything
+ * expanded, so a first visit shows the evidence rather than a wall of +
+ * signs. We store the COLLAPSED set, so a newly added theme is expanded by
+ * default without a migration.
  */
 
 import { useEffect, useMemo, useState } from "react";
-import type { LayerDef, LayerGroup } from "@/lib/types";
+import type { LayerDef, LayerGroup, LayerCategory, LayerSubcategory } from "@/lib/types";
 import { SOURCES } from "@/lib/sources";
 import { LICENCES } from "@/lib/licences";
+import {
+  CATEGORY_ORDER,
+  CATEGORY_LABELS,
+  CATEGORY_BLURBS,
+  SUBCATEGORY_LABELS,
+  orderSubcategories,
+} from "@/lib/taxonomy";
+import { buildLayerTree } from "@/lib/layer-tree";
+import { InfoIcon } from "./Icons";
 
 const GROUP_LABELS: Record<LayerGroup, string> = {
   geography: "Geography",
@@ -37,15 +56,14 @@ const GROUP_LABELS: Record<LayerGroup, string> = {
   gaps: "Documented gaps",
 };
 
+/** Groups shown for layers that carry no category, in reading order. */
 const GROUP_ORDER: LayerGroup[] = [
   "geography",
-  "infrastructure",
-  "cables",
-  "energy",
-  "transport",
   "trails",
+  "transport",
+  "energy",
+  "cables",
   "environment",
-  "poi",
   "surveillance",
   "aviation",
   "live",
@@ -58,17 +76,16 @@ const GRADE_CLASS: Record<string, string> = {
   D: "text-danger",
 };
 
-const EXPANDED_KEY = "om:layerGroupsExpanded";
+const COLLAPSED_KEY = "om:layerNavCollapsed";
 
-function getDefaultExpanded(): Set<LayerGroup> {
-  // Default to all groups expanded
-  return new Set(GROUP_ORDER);
-}
+const catKey = (c: LayerCategory) => `cat:${c}`;
+const subKey = (c: LayerCategory, s: LayerSubcategory) => `sub:${c}:${s}`;
+const grpKey = (g: LayerGroup) => `grp:${g}`;
 
-function loadExpanded(): Set<LayerGroup> {
-  if (typeof window === "undefined") return getDefaultExpanded();
+function loadCollapsed(): Set<string> {
+  if (typeof window === "undefined") return new Set();
   try {
-    const stored = localStorage.getItem(EXPANDED_KEY);
+    const stored = localStorage.getItem(COLLAPSED_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed)) return new Set(parsed);
@@ -76,16 +93,109 @@ function loadExpanded(): Set<LayerGroup> {
   } catch {
     /* ignore */
   }
-  return getDefaultExpanded();
+  return new Set();
 }
 
-function saveExpanded(expanded: Set<LayerGroup>) {
+function saveCollapsed(collapsed: Set<string>) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(EXPANDED_KEY, JSON.stringify([...expanded]));
+    localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...collapsed]));
   } catch {
     /* ignore */
   }
+}
+
+function LayerRow({
+  layer,
+  enabled,
+  missing,
+  feedErrors,
+  onToggle,
+  onShowDetail,
+}: {
+  layer: LayerDef;
+  enabled: Set<string>;
+  missing: Set<string>;
+  feedErrors: Record<string, string>;
+  onToggle: (id: string) => void;
+  onShowDetail?: (layer: LayerDef) => void;
+}) {
+  const isMissing = missing.has(layer.id);
+  const isLive = layer.kind === "live";
+  const feedError = isLive ? feedErrors[layer.id] : undefined;
+  const isOn = enabled.has(layer.id) && !isMissing;
+  const src = SOURCES[layer.sourceId];
+  const lic = src ? LICENCES[src.licence] : undefined;
+  const needsPermission = lic?.requiresPermission ?? false;
+
+  return (
+    <div className="border-b border-line-soft">
+      <div className="flex items-start gap-2 px-3 py-2">
+        <input
+          type="checkbox"
+          id={`layer-${layer.id}`}
+          checked={isOn}
+          disabled={isMissing}
+          onChange={() => onToggle(layer.id)}
+          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-accent disabled:opacity-40"
+        />
+
+        <label htmlFor={`layer-${layer.id}`} className="min-w-0 flex-1 cursor-pointer">
+          <span className="flex items-center gap-1.5">
+            <span className="icon-badge" style={{ background: layer.color }} aria-hidden />
+            <span
+              className={`truncate text-[13px] ${
+                isMissing ? "text-ink-3 line-through" : "text-ink"
+              }`}
+            >
+              {layer.label}
+            </span>
+          </span>
+
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-ink-3">
+            <span className={`font-mono font-semibold ${GRADE_CLASS[layer.confidence]}`}>
+              {layer.confidence}
+            </span>
+            {layer.featureCount !== undefined && (
+              <span className="font-mono">{layer.featureCount.toLocaleString()}</span>
+            )}
+            {layer.minZoom !== undefined && layer.minZoom > 0 && (
+              <span>z{layer.minZoom}+</span>
+            )}
+            {needsPermission && <span className="chip bg-warn/10 text-warn">permission needed</span>}
+            {isLive && <span className="chip bg-info/10 text-info">live route</span>}
+            {feedError && (
+              <span className="chip bg-danger/10 text-danger" title={feedError}>
+                feed offline
+              </span>
+            )}
+            {isMissing && <span className="chip bg-danger/10 text-danger">no data</span>}
+          </span>
+        </label>
+
+        {onShowDetail && (
+          <button
+            type="button"
+            onClick={() => onShowDetail(layer)}
+            aria-label={`About ${layer.label}`}
+            title="About this layer"
+            className="mt-0.5 shrink-0 rounded-md p-1 text-ink-3 transition-colors hover:bg-raised hover:text-ink"
+          >
+            <InfoIcon className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {feedError && (
+        <div className="space-y-2 px-3 pb-3 text-[12px] leading-relaxed text-ink-2">
+          <div className="rounded-md border border-danger/30 bg-danger/5 p-2 pl-8">
+            <div className="mb-1 font-semibold text-danger">This live feed is not running</div>
+            <p className="break-words">{feedError}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function LayerPanel({
@@ -95,6 +205,7 @@ export function LayerPanel({
   feedErrors,
   onToggle,
   onToggleAll,
+  onShowDetail,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
@@ -108,31 +219,31 @@ export function LayerPanel({
   onToggle: (id: string) => void;
   /** Flip every layer on or off in one switch. */
   onToggleAll?: (on: boolean) => void;
+  /** Open the detail drawer for a layer. */
+  onShowDetail?: (layer: LayerDef) => void;
 }) {
-  const [expandedGroups, setExpandedGroups] = useState<Set<LayerGroup>>(() => loadExpanded());
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => loadCollapsed());
 
   useEffect(() => {
-    saveExpanded(expandedGroups);
-  }, [expandedGroups]);
+    saveCollapsed(collapsed);
+  }, [collapsed]);
 
-  const grouped = useMemo(() => {
-    const map = new Map<LayerGroup, LayerDef[]>();
-    for (const l of layers) {
-      if (!map.has(l.group)) map.set(l.group, []);
-      map.get(l.group)!.push(l);
-    }
-    return map;
-  }, [layers]);
-
-  const toggleGroup = (group: LayerGroup) =>
-    setExpandedGroups((prev) => {
+  const isExpanded = (key: string) => !collapsed.has(key);
+  const toggleSection = (key: string) =>
+    setCollapsed((prev) => {
       const next = new Set(prev);
-      if (next.has(group)) next.delete(group);
-      else next.add(group);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
 
+  const { byCategory, byGroup } = useMemo(() => buildLayerTree(layers), [layers]);
+
   const onCount = layers.filter((l) => enabled.has(l.id)).length;
+
+  const countOn = (defs: LayerDef[]) => defs.filter((l) => enabled.has(l.id)).length;
+
+  const rowProps = { enabled, missing, feedErrors, onToggle, onShowDetail };
 
   return (
     <div className="flex h-full flex-col">
@@ -162,116 +273,104 @@ export function LayerPanel({
       </div>
 
       <div className="scroll-thin flex-1 overflow-y-auto">
-        {GROUP_ORDER.filter((g) => grouped.has(g)).map((group) => {
-          const isGroupExpanded = expandedGroups.has(group);
+        {CATEGORY_ORDER.filter((c) => byCategory.has(c)).map((category) => {
+          const subs = byCategory.get(category)!;
+          const catDefs = [...subs.values()].flat();
+          const catExpanded = isExpanded(catKey(category));
+          const subOrder = orderSubcategories(category, [...subs.keys()]);
+
           return (
-            <section key={group}>
+            <section key={category}>
               <button
                 type="button"
-                onClick={() => toggleGroup(group)}
-                className="flex w-full items-center justify-between sticky top-0 z-10 bg-page/95 px-3 py-1.5 text-left text-[11px] font-semibold tracking-wide text-ink-3 uppercase backdrop-blur"
-                aria-expanded={isGroupExpanded}
+                onClick={() => toggleSection(catKey(category))}
+                className="sticky top-0 z-10 flex w-full items-center justify-between bg-page/95 px-3 py-2 text-left backdrop-blur"
+                aria-expanded={catExpanded}
               >
                 <span className="flex items-center gap-1.5">
-                  <span className="text-accent">{isGroupExpanded ? "−" : "+"}</span>
-                  {GROUP_LABELS[group]}
+                  <span className="text-accent">{catExpanded ? "−" : "+"}</span>
+                  <span className="flex flex-col">
+                    <span className="text-[12px] font-bold tracking-wide text-ink uppercase">
+                      {CATEGORY_LABELS[category]}
+                    </span>
+                    <span className="text-[10px] font-normal normal-case text-ink-3">
+                      {CATEGORY_BLURBS[category]}
+                    </span>
+                  </span>
                 </span>
                 <span className="text-[10px] text-ink-3">
-                  {grouped.get(group)!.filter((l) => enabled.has(l.id)).length} / {grouped.get(group)!.length}
+                  {countOn(catDefs)} / {catDefs.length}
                 </span>
               </button>
 
-              {isGroupExpanded && (
-                <div className="space-y-0.5">
-                  {grouped.get(group)!.map((layer) => {
-                    const isMissing = missing.has(layer.id);
-                    const isLive = layer.kind === "live";
-                    const feedError = isLive ? feedErrors[layer.id] : undefined;
-                    const isOn = enabled.has(layer.id) && !isMissing;
-                    const src = SOURCES[layer.sourceId];
-                    const lic = src ? LICENCES[src.licence] : undefined;
-                    const needsPermission = lic?.requiresPermission ?? false;
+              {catExpanded &&
+                subOrder.map((sub) => {
+                  const defs = subs.get(sub)!;
+                  const subExpanded = isExpanded(subKey(category, sub));
+                  return (
+                    <div key={sub}>
+                      <button
+                        type="button"
+                        onClick={() => toggleSection(subKey(category, sub))}
+                        className="flex w-full items-center justify-between border-b border-line-soft bg-panel/60 px-3 py-1 pl-5 text-left"
+                        aria-expanded={subExpanded}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-ink-3">{subExpanded ? "−" : "+"}</span>
+                          <span className="text-[11px] font-semibold text-ink-2">
+                            {SUBCATEGORY_LABELS[sub]}
+                          </span>
+                        </span>
+                        <span className="font-mono text-[10px] text-ink-3">
+                          {countOn(defs)} / {defs.length}
+                        </span>
+                      </button>
 
-                    return (
-                      <div key={layer.id} className="border-b border-line-soft">
-                        <div className="flex items-start gap-2 px-3 py-2">
-                          <input
-                            type="checkbox"
-                            id={`layer-${layer.id}`}
-                            checked={isOn}
-                            disabled={isMissing}
-                            onChange={() => onToggle(layer.id)}
-                            className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-accent disabled:opacity-40"
-                          />
-
-                          <label
-                            htmlFor={`layer-${layer.id}`}
-                            className="min-w-0 flex-1 cursor-pointer"
-                          >
-                            <span className="flex items-center gap-1.5">
-                              <span
-                                className="icon-badge"
-                                style={{ background: layer.color }}
-                                aria-hidden
-                              />
-                              <span
-                                className={`truncate text-[13px] ${
-                                  isMissing ? "text-ink-3 line-through" : "text-ink"
-                                }`}
-                              >
-                                {layer.label}
-                              </span>
-                            </span>
-
-                            <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-ink-3">
-                              <span className={`font-mono font-semibold ${GRADE_CLASS[layer.confidence]}`}>
-                                {layer.confidence}
-                              </span>
-                              {layer.featureCount !== undefined && (
-                                <span className="font-mono">{layer.featureCount.toLocaleString()}</span>
-                              )}
-                              {layer.minZoom !== undefined && layer.minZoom > 0 && (
-                                <span>z{layer.minZoom}+</span>
-                              )}
-                              {needsPermission && (
-                                <span className="chip bg-warn/10 text-warn">permission needed</span>
-                              )}
-                              {isLive && <span className="chip bg-info/10 text-info">live route</span>}
-                              {feedError && (
-                                <span
-                                  className="chip bg-danger/10 text-danger"
-                                  title={feedError}
-                                >
-                                  feed offline
-                                </span>
-                              )}
-                              {isMissing && (
-                                <span className="chip bg-danger/10 text-danger">no data</span>
-                              )}
-                            </span>
-                          </label>
-                        </div>
-
-<div className="space-y-2 px-3 pb-3 text-[12px] leading-relaxed text-ink-2">
-
-                          {feedError && (
-                            <div className="rounded-md border border-danger/30 bg-danger/5 p-2 pl-8">
-                              <div className="mb-1 font-semibold text-danger">
-                                This live feed is not running
-                              </div>
-                              <p className="break-words">{feedError}</p>
-                            </div>
-                          )}
-
-</div>
-                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                      {subExpanded &&
+                        defs.map((layer) => (
+                          <LayerRow key={layer.id} layer={layer} {...rowProps} />
+                        ))}
+                    </div>
+                  );
+                })}
             </section>
           );
         })}
+
+        {GROUP_ORDER.some((g) => byGroup.has(g)) && (
+          <div>
+            <div className="px-3 pt-3 pb-1 text-[11px] font-semibold tracking-wide text-ink-3">
+              Not in a theme
+            </div>
+            {GROUP_ORDER.filter((g) => byGroup.has(g)).map((group) => {
+              const defs = byGroup.get(group)!;
+              const groupExpanded = isExpanded(grpKey(group));
+              return (
+                <section key={group}>
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(grpKey(group))}
+                    aria-expanded={groupExpanded}
+                    className="flex w-full items-center justify-between gap-1.5 px-3 py-1.5 text-left"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-ink-3">{groupExpanded ? "−" : "+"}</span>
+                      <span className="text-[12px] font-semibold text-ink-2">
+                        {GROUP_LABELS[group]}
+                      </span>
+                    </span>
+                    <span className="font-mono text-[10px] text-ink-3">
+                      {countOn(defs)} / {defs.length}
+                    </span>
+                  </button>
+
+                  {groupExpanded &&
+                    defs.map((layer) => <LayerRow key={layer.id} layer={layer} {...rowProps} />)}
+                </section>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

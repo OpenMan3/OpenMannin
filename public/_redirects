@@ -1,0 +1,10 @@
+# SPA fallback for static export on Cloudflare Pages
+# Paths with dots (assets, data, workers, manifest) are served as-is.
+/data/*  /data/:splat  200
+/_headers  /_headers  200
+/health.json  /health.json  200
+/maplibre-gl-worker.mjs  /maplibre-gl-worker.mjs  200
+/passes-worker.mjs  /passes-worker.mjs  200
+/routing-worker.mjs  /routing-worker.mjs  200
+/*.webmanifest  /.webmanifest  200
+/*  /index.html  200

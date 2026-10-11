@@ -17,11 +17,21 @@
  *   node --experimental-strip-types scripts/ingest-osm-infra.mjs
  */
 
-import { writeJSON, sleep, roundCoords } from "./lib/fetch.mjs";
+import { writeJSON, sleep, roundCoords, simplifyGeometry } from "./lib/fetch.mjs";
 import { overpass, IOM_BBOX as BBOX } from "./lib/overpass.mjs";
 import { registryProvenance } from "./lib/registry-provenance.mjs";
 
 const OUT = "public/data";
+
+/**
+ * Douglas-Peucker tolerance, in degrees, for line and polygon layers.
+ *
+ * 1e-5 deg is about 1 m here: far below one pixel at the deepest zoom the app
+ * reaches, but it removes the metre-accurate micro-vertices that made roads
+ * and footpaths tens of MB of GeoJSON. The tester lives in scripts/lib/fetch.mjs
+ * and is shared with the cable ingest.
+ */
+const SIMPLIFY_TOL = 1e-5;
 
 /**
  * Convert an Overpass element to a GeoJSON feature.
@@ -56,6 +66,10 @@ function toFeature(el, mode, keep) {
     } else {
       geometry = { type: "LineString", coordinates: coords };
     }
+    // Douglas-Peucker simplification before rounding keeps line/area files
+    // small while staying visually exact at any zoom the app reaches.
+    geometry = simplifyGeometry(geometry, SIMPLIFY_TOL);
+    if (!geometry) return null;
   }
 
   return {

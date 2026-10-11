@@ -210,6 +210,21 @@ export function TurnIcon(props: IconProps) {
   ));
 }
 
+export function DirectionsIcon(props: IconProps) {
+  // Google-Maps-style navigation arrow toward the top-right.
+  return base(props, (
+    <>
+      <path d="M12 2v20M12 2l-6 6M12 2l6 6" />
+    </>
+  ));
+}
+
+export function CheckIcon(props: IconProps) {
+  return base(props, (
+    <path d="M5 13l4 4L19 7" />
+  ));
+}
+
 export function InfoIcon(props: IconProps) {
   return base(props, (
     <>

@@ -130,9 +130,17 @@ try {
     };
   })()`;
 
-  const assertOrder = (label, probe) => {
+  const assertOrder = (label, probe, { requireBasemap = true } = {}) => {
     if (probe.error) { fails.push(`${label}: ${probe.error}`); return; }
     if (probe.dataCount === 0) { fails.push(`${label}: no data layers in style at all`); return; }
+    // Vector basemaps (OpenFreeMap) ship a complete style with no single raster
+    // "basemap" layer; our data layers are appended above the style's own, so
+    // there is no opaque-raster-above-data hazard to check. Raster basemaps
+    // (OpenTopoMap) add one "basemap" layer that must stay below the data.
+    if (probe.basemapIndex === -1) {
+      if (requireBasemap) fails.push(`${label}: expected a raster "basemap" layer but found none`);
+      return;
+    }
     if (!probe.basemapBelowAllData) {
       fails.push(
         `${label}: basemap is NOT below the data layers ` +
@@ -143,20 +151,23 @@ try {
   };
 
   const orderAfterSwitch = await evaluate(orderProbe, sessionId);
-  assertOrder("after switching to opentopo", orderAfterSwitch);
+  assertOrder("after switching to opentopo", orderAfterSwitch, { requireBasemap: true });
 
-  // And back again: the old bug survived the return trip too.
+  // And back again: the old bug survived the return trip too. OpenFreeMap
+  // (Liberty) is now the light default and the OSM standard tiles are gone
+  // (their usage policy is incompatible), so switch to it rather than "osm".
   await evaluate(`(() => {
     const sel = [...document.querySelectorAll("select")].find(s =>
-      [...s.options].some(o => o.value === "osm"));
+      [...s.options].some(o => o.value === "openfreemap"));
+    if (!sel) return "no basemap select found";
     const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set;
-    setter.call(sel, "osm");
+    setter.call(sel, "openfreemap");
     sel.dispatchEvent(new Event("change", { bubbles: true }));
     return "ok";
   })()`, sessionId);
   await sleep(4000);
   const orderAfterBack = await evaluate(orderProbe, sessionId);
-  assertOrder("after switching back to opentopo", orderAfterBack);
+  assertOrder("after switching back to OpenFreeMap", orderAfterBack, { requireBasemap: false });
 
   // Put it back on opentopo for the screenshot and attribution assertions.
   await evaluate(`(() => {
@@ -212,7 +223,8 @@ try {
   console.log(`  direct tile requests  ${(perf ?? []).length} (${tile200.length} HTTP 200)`);
   console.log(`  tile request errors   ${tileErrors.length}`);
   console.log(`  basemap layer index   ${orderAfterSwitch.basemapIndex} (first data layer ${orderAfterSwitch.firstDataIndex}, ${orderAfterSwitch.dataCount} data layers)`);
-  console.log(`  below data, both ways ${orderAfterSwitch.basemapBelowAllData && orderAfterBack.basemapBelowAllData ? "yes" : "NO"}`);
+  console.log(`  raster below data     ${orderAfterSwitch.basemapBelowAllData ? "yes" : "NO"}`);
+  console.log(`  vector data present   ${orderAfterBack.dataCount > 0 ? `yes (${orderAfterBack.dataCount} layers)` : "NO"}`);
   console.log(`  attribution          ${(attribution ?? "(none)").slice(0, 90)}`);
   console.log("  screenshot            /tmp/opencode/opentopo-basemap.png");
   console.log(fails.length ? `\nFAIL:\n  ${fails.join("\n  ")}` : "\nOK");

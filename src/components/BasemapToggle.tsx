@@ -3,8 +3,12 @@
 /**
  * Basemap theme toggle: light/dark mode for the basemap.
  *
- * Each basemap has a light and dark variant. This component toggles between
- * the two for the currently selected basemap.
+ * Of the two basemap families this app serves, OpenFreeMap ships a light
+ * (Liberty) and a dark style, so it is the one a theme toggle can affect.
+ * OpenTopoMap is raster-only and has no dark twin, so the toggle hides
+ * itself when that basemap is active. The OpenStreetMap standard tiles were
+ * removed (their usage policy is incompatible); OpenFreeMap serves the same
+ * ODbL road data under a style this app may use freely.
  */
 
 import { useEffect, useState } from "react";
@@ -15,33 +19,25 @@ const THEME_KEY = "om:basemapTheme";
 
 type Theme = "light" | "dark";
 
-function darkVariant(id: BasemapId): BasemapId {
-  if (id.endsWith("-dark")) return id;
-  return `${id}-dark` as BasemapId;
-}
-
-function lightVariant(id: BasemapId): BasemapId {
-  if (id.endsWith("-dark")) return id.slice(0, -5) as BasemapId;
-  return id;
-}
-
-interface BasemapToggleProps {
+export function BasemapToggle({
+  basemap,
+  onBasemapChange,
+}: {
   basemap: BasemapId;
   onBasemapChange: (id: BasemapId) => void;
-}
-
-export function BasemapToggle({ basemap, onBasemapChange }: BasemapToggleProps) {
+}) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === "undefined") return "light";
     return (localStorage.getItem(THEME_KEY) as Theme) ?? "light";
   });
 
-  const isDark = basemap.endsWith("-dark");
+  const isDark = basemap === "openfreemap-dark";
+  // Only OpenFreeMap has a dark twin; OpenTopoMap is raster-only.
+  const canTheme = basemap === "openfreemap" || basemap === "openfreemap-dark";
 
   useEffect(() => {
-    // Sync local state with the actual basemap
-    setTheme(basemap.endsWith("-dark") ? "dark" : "light");
-  }, [basemap]);
+    setTheme(isDark ? "dark" : "light");
+  }, [basemap, isDark]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -49,7 +45,9 @@ export function BasemapToggle({ basemap, onBasemapChange }: BasemapToggleProps) 
     }
   }, [theme]);
 
-  const target = isDark ? lightVariant(basemap) : darkVariant(basemap);
+  if (!canTheme) return null;
+
+  const target = isDark ? "openfreemap" : "openfreemap-dark";
 
   const handleToggle = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));

@@ -11,6 +11,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { loadSearchIndex, searchIndex, type SearchIndex, type SearchResult } from "@/lib/search-index";
+import { SearchIcon } from "./Icons";
 
 export function GlobalSearch({
   onSelect,
@@ -87,22 +88,25 @@ export function GlobalSearch({
 
   return (
     <div ref={rootRef} className="relative">
-      <input
-        ref={inputRef}
-        value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setOpen(true);
-        }}
-        onFocus={() => setOpen(true)}
-        onKeyDown={onKeyDown}
-        placeholder="Search all layers…"
-        aria-label="Search across all layers"
-        className="field"
-      />
+      <div className="group relative">
+        <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3 group-focus-within:text-accent" />
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={onKeyDown}
+          placeholder="Search all layers…"
+          aria-label="Search across all layers"
+          className="w-full rounded-full border border-line bg-panel py-2.5 pl-10 pr-4 text-[13px] text-ink placeholder:text-ink-3 shadow-sm transition-shadow focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+        />
+      </div>
 
       {showResults && (
-        <div className="scroll-thin absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-md border border-line bg-panel shadow-2xl">
+        <div className="scroll-thin absolute z-30 mt-1.5 w-full overflow-y-auto rounded-xl border border-line bg-panel shadow-2xl">
           {error && <p className="p-2 text-[12px] text-danger">Search index failed: {error}</p>}
           {!error && !index && <p className="p-2 text-[12px] text-ink-3">Loading index…</p>}
           {!error && index && results.length === 0 && (
@@ -114,7 +118,7 @@ export function GlobalSearch({
               type="button"
               onMouseEnter={() => setActive(i)}
               onClick={() => choose(r)}
-              className={`flex w-full items-baseline justify-between gap-2 px-2.5 py-2 text-left text-[12px] ${
+              className={`flex w-full items-baseline justify-between gap-2 px-3.5 py-2.5 text-left text-[12px] ${
                 i === active
                   ? "bg-raised text-accent"
                   : "text-ink hover:bg-raised/60"

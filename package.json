@@ -35,6 +35,7 @@
     "verify:render": "node scripts/verify-render.mjs",
     "verify:basemap": "node scripts/verify-basemap.mjs",
     "build:manifest": "node --experimental-strip-types --no-warnings scripts/build-manifest.mjs",
+    "update-data": "node --experimental-strip-types --no-warnings scripts/update-data.mjs",
     "build:sources": "node --experimental-strip-types --no-warnings scripts/build-sources.mjs",
     "build:search": "node --experimental-strip-types --no-warnings scripts/build-search-index.mjs",
     "annotate:nearest": "node --experimental-strip-types --no-warnings scripts/annotate-nearest-place.mjs",

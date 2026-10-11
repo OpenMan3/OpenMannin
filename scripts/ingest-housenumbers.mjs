@@ -30,6 +30,15 @@ function labelFor(t) {
   return number ?? name ?? null;
 }
 
+/** Remove keys with null/undefined/empty-string values. */
+function compact(obj) {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== null && v !== undefined && v !== "") out[k] = v;
+  }
+  return out;
+}
+
 async function main() {
   console.log("Address ingest (OSM addr:housenumber + addr:housename)");
 
@@ -60,7 +69,7 @@ out center body;`,
       type: "Feature",
       id: `${el.type}/${el.id}`,
       geometry: roundCoords({ type: "Point", coordinates: [lon, lat] }, 6),
-      properties: {
+      properties: compact({
         label: labelFor(t),
         housenumber,
         housename,
@@ -71,7 +80,7 @@ out center body;`,
         unit: t["addr:unit"] ?? t["addr:flats"] ?? null,
         kind: housenumber ? "number" : "name",
         source: "osm",
-      },
+      }),
     });
   }
 

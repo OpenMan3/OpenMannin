@@ -41,9 +41,6 @@
 const CONNECT_SRC = [
   "'self'",
   "https://celestrak.org",
-  "https://a.tile.openstreetmap.org",
-  "https://b.tile.openstreetmap.org",
-  "https://c.tile.openstreetmap.org",
   "https://a.tile.opentopomap.org",
   "https://b.tile.opentopomap.org",
   "https://c.tile.opentopomap.org",

@@ -22,7 +22,7 @@ import { useEffect, useRef } from "react";
 import { ROUTE_MODES, type RouteMode } from "@/lib/navigation/profiles";
 import type { NavigationState } from "@/lib/navigation/host";
 import { formatStepDistance, type NavigationStep } from "@/lib/navigation/steps";
-import { BikeIcon, CarIcon, CloseIcon, ClockIcon, RouteIcon, WalkIcon } from "./Icons";
+import { BikeIcon, CarIcon, CheckIcon, CloseIcon, ClockIcon, RouteIcon, WalkIcon } from "./Icons";
 
 function formatDistance(m: number): string {
   return formatStepDistance(m);
@@ -103,7 +103,7 @@ export function DestinationSheet({
   /** Mobile: whether to show minimized version when route is ready. */
   minimized?: boolean;
 }) {
-  const { destination, routes, activeMode, routeStatus, routeError, userLocation, steps } = state;
+  const { destination, routes, activeMode, routeStatus, routeError, userLocation, steps, stepIndex, progressM, remainingM } = state;
   const present = !!destination;
 
   // The sheet overlays the bottom of the map in navigation mode, so the map
@@ -136,12 +136,17 @@ export function DestinationSheet({
   const busy = routeStatus === "loading";
   const noNetwork = routeStatus === "no-route";
   const failed = routeStatus === "error";
-  const ready = routeStatus === "ready" && active;
+  const ready = (routeStatus === "ready" || routeStatus === "recalculating") && active;
+  const arrived = routeStatus === "arrived";
 
   const canNavigate = !!userLocation && !busy;
 
+  // Remaining (not-yet-taken) turns; completed legs drop off the front.
+  const upcoming = steps.slice(stepIndex);
+  const upCount = upcoming.length;
+
   // Mobile: minimized sheet when route is ready and not showing steps
-  const isMinimized = minimized && ready && !stepsOpen && !busy && !noNetwork && !failed;
+  const isMinimized = minimized && (ready || arrived) && !stepsOpen && !busy && !noNetwork && !failed;
 
   if (isMinimized) {
     return (
@@ -158,28 +163,37 @@ export function DestinationSheet({
               </div>
               <div className="truncate text-sm font-semibold text-ink">{destination.title}</div>
             </div>
-            {ready && active && (
+            {(ready || arrived) && active && (
               <div className="flex items-center gap-3 text-[12px] text-ink-2 shrink-0">
-                <span className="flex items-center gap-1">
-                  <span className="font-semibold text-ink">{formatDistance(active.distanceM)}</span>
-                  <span className="text-ink-3">·</span>
-                  <span className="font-semibold text-ink">{formatDuration(active.durationS)}</span>
-                </span>
-                <span className="flex items-center gap-0.5 text-[10px] text-ink-3">
-                  <ClockIcon className="h-3 w-3" />
-                  {arrivalTime(active.durationS)}
-                </span>
+                {arrived ? (
+                  <span className="flex items-center gap-1 font-semibold text-ok">
+                    <CheckIcon className="h-4 w-4" /> Arrived
+                  </span>
+                ) : (
+                  <>
+                    <span className="whitespace-nowrap">
+                      <span className="font-semibold text-ink">{formatDistance(remainingM)}</span>{" "}
+                      <span className="text-ink-3">left</span>
+                    </span>
+                    <span className="flex items-center gap-0.5 text-[10px] text-ink-3">
+                      <ClockIcon className="h-3 w-3" />
+                      {arrivalTime(active.durationS)}
+                    </span>
+                  </>
+                )}
               </div>
             )}
-            <button
-              type="button"
-              onClick={onToggleSteps}
-              className="btn-icon !h-8 !w-8 flex items-center gap-1 px-2 text-[11px] text-ink-2 hover:text-ink"
-              aria-label="Show turn-by-turn directions"
-            >
-              <RouteIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">{steps.length} steps</span>
-            </button>
+            {!arrived && (
+              <button
+                type="button"
+                onClick={onToggleSteps}
+                className="btn-icon !h-8 !w-8 flex items-center gap-1 px-2 text-[11px] text-ink-2 hover:text-ink"
+                aria-label="Show turn-by-turn directions"
+              >
+                <RouteIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">{upCount} steps</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -277,13 +291,20 @@ export function DestinationSheet({
             </p>
           )}
 
+          {arrived && (
+            <div className="flex items-center gap-2 rounded-lg border border-ok/30 bg-ok/10 px-3 py-2 text-[12px] font-semibold text-ok">
+              <CheckIcon className="h-4 w-4" />
+              You&apos;ve arrived — destination is within {formatDistance(remainingM + 40)}.
+            </div>
+          )}
+
           {ready && active && (
             <div className="flex items-end justify-between gap-3">
               <dl className="flex gap-4">
                 <div>
-                  <dt className="label">Distance</dt>
+                  <dt className="label">{progressM > 5 ? "Remaining" : "Distance"}</dt>
                   <dd className="text-lg font-semibold text-ink tabular-nums">
-                    {formatDistance(active.distanceM)}
+                    {progressM > 5 ? formatDistance(remainingM) : formatDistance(active.distanceM)}
                   </dd>
                 </div>
                 <div>
@@ -297,6 +318,18 @@ export function DestinationSheet({
                 <ClockIcon className="h-3.5 w-3.5" />
                 arrive {arrivalTime(active.durationS)}
               </div>
+            </div>
+          )}
+
+          {ready && active && progressM > 5 && (
+            <div
+              className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-raised"
+              aria-label={`${Math.round((progressM / active.distanceM) * 100)}% travelled`}
+            >
+              <div
+                className="h-full rounded-full bg-accent transition-[width] duration-500"
+                style={{ width: `${Math.min(100, (progressM / active.distanceM) * 100)}%` }}
+              />
             </div>
           )}
 
@@ -314,7 +347,7 @@ export function DestinationSheet({
               );
             })}
 
-          {ready && steps.length > 0 && (
+          {ready && !arrived && upcoming.length > 0 && (
             <>
               <button
                 type="button"
@@ -324,11 +357,11 @@ export function DestinationSheet({
               >
                 <span className="flex items-center gap-1.5">
                   <RouteIcon className="h-4 w-4 text-accent" />
-                  {steps.length} step{steps.length === 1 ? "" : "s"}
+                  {upCount} step{upCount === 1 ? "" : "s"} left
                 </span>
                 <span className="text-[11px] text-ink-3">{stepsOpen ? "Hide" : "Show"} list</span>
               </button>
-              {stepsOpen && <StepList steps={steps} />}
+              {stepsOpen && <StepList steps={upcoming} />}
             </>
           )}
         </div>
@@ -338,10 +371,18 @@ export function DestinationSheet({
           <button
             type="button"
             onClick={onNavigate}
-            disabled={!canNavigate}
+            disabled={!canNavigate || arrived}
             className="btn btn-primary flex-1"
           >
-            {busy ? "Routing…" : "Navigate"}
+            {arrived ? (
+              <>
+                <CheckIcon className="h-4 w-4" /> Arrived
+              </>
+            ) : busy ? (
+              "Routing…"
+            ) : (
+              "Navigate"
+            )}
           </button>
           <button type="button" onClick={onClear} className="btn">
             Clear

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { GAPS, LAYERS } from "@/lib/layers";
 import { MapView, type BasemapId, type PickedFeature } from "@/components/MapView";
 import { LayerPanel } from "@/components/LayerPanel";
+import { LayerDetailDrawer } from "@/components/LayerDetailDrawer";
 import { FeaturePopup } from "@/components/FeaturePopup";
 import { FeatureBrowser } from "@/components/FeatureBrowser";
 import { GapsPanel } from "@/components/GapsPanel";
@@ -27,6 +28,7 @@ import {
 } from "@/components/Icons";
 import type { NavigationState, FollowMode } from "@/lib/navigation/host";
 import type { RouteMode } from "@/lib/navigation/profiles";
+import type { LayerDef } from "@/lib/types";
 import { releaseWakeLock, requestWakeLock } from "@/lib/screen-wake-lock";
 import type { Map } from "maplibre-gl";
 
@@ -53,7 +55,7 @@ export default function Page() {
 function PageContent() {
   const [tab, setTab] = useState<Tab>("layers");
   const [picked, setPicked] = useState<PickedFeature | null>(null);
-  const [basemap, setBasemap] = useState<BasemapId>("opentopo");
+  const [basemap, setBasemap] = useState<BasemapId>("openfreemap");
   /** 3D terrain + camera pitch, remembered between visits. */
   const [terrain3d, setTerrain3d] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -85,6 +87,14 @@ function PageContent() {
   const [feedErrors, setFeedErrors] = useState<Record<string, string>>({});
   // MapLibre instance, set when MapView is ready.
   const [map, setMap] = useState<Map | null>(null);
+  // The layer whose detail drawer is open, if any.
+  const [detail, setDetail] = useState<LayerDef | null>(null);
+  // Per-layer metadata from the build manifest (data "as of" date and bounds),
+  // so the drawer can show provenance and the map can zoom to a layer without
+  // re-fetching its file.
+  const [manifest, setManifest] = useState<{
+    layers?: Record<string, { generated?: string; bbox?: [number, number, number, number] }>;
+  } | null>(null);
 
   // Start from whatever the registry marked defaultOn - which is everything.
   // Every layer is shown by default; weak and disputed ones carry their
@@ -119,6 +129,36 @@ function PageContent() {
 
   const onMissing = useCallback((next: Set<string>) => setMissing(next), []);
   const onFeedErrors = useCallback((next: Record<string, string>) => setFeedErrors(next), []);
+
+  // Load the build manifest once: it records each data file's "as of" date and
+  // bounding box, so the detail drawer and "zoom to layer" need no extra fetch.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/data/manifest.json", { cache: "force-cache" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((m) => {
+        if (!cancelled && m) setManifest(m);
+      })
+      .catch(() => {
+        /* the manifest is a convenience: the map works without it */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Zoom the map to a layer's bounds and close the drawer. The map owns the
+  // camera, so this only dispatches; map-interactions does the fitBounds.
+  const zoomToLayer = useCallback(
+    (layer: LayerDef) => {
+      const bbox = manifest?.layers?.[layer.id]?.bbox;
+      if (bbox) {
+        window.dispatchEvent(new CustomEvent("openmannin:fit-layer", { detail: { bbox } }));
+      }
+      setDetail(null);
+    },
+    [manifest],
+  );
 
   // The visible map centre + zoom, reported by MapView after each move. Used to
   // keep the URL in sync so a map state can be shared as a link.
@@ -365,6 +405,7 @@ function PageContent() {
                   feedErrors={feedErrors}
                   onToggle={toggle}
                   onToggleAll={setAll}
+                  onShowDetail={setDetail}
                 />
               )}
               {tab === "browse" && (
@@ -388,12 +429,13 @@ function PageContent() {
                   className="rounded border border-line bg-panel px-1.5 py-1 text-[11px] text-ink focus:border-accent focus:outline-none"
                 >
                   <option value="opentopo">OpenTopoMap</option>
-                  <option value="osm">OpenStreetMap</option>
                   <option value="openfreemap">OpenFreeMap (Liberty)</option>
+                  <option value="openfreemap-dark">OpenFreeMap (Dark)</option>
                 </select>
               </label>
               <p className="mt-1 text-[10px] leading-snug text-ink-3">
-                OpenTopoMap (CC-BY-SA), OpenStreetMap (ODbL), OpenFreeMap Liberty (ODbL).
+                OpenTopoMap (CC-BY-SA) and OpenFreeMap (ODbL). The OpenStreetMap
+                raster tiles are not offered — their usage policy is incompatible.
               </p>
             </div>
           </>
@@ -434,22 +476,20 @@ function PageContent() {
 
         {/* Map overlays (always visible when map is ready) */}
         {map && (
-          <MapControls
-            basemap={basemap}
-            onBasemapChange={setBasemap}
-            terrain3d={terrain3d}
-            onTerrainChange={setTerrain3d}
-          />
-        )}
-
-        {nav && (
-          <>
-            <LocateButton state={nav} onToggle={toggleLocate} />
-            {nav.routeStatus === "ready" && (
+          <div className="absolute right-3 top-[150px] z-20 flex flex-col items-end gap-2 md:top-[76px]">
+            {nav && <LocateButton state={nav} onToggle={toggleLocate} />}
+            {nav && nav.locationStatus === "active" && (
               <FollowModeButton followMode={nav.followMode} onToggle={setFollowMode} />
             )}
-          </>
+            <MapControls
+              basemap={basemap}
+              onBasemapChange={setBasemap}
+              terrain3d={terrain3d}
+              onTerrainChange={setTerrain3d}
+            />
+          </div>
         )}
+
         {nav && <ProgressHUD state={nav} />}
         {nav && (
           <DestinationSheet
@@ -463,6 +503,16 @@ function PageContent() {
             minimized
           />
         )}
+
+        <LayerDetailDrawer
+          layer={detail}
+          asOf={detail ? manifest?.layers?.[detail.id]?.generated : undefined}
+          hasBounds={!!(detail && manifest?.layers?.[detail.id]?.bbox)}
+          isOn={detail ? enabled.has(detail.id) : false}
+          onClose={() => setDetail(null)}
+          onToggle={toggle}
+          onZoomToLayer={zoomToLayer}
+        />
       </section>
 
       {/* ---- mobile bottom tab bar ---- */}

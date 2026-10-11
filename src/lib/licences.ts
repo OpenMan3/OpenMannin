@@ -73,15 +73,6 @@ export const LICENCES: Record<LicenceId, Licence> = {
     requiresPermission: false,
     obligation: "Free and full open. Attribution to Copernicus/ESA appreciated.",
   },
-  "OS-TM-POLICY": {
-    id: "OS-TM-POLICY",
-    name: "OpenStreetMap tile usage policy",
-    url: "https://operations.osmfoundation.org/policies/tiles/",
-    commercial: true,
-    requiresPermission: true,
-    obligation:
-      "Requires distinctive User-Agent, >=7 day caching, Referer preserved. Forbids bulk downloading and prefetching. OSM may block without notice.",
-  },
   "NO-LICENCE": {
     id: "NO-LICENCE",
     name: "No published licence",

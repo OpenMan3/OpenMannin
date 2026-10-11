@@ -1,42 +1,24 @@
 /**
  * Basemap definitions and style creation.
  *
- * Every option is genuinely open-licensed - OSM data (ODbL) for the standard
- * tiles, OpenTopoMap under CC-BY-SA, and OpenFreeMap's Liberty style
- * (ODbL data, ODbL-derived style). Commercial imagery (Esri et al.) was
- * removed because it has no clear open licence.
+ * Every option is genuinely open-licensed and self-hosting-friendly: no app
+ * in this list hits the OpenStreetMap Foundation's own tile servers, whose
+ * tile usage policy requires a distinctive User-Agent, caching and
+ * no bulk downloading, and which forbids the kind of always-on viewer a map
+ * app is. The OpenStreetMap raster basemap was removed for exactly that
+ * reason; the OpenStreetMap DATABASE (ODbL) still underpins every other
+ * option here, which is legitimate and credited.
+ *
+ * Remaining options:
+ *  - OpenTopoMap: raster hill-shaded tiles, keyless, CORS-open, CC-BY-SA.
+ *  - OpenFreeMap Liberty / dark: keyless vector styles on OSM data (ODbL).
  */
 
 import type { StyleSpecification, Map as MapLibreMap } from "maplibre-gl";
 
-export type BasemapId =
-  | "osm"
-  | "opentopo"
-  | "openfreemap"
-  | "osm-dark"
-  | "opentopo-dark"
-  | "openfreemap-dark";
+export type BasemapId = "opentopo" | "openfreemap" | "openfreemap-dark";
 
-// OpenStreetMap Standard tiles don't have an official dark variant.
-// OpenTopoMap has a community dark fork. OpenFreeMap has a dark style.
 export const BASEMAPS: Record<BasemapId, BasemapDef> = {
-  "osm": {
-    kind: "raster",
-    tiles: [
-      "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    ],
-    attribution: "Map data &copy; OpenStreetMap contributors",
-    maxzoom: 19,
-  },
-  "osm-dark": {
-    kind: "style",
-    styleUrl: "https://tiles.openfreemap.org/styles/dark",
-    attribution:
-      "Map data &copy; OpenStreetMap contributors | Map style &copy; OpenFreeMap (ODbL)",
-    maxzoom: 16,
-  },
   "opentopo": {
     kind: "raster",
     tiles: [
@@ -47,13 +29,6 @@ export const BASEMAPS: Record<BasemapId, BasemapDef> = {
     attribution:
       "Map data &copy; OpenStreetMap contributors, SRTM | Map style &copy; OpenTopoMap (CC-BY-SA)",
     maxzoom: 17,
-  },
-  "opentopo-dark": {
-    kind: "style",
-    styleUrl: "https://tiles.openfreemap.org/styles/dark",
-    attribution:
-      "Map data &copy; OpenStreetMap contributors | Map style &copy; OpenFreeMap (ODbL)",
-    maxzoom: 16,
   },
   "openfreemap": {
     kind: "style",

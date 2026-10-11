@@ -171,16 +171,15 @@ export const SOURCES: Record<string, Source> = {
     lastChecked: "2026-10-04",
     notes: "CC-BY-SA derived map data on ODbL geometry. Raster, keyless, ACAO *.",
   },
-  openstreetmap: {
-    id: "openstreetmap",
-    name: "OpenStreetMap standard tiles",
-    publisher: "OpenStreetMap Foundation",
-    url: "https://www.openstreetmap.org/",
-    licence: "OS-TM-POLICY",
-    lastChecked: "2026-10-11",
-    notes:
-      "The standard OSM raster basemap (tile.openstreetmap.org). The data is ODbL, but the tiles are served under the OSM Foundation tile usage policy: keyless, yet it demands a distinctive User-Agent, caching, and no bulk downloading or prefetching, and OSM may block without notice. Offered only as an optional basemap, never as an ingest source.",
-  },
+  // NOTE: the OpenStreetMap Foundation's standard raster tiles
+  // (tile.openstreetmap.org) were previously listed here. They are NOT a source
+  // this project uses. Their tile usage policy (distinctive User-Agent,
+  // >=7-day caching, no bulk downloading, blocking without notice) is
+  // incompatible with an always-on viewer, so the basemap was removed on
+  // 2026-10-11 and the entry was DROPPED from the register rather than left in
+  // the list as a source we do not render. The OSM DATABASE (ODbL) still
+  // underpins every layer and the OpenTopoMap and OpenFreeMap basemaps, which
+  // is legitimate and credited.
   openfreemap: {
     id: "openfreemap",
     name: "OpenFreeMap styles (Liberty, bright, positron, dark)",

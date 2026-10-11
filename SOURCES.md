@@ -22,7 +22,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | No published licence | no | yes | No terms of use, robots.txt or licence found. Absence of a licence is not a grant. Do not republish without written permission. |
 | Licence not established | no | yes | Verify before use. |
 
-## Source register (19)
+## Source register (20)
 
 | Source | Publisher | Licence | Last checked |
 | --- | --- | --- | --- |
@@ -44,6 +44,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | [Spaceman teleport / aql Space Services](https://spaceman.im/) | aql (formerly BlueWave Communications) | PUBLIC-DOMAIN | 2026-10-04 |
 | [OpenTopoMap tiles](https://opentopomap.org/) | OpenTopoMap (based on OpenStreetMap, SRTM) | CC-BY-4.0 | 2026-10-04 |
 | [EMODnet Bathymetry](https://emodnet.ec.europa.eu/en/bathymetry) | EMODnet / European Commission | CC-BY-4.0 | 2026-10-04 |
+| [AWS Open Data — Terrain Tiles (Mapzen/Joerd)](https://registry.opendata.aws/terrain-tiles/) | Mapzen (Linux Foundation) / AWS Open Data | COPERNICUS | 2026-10-11 |
 | [OpenMannin compilation](https://github.com/) | OpenMannin | OGL-IoM | 2026-10-04 |
 
 ## Layers by source
@@ -54,19 +55,25 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | --- | --- | --- | --- | --- |
 | Place names (`toponyms`) | osmIOM | ODbL | B | 1253 |
 | Heritage-designated places (`heritage`) | wikidata | CC0-1.0 | C | 319 |
+| Parish boundaries (`parish-boundaries`) | osmIOM | ODbL | C | 23 |
 
 ### trails
 
 | Layer | Source | Licence | Grade | Features |
 | --- | --- | --- | --- | --- |
-| Road network (`roads`) | osmIOM | ODbL | B | 21239 |
+| Road network (`roads`) | osmIOM | ODbL | B | 21481 |
 | Bridges (`bridges`) | osmIOM | ODbL | C | 557 |
 | Speed limits (`speedlimits`) | osmIOM | ODbL | C | 4207 |
+| Emergency services (`emergency`) | osmIOM | ODbL | C | 64 |
+| Footpaths & PRoW (`footpaths`) | osmIOM | ODbL | C | 9250 |
 
 ### transport
 
 | Layer | Source | Licence | Grade | Features |
 | --- | --- | --- | --- | --- |
+| Schools & health (`schools-health`) | osmIOM | ODbL | C | 120 |
+| Tourism (`tourism`) | osmIOM | ODbL | C | 323 |
+| Places of worship (`worship`) | osmIOM | ODbL | C | 97 |
 | Bus stops (`bus-stops`) | osmIOM | ODbL | C | 732 |
 | Postcodes (`postcodes`) | osmIOM | ODbL | C | 1414 |
 | House numbers (`house-numbers`) | osmIOM | ODbL | C | 8395 |
@@ -119,6 +126,16 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | --- | --- | --- | --- | --- |
 | Tide reference stations (`tide-stations`) | mea | OGL-IoM | A | 6 |
 
+### poi
+
+| Layer | Source | Licence | Grade | Features |
+| --- | --- | --- | --- | --- |
+| Mine shafts, adits & mines (`mine-infrastructure`) | osmIOM | ODbL | C | 19 |
+| Tholtans & ruined buildings (`tholtans-ruins`) | osmIOM | ODbL | C | 848 |
+| Essential utilities & services (`essential-utilities`) | osmIOM | ODbL | C | 187 |
+| Food & drink (`food-drink`) | osmIOM | ODbL | C | 308 |
+| Coastal & outdoor (`coastal-outdoor`) | osmIOM | ODbL | C | 1065 |
+
 ### live
 
 | Layer | Source | Licence | Grade | Features |
@@ -151,6 +168,6 @@ Coverage that could not be sourced under a usable licence. Rendered in the app a
 | Public rights of way and footpaths (`prow-network`) | high | The PROW, footpath, promoted-walking, cycle and pilgrimage route layers were all government mapping services and are removed. The definitive PROW map is maintained by the Department of Infrastructure in Central Registry and is not open in any reusable form. |
 | Bus route alignments (`bus-route-alignments`) | medium | The previous bus-routes layer was a 2015 government network and is removed. OSM bus route relations exist but only a fraction of stops are members, and the alignments were not extracted into a comparable layer. |
 | TT and Billown course infrastructure (`tt-course`) | low | The previous layer was a government 'MotorCourse' service and is removed. No open, licensed alignment is published; the widely quoted 37.73 mile length is Wikipedia-only with no official linear referencing. |
-| Coastal access points (`coastal-access`) | low | This was a government map layer (40 points) and is removed because it is not openly licensed. No independently licensed equivalent was found. |
+| Coastal access points (`coastal-access`) | low | This was a government map layer (40 points) and is removed because it is not openly licensed. No official open equivalent exists, but a community substitute is now built: the 'Coastal & outdoor' layer carries OpenStreetMap slipways, viewpoints, picnic sites and car parks, and slipways are the practical access points. It is community-mapped and does not reproduce the government's 40 points. |
 | Marine habitats and fishery closures (`marine-habitats`) | medium | This was a government map layer (434 features) and is removed because it is not openly licensed. Some layers of this type exist in EMODnet (CC-BY 4.0) but no ingest has been built for them yet. |
 | Live AIS vessel tracking (`ais-live`) | medium | There is NO free, no-key programmatic AIS source. AISStream is free but requires an API key, caps 3 connections per account AND per originating IP, prohibits direct browser connections in its own docs, and publishes no terms document — an undocumented-licence gap we will not silently build on. MarineTraffic is sales-gated and paid; Global Fishing Watch is CC BY-NC (blocks ad-supported deployment). A browser-side WebSocket client was built and evaluated on 2026-10-07, then removed, because a client shipped without a deployer-provided key would be dead code and would still lean on an undocumented licence. |

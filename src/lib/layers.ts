@@ -818,7 +818,7 @@ export const LAYERS: LayerDef[] = [
     caveats: [
       "TIDE AND WEATHER MATTER. A slipway may be unusable or submerged at some states of the tide, and coastal viewpoints and picnic sites are exposed. Check tide tables and forecasts.",
       "Car parks may be pay-and-display, time-limited or private; fees and access are not always tagged.",
-      "Community-mapped; not an official access or amenities dataset.",
+      "Community-mapped; not an official access or amenities dataset — see the 'Coastal access points' gap.",
       "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
     confidence: "C",
@@ -890,7 +890,7 @@ export const GAPS: Gap[] = [
     whyUnavailable:
       "No official mining layer is published. Searches of the government's 564 open items for 'mine', 'mining', 'mineral', 'spoil' and 'shaft' return zero results. Manx National Heritage holds the authoritative archaeological record but its HER API returns 404 on every conventional path and it operates an Access and Charging Policy, so some reuse may be chargeable.",
     whatWeWouldNeed:
-      "The Manx National Heritage HER under licence, or a scoped build-time pull from OSM (which does carry a partial scatter of mine features). Contact iomher@mnh.im. We have attempted the OSM fallback.",
+      "The Manx National Heritage HER under licence, which would add spoil heaps, processing plants and survey-grade positions. The OSM fallback is now built and shipped as the 'Mine shafts, adits & mines' layer — partial and community-mapped, graded C — so this gap remains only for the authoritative record. Contact iomher@mnh.im.",
     contact: "iomher@mnh.im",
     severity: "high",
   },
@@ -1093,8 +1093,9 @@ export const GAPS: Gap[] = [
     title: "Coastal access points",
     wanted: "Published access points to the Isle of Man coastline.",
     whyUnavailable:
-      "This was a government map layer (40 points) and is removed because it is not openly licensed. No independently licensed equivalent was found.",
-    whatWeWouldNeed: "DEFA or the Marine Plan to release coastal access points under the OGL.",
+      "This was a government map layer (40 points) and is removed because it is not openly licensed. No official open equivalent exists, but a community substitute is now built: the 'Coastal & outdoor' layer carries OpenStreetMap slipways, viewpoints, picnic sites and car parks, and slipways are the practical access points. It is community-mapped and does not reproduce the government's 40 points.",
+    whatWeWouldNeed:
+      "DEFA or the Marine Plan to release the official coastal access points under the OGL. Until then the OSM-derived 'Coastal & outdoor' layer is the available substitute.",
     contact: "EnvironmentalProtection@gov.im",
     severity: "low",
   },

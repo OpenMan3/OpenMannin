@@ -279,6 +279,12 @@ export function MapView({
         style: initialStyle,
       });
 
+      // Publish the instance before anything else. Every update effect below -
+      // layer visibility, basemap swap, terrain, padding, live polls - gates on
+      // mapRef.current; without this assignment they all silently no-op and the
+      // map looks frozen at its first render.
+      mapRef.current = map;
+
       map.addControl(new (await import("maplibre-gl")).NavigationControl({ visualizePitch: false, showZoom: false }), "top-right");
 
       // Error handler
@@ -299,8 +305,6 @@ export function MapView({
         );
       });
 
-      const mapRefForSync = mapRef;
-
       map.on("load", () => {
         readyRef.current = true;
         if (terrain3dRef.current) applyTerrain(map, true);
@@ -310,7 +314,7 @@ export function MapView({
           onMissing: reportMissing,
           onAsOf: reportAsOf,
         });
-        startLivePolls(enabledRef, layersRef, mapRefForSync, setFeedError);
+        startLivePolls(enabledRef, layersRef, mapRef, setFeedError);
         // Notify parent that the map is ready
         onMapReady?.(map);
       });

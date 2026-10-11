@@ -31,12 +31,11 @@ export const BASEMAPS: Record<BasemapId, BasemapDef> = {
     maxzoom: 19,
   },
   "osm-dark": {
-    kind: "raster",
-    tiles: [
-      "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
-    ],
-    attribution: "Map data &copy; OpenStreetMap contributors | Map style &copy; Stadia Maps (CC-BY-4.0)",
-    maxzoom: 20,
+    kind: "style",
+    styleUrl: "https://tiles.openfreemap.org/styles/dark",
+    attribution:
+      "Map data &copy; OpenStreetMap contributors | Map style &copy; OpenFreeMap (ODbL)",
+    maxzoom: 16,
   },
   "opentopo": {
     kind: "raster",
@@ -50,12 +49,11 @@ export const BASEMAPS: Record<BasemapId, BasemapDef> = {
     maxzoom: 17,
   },
   "opentopo-dark": {
-    kind: "raster",
-    tiles: [
-      "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png",
-    ],
-    attribution: "Map data &copy; OpenStreetMap contributors, SRTM | Map style &copy; Stadia Maps (CC-BY-4.0)",
-    maxzoom: 20,
+    kind: "style",
+    styleUrl: "https://tiles.openfreemap.org/styles/dark",
+    attribution:
+      "Map data &copy; OpenStreetMap contributors | Map style &copy; OpenFreeMap (ODbL)",
+    maxzoom: 16,
   },
   "openfreemap": {
     kind: "style",
@@ -66,7 +64,7 @@ export const BASEMAPS: Record<BasemapId, BasemapDef> = {
   },
   "openfreemap-dark": {
     kind: "style",
-    styleUrl: "https://tiles.openfreemap.org/styles/liberty-dark",
+    styleUrl: "https://tiles.openfreemap.org/styles/dark",
     attribution:
       "Map data &copy; OpenStreetMap contributors | Map style &copy; OpenFreeMap (ODbL)",
     maxzoom: 16,

@@ -41,6 +41,15 @@ export const LICENCES: Record<LicenceId, Licence> = {
     requiresPermission: false,
     obligation: "Attribution with link to licence.",
   },
+  "CC-BY-SA-2.0": {
+    id: "CC-BY-SA-2.0",
+    name: "Creative Commons Attribution-ShareAlike 2.0",
+    url: "https://creativecommons.org/licenses/by-sa/2.0/",
+    commercial: true,
+    requiresPermission: false,
+    obligation:
+      "Attribution to the creator and ShareAlike: a derivative must carry the same licence. OpenSeaMap's rendered seamark tiles use this; the underlying data is OpenStreetMap (ODbL).",
+  },
   "PUBLIC-DOMAIN": {
     id: "PUBLIC-DOMAIN",
     name: "Public domain / no known copyright",

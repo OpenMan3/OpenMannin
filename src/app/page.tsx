@@ -48,6 +48,8 @@ const ASIDE_DEFAULT = 320;
 const ASIDE_KEY = "om:asideWidth";
 /** Persisted 3D-terrain preference. */
 const TERRAIN_KEY = "om:terrain3d";
+/** Persisted OpenSeaMap seamark-overlay preference (off by default). */
+const SEAMARKS_KEY = "om:seamarks";
 
 export default function Page() {
   return <PageContent />;
@@ -61,6 +63,15 @@ function PageContent() {
     if (typeof window === "undefined") return false;
     try {
       return localStorage.getItem(TERRAIN_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  /** OpenSeaMap seamark overlay, remembered between visits. */
+  const [seamarks, setSeamarks] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem(SEAMARKS_KEY) === "1";
     } catch {
       return false;
     }
@@ -191,6 +202,15 @@ function PageContent() {
       /* private mode: the preference simply does not persist */
     }
   }, [terrain3d]);
+
+  // Persist the OpenSeaMap overlay choice too.
+  useEffect(() => {
+    try {
+      localStorage.setItem(SEAMARKS_KEY, seamarks ? "1" : "0");
+    } catch {
+      /* private mode: the preference simply does not persist */
+    }
+  }, [seamarks]);
 
   // Drag the sidebar's right edge to resize it (desktop only).
   const startResize = useCallback(
@@ -446,6 +466,7 @@ function PageContent() {
           onMapReady={setMap}
           insetBottom={nav?.destination && nav.routeStatus === "ready" ? sheetInset + 68 : 0}
           terrain3d={terrain3d}
+          seamarks={seamarks}
         />
 
         <FeaturePopup picked={picked} onClose={() => setPicked(null)} onLocate={centreOn} />
@@ -460,7 +481,12 @@ function PageContent() {
               {nav && nav.navigating && (
                 <VoiceButton muted={nav.voiceMuted} onToggle={setVoiceMuted} />
               )}
-              <MapControls terrain3d={terrain3d} onTerrainChange={setTerrain3d} />
+              <MapControls
+                terrain3d={terrain3d}
+                onTerrainChange={setTerrain3d}
+                seamarks={seamarks}
+                onSeamarksChange={setSeamarks}
+              />
             </div>
           )}
 

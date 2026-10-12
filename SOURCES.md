@@ -6,7 +6,7 @@ OpenMannin renders only data that can be traced to a source, a licence and a con
 
 This project does **not** ingest, cache, trace or derive anything from government maps or map-derived products. The IoM Open Government Licence explicitly **excludes maps and map-derived products** ([OGL](https://www.gov.im/about-this-site/open-government-licence/), [maps exclusion](https://www.gov.im/about-this-site/terms-and-conditions/maps/)), and the Isle of Man Survey base cartography is sold commercially. All island-wide vector coverage is built from independently licensed sources — principally OpenStreetMap (ODbL) and Wikidata (CC0). Coverage that could not be independently sourced is recorded as a gap rather than relicensed.
 
-## Licence register (10)
+## Licence register (11)
 
 | Licence | Commercial | Permission required | Obligation |
 | --- | --- | --- | --- |
@@ -14,6 +14,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Crown copyright — derived open datasets (base mapping NOT included) ([link](https://www.gov.im/about-this-site/open-government-licence/)) | yes | no | Crown copyright, attribution required. CRITICAL EXCLUSION: this covers the derived feature services published through the open data portal only. It does NOT cover the Isle of Man Survey base cartography, which is Crown copyright but explicitly excluded from the OGL and sold commercially. Never mix our vectors with their base tiles without a licence. Also excluded: personal data, departmental logos, the Isle of Man crest, third-party rights, patents, trademarks and designs. |
 | Open Database License (OpenStreetMap) ([link](https://opendatacommons.org/licenses/odbl/)) | yes | no | Attribution AND share-alike on derived databases. OSM data is (c) OpenStreetMap contributors. |
 | Creative Commons Attribution 4.0 ([link](https://creativecommons.org/licenses/by/4.0/)) | yes | no | Attribution with link to licence. |
+| Creative Commons Attribution-ShareAlike 2.0 ([link](https://creativecommons.org/licenses/by-sa/2.0/)) | yes | no | Attribution to the creator and ShareAlike: a derivative must carry the same licence. OpenSeaMap's rendered seamark tiles use this; the underlying data is OpenStreetMap (ODbL). |
 | Public domain / no known copyright | yes | no | Attribution appreciated, not required. |
 | Creative Commons CC0 1.0 (public domain dedication) ([link](https://creativecommons.org/publicdomain/zero/1.0/)) | yes | no | No rights reserved. Attribution optional. |
 | OurAirports public domain dedication ([link](https://ourairports.com/data/)) | yes | no | OurAirports publishes its airport, runway and heliport tables under a public domain dedication. No attribution required, though crediting OurAirports is appreciated. Note this covers the DATA, not the website's own compiled map styling. |
@@ -21,7 +22,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | No published licence | no | yes | No terms of use, robots.txt or licence found. Absence of a licence is not a grant. Do not republish without written permission. |
 | Licence not established | no | yes | Verify before use. |
 
-## Source register (21)
+## Source register (22)
 
 | Source | Publisher | Licence | Last checked |
 | --- | --- | --- | --- |
@@ -42,6 +43,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | [The Crown Estate offshore wind leasing](https://www.thecrownestate.co.uk/our-business/marine/offshore-wind/morgan-offshore-wind-site) | The Crown Estate | PUBLIC-DOMAIN | 2026-10-04 |
 | [Spaceman teleport / aql Space Services](https://spaceman.im/) | aql (formerly BlueWave Communications) | PUBLIC-DOMAIN | 2026-10-04 |
 | [OpenTopoMap tiles](https://opentopomap.org/) | OpenTopoMap (based on OpenStreetMap, SRTM) | CC-BY-4.0 | 2026-10-04 |
+| [OpenSeaMap seamark overlay](https://www.openseamap.org/) | OpenSeaMap (OpenStreetMap data) | CC-BY-SA-2.0 | 2026-10-12 |
 | [OpenFreeMap styles (Liberty, bright, positron, dark)](https://openfreemap.org/) | OpenFreeMap | ODbL | 2026-10-11 |
 | [EMODnet Bathymetry](https://emodnet.ec.europa.eu/en/bathymetry) | EMODnet / European Commission | CC-BY-4.0 | 2026-10-04 |
 | [AWS Open Data — Terrain Tiles (Mapzen/Joerd)](https://registry.opendata.aws/terrain-tiles/) | Mapzen (Linux Foundation) / AWS Open Data | COPERNICUS | 2026-10-11 |

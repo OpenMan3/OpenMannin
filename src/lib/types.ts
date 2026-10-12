@@ -11,6 +11,7 @@ export type LicenceId =
   | "OGL-IoM-DERIVED"
   | "ODbL"
   | "CC-BY-4.0"
+  | "CC-BY-SA-2.0"
   | "PUBLIC-DOMAIN"
   | "CC0-1.0"
   | "PD-OURAIRPORTS"

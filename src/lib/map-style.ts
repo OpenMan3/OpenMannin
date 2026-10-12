@@ -75,6 +75,55 @@ export function applyTerrain(map: MapLibreMap, enabled: boolean): void {
   }
 }
 
+/**
+ * OpenSeaMap seamark overlay.
+ *
+ * A keyless, CORS-open raster overlay of nautical marks — buoys, beacons,
+ * lights, harbour detail — rendered by the OpenSeaMap project. Underneath it is
+ * the same OpenStreetMap database (ODbL); the RENDERED TILES are CC-BY-SA 2.0.
+ * It is a display overlay only: OSM seamark characteristics are frequently
+ * absent or wrong and this is not a navigation chart.
+ */
+export const SEAMARK_SOURCE_ID = "seamark-overlay";
+export const SEAMARK_LAYER_ID = "seamark-overlay";
+export const SEAMARK_TILES = ["https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"];
+export const SEAMARK_ATTRIBUTION =
+  '&copy; <a href="https://www.openseamap.org/">OpenSeaMap</a> contributors (CC-BY-SA 2.0)';
+
+/**
+ * Add or remove the OpenSeaMap overlay.
+ *
+ * The source is REPLACED (not retargeted) on each style swap, exactly like the
+ * basemap, because a style swap drops every runtime source. The layer is kept
+ * above the basemap but below every data layer, so the marks read as a chart
+ * backdrop and never hide the `om-*` layers drawn over them.
+ */
+export function applySeamarkOverlay(map: MapLibreMap, on: boolean): void {
+  if (!on) {
+    if (map.getLayer(SEAMARK_LAYER_ID)) map.removeLayer(SEAMARK_LAYER_ID);
+    if (map.getSource(SEAMARK_SOURCE_ID)) map.removeSource(SEAMARK_SOURCE_ID);
+    return;
+  }
+
+  if (!map.getSource(SEAMARK_SOURCE_ID)) {
+    map.addSource(SEAMARK_SOURCE_ID, {
+      type: "raster",
+      tiles: SEAMARK_TILES,
+      tileSize: 256,
+      attribution: SEAMARK_ATTRIBUTION,
+    });
+  }
+  if (map.getLayer(SEAMARK_LAYER_ID)) return;
+
+  // Insert before the first data layer when there is one, otherwise append:
+  // never before `background`, which is opaque and would cover the overlay.
+  const firstDataLayer = map.getStyle().layers?.find((l) => l.id.startsWith("om-"))?.id;
+  map.addLayer(
+    { id: SEAMARK_LAYER_ID, type: "raster", source: SEAMARK_SOURCE_ID },
+    firstDataLayer,
+  );
+}
+
 /** Centre on the Isle of Man, framed so the whole island is visible at z10. */
 export const INITIAL_CENTRE: [number, number] = [-4.4814, 54.1509];
 export const INITIAL_ZOOM = 10;

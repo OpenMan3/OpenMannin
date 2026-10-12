@@ -44,6 +44,8 @@ const CONNECT_SRC = [
   "https://a.tile.opentopomap.org",
   "https://b.tile.opentopomap.org",
   "https://c.tile.opentopomap.org",
+  // OpenSeaMap seamark overlay (raster tiles, optional layer).
+  "https://tiles.openseamap.org",
   "https://tiles.openfreemap.org",
   "https://tiles.basemaps.cartocdn.com",
   // 3D terrain: AWS Open Data DEM tiles (raster-dem, terrarium). MapLibre

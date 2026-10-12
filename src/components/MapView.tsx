@@ -19,6 +19,7 @@ import {
   createInitialStyle,
   applyRasterBasemap,
   applyTerrain,
+  applySeamarkOverlay,
   BASEMAPS,
   type BasemapId,
   INITIAL_CENTRE,
@@ -57,6 +58,7 @@ export function MapView({
   onMapReady,
   insetBottom = 0,
   terrain3d = false,
+  seamarks = false,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
@@ -85,6 +87,8 @@ export function MapView({
   insetBottom?: number;
   /** Whether 3D terrain is on. Re-applied after a basemap style swap. */
   terrain3d?: boolean;
+  /** Whether the OpenSeaMap seamark overlay is on. Re-applied after a style swap. */
+  seamarks?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -120,6 +124,8 @@ export function MapView({
   const layerAsOfRef = useRef<Map<string, string>>(new Map());
   /** Latest terrain flag, so the mount-time load handler reads the current value. */
   const terrain3dRef = useRef(terrain3d);
+  /** Latest seamark-overlay flag, for the same reason. */
+  const seamarksRef = useRef(seamarks);
 
   useEffect(() => {
     enabledRef.current = enabled;
@@ -129,7 +135,8 @@ export function MapView({
     onNavRef.current = onNav;
     missingRef.current = missing;
     terrain3dRef.current = terrain3d;
-  }, [enabled, layers, onPick, onViewport, onNav, missing, terrain3d]);
+    seamarksRef.current = seamarks;
+  }, [enabled, layers, onPick, onViewport, onNav, missing, terrain3d, seamarks]);
 
   // Report a single layer's load outcome. Updates the ref immediately as well
   // as the state, so a sync that finishes while this is in flight sees it.
@@ -218,6 +225,13 @@ export function MapView({
     if (!map || !readyRef.current) return;
     applyTerrain(map, terrain3d);
   }, [terrain3d]);
+
+  // React to the OpenSeaMap overlay toggle, on the same pattern as terrain.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    applySeamarkOverlay(map, seamarks);
+  }, [seamarks]);
 
   // Keep the overlay sheet clear of the route
   useEffect(() => {
@@ -308,6 +322,7 @@ export function MapView({
       map.on("load", () => {
         readyRef.current = true;
         if (terrain3dRef.current) applyTerrain(map, true);
+        if (seamarksRef.current) applySeamarkOverlay(map, true);
         void syncStaticLayers(map, layersRef.current, {
           enabledRef,
           missingRef,
@@ -343,6 +358,7 @@ export function MapView({
         // A style swap drops the DEM source too; restore terrain before the
         // data layers so the map does not briefly render flat then pop up.
         if (terrain3dRef.current) applyTerrain(m, true);
+        if (seamarksRef.current) applySeamarkOverlay(m, true);
         await syncStaticLayers(m, layersRef.current, {
           enabledRef,
           missingRef,

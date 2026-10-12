@@ -39,6 +39,8 @@ export interface NavigationState {
   steps: NavigationStep[];
   /** Live speed derived from successive GPS fixes, mph. null before two fixes. */
   speedMph: number | null;
+  /** Posted speed limit of the road under the user, km/h. null when untagged. */
+  speedLimitKmh: number | null;
   /** Index of the next unfinished turn-by-turn leg (0 = the current one). */
   stepIndex: number;
   /** Straight-line distance to the next maneuver, metres. */
@@ -72,6 +74,8 @@ export interface Internal {
   routes: Partial<Record<RouteMode, { distanceM: number; durationS: number } | null>>;
   steps: NavigationStep[];
   speedMph: number | null;
+  /** Posted speed limit of the road under the user, km/h. null when untagged. */
+  speedLimitKmh: number | null;
   stepIndex: number;
   nextStepM: number;
   lastSignature: string;

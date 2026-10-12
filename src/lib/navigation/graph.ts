@@ -22,7 +22,7 @@
  * serves driving, walking and cycling alike.
  */
 
-import { edgeTimeS, maxSpeedKmh, type Profile, type RoadTags } from "./profiles.ts";
+import { edgeTimeS, maxSpeedKmh, parseMaxspeedKmh, type Profile, type RoadTags } from "./profiles.ts";
 
 export interface LatLng {
   lon: number;
@@ -80,6 +80,13 @@ export interface RouteResult {
    * where the segment had no junction tag.
    */
   segmentJunctions: (string | null)[];
+  /**
+   * Posted speed limit in km/h of each segment, parallel to `coordinates`, or
+   * `null` where OSM has no `maxspeed`. Only an explicitly tagged limit is
+   * surfaced: the class planning speeds are not legal limits and are never
+   * presented as one.
+   */
+  segmentMaxspeed: (number | null)[];
 }
 
 interface Feature {
@@ -542,23 +549,33 @@ export function routeBetween(
 
   const roadName = (e: number): string | null => graph.edgeRoad[e]?.name ?? null;
   const roadJunction = (e: number): string | null => graph.edgeRoad[e]?.junction ?? null;
+  const roadLimit = (e: number): number | null => parseMaxspeedKmh(graph.edgeRoad[e]?.maxspeed);
   const startName = roadName(startSnap.edge);
   const goalName = roadName(goalSnap.edge);
   const startJunction = roadJunction(startSnap.edge);
   const goalJunction = roadJunction(goalSnap.edge);
+  const startLimit = roadLimit(startSnap.edge);
+  const goalLimit = roadLimit(goalSnap.edge);
 
-  // Coordinates and the parallel segment-name list are built together and
-  // de-duplicated together, so names[k] always names the segment from
-  // coordinates[k] to coordinates[k+1].
+  // Coordinates and the parallel segment-name/junction/limit lists are built
+  // together and de-duplicated together, so names[k] always names the segment
+  // from coordinates[k] to coordinates[k+1].
   const coords: [number, number][] = [[start.lon, start.lat]];
   const names: (string | null)[] = [];
   const junctions: (string | null)[] = [];
-  const push = (pt: [number, number], name: string | null, junction: string | null): void => {
+  const maxspeeds: (number | null)[] = [];
+  const push = (
+    pt: [number, number],
+    name: string | null,
+    junction: string | null,
+    limit: number | null,
+  ): void => {
     const prev = coords[coords.length - 1];
     if (Math.abs(prev[0] - pt[0]) <= 1e-9 && Math.abs(prev[1] - pt[1]) <= 1e-9) return;
     coords.push(pt);
     names.push(name);
     junctions.push(junction);
+    maxspeeds.push(limit);
   };
 
   let timeS = 0;
@@ -581,20 +598,25 @@ export function routeBetween(
   }
 
   if (sameEdge) {
-    push([startSnap.lon, startSnap.lat], startName, startJunction);
-    push([goalSnap.lon, goalSnap.lat], startName, startJunction);
-    push([dest.lon, dest.lat], goalName, goalJunction);
+    push([startSnap.lon, startSnap.lat], startName, startJunction, startLimit);
+    push([goalSnap.lon, goalSnap.lat], startName, startJunction, startLimit);
+    push([dest.lon, dest.lat], goalName, goalJunction, goalLimit);
   } else {
     const res = search(graph, startSnap, goalSnap, profile);
     if (!res) return null;
     timeS = res.timeS;
-    push([startSnap.lon, startSnap.lat], startName, startJunction);
+    push([startSnap.lon, startSnap.lat], startName, startJunction, startLimit);
     for (let i = 0; i < res.path.length; i++) {
       const n = res.path[i];
-      push([graph.lon[n], graph.lat[n]], roadName(res.edges[i]), roadJunction(res.edges[i]));
+      push(
+        [graph.lon[n], graph.lat[n]],
+        roadName(res.edges[i]),
+        roadJunction(res.edges[i]),
+        roadLimit(res.edges[i]),
+      );
     }
-    push([goalSnap.lon, goalSnap.lat], goalName, goalJunction);
-    push([dest.lon, dest.lat], goalName, goalJunction);
+    push([goalSnap.lon, goalSnap.lat], goalName, goalJunction, goalLimit);
+    push([dest.lon, dest.lat], goalName, goalJunction, goalLimit);
   }
 
   let distanceM = 0;
@@ -626,5 +648,6 @@ export function routeBetween(
     coordinates: coords,
     segmentNames: names,
     segmentJunctions: junctions,
+    segmentMaxspeed: maxspeeds,
   };
 }

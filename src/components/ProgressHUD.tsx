@@ -10,7 +10,7 @@
  */
 
 import type { NavigationState } from "@/lib/navigation/host";
-import { formatDistance, formatDuration, formatSpeedMph, mphToKmh } from "@/lib/units";
+import { formatDistance, formatDuration, formatSpeedMph, kmhToMph, mphToKmh } from "@/lib/units";
 import { ClockIcon, TurnIcon } from "./Icons";
 
 interface ProgressHUDProps {
@@ -41,7 +41,7 @@ function arrivalEstimate(state: NavigationState): {
 }
 
 export function ProgressHUD({ state }: ProgressHUDProps) {
-  const { routeStatus, steps, userLocation, remainingM, activeMode, routes, offRoute, speedMph, stepIndex, nextStepM } = state;
+  const { routeStatus, steps, userLocation, remainingM, activeMode, routes, offRoute, speedMph, speedLimitKmh, stepIndex, nextStepM } = state;
 
   const active = routeStatus === "ready" || routeStatus === "recalculating" || routeStatus === "arrived";
   if (!active || !userLocation || !steps.length || routeStatus === "arrived") {
@@ -55,6 +55,12 @@ export function ProgressHUD({ state }: ProgressHUDProps) {
   const nextNextStep = steps[Math.min(stepIndex + 1, steps.length - 1)];
   const showNext = stepIndex < steps.length;
   const { remainingS, clockHhmm } = arrivalEstimate(state);
+
+  // Posted speed limit, shown only for driving and only where OSM tags one.
+  // The roundel is red-ringed when the live speed is clearly over it.
+  const limitMph = speedLimitKmh !== null ? Math.round(kmhToMph(speedLimitKmh)) : null;
+  const showLimit = activeMode === "driving" && limitMph !== null;
+  const overLimit = showLimit && speedMph !== null && speedLimitKmh !== null && speedMph > kmhToMph(speedLimitKmh) + 2;
 
   return (
     <div
@@ -115,6 +121,22 @@ export function ProgressHUD({ state }: ProgressHUDProps) {
             <span className="text-[10px] text-ink-3">{formatSpeedMph(mphToKmh(speedMph))}</span>
           )}
         </div>
+
+        {/* Posted speed limit (driving only, where OSM tags one) */}
+        {showLimit && (
+          <>
+            <div className="w-px h-8 bg-line" />
+            <div
+              className={`mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-[3px] bg-white text-[13px] font-bold tabular-nums shadow-sm ${
+                overLimit ? "border-warn text-warn" : "border-ink text-ink"
+              }`}
+              title={overLimit ? "Over the posted speed limit" : "Posted speed limit"}
+              aria-label={`Speed limit ${limitMph} miles per hour${overLimit ? ", over the limit" : ""}`}
+            >
+              {limitMph}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

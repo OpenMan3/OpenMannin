@@ -32,6 +32,12 @@ export interface RouteLeg {
    * builder call out roundabouts. `null` where the segment had no junction tag.
    */
   segmentJunctions: (string | null)[];
+  /**
+   * Posted speed limit (km/h) of each segment, parallel to `coordinates`, or
+   * `null` where OSM has no explicit `maxspeed`. Optional for backward
+   * compatibility with a reply from an older worker bundle.
+   */
+  segmentMaxspeed?: (number | null)[];
 }
 
 export type RouteMap = Partial<Record<RouteMode, RouteLeg | null>>;

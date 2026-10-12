@@ -29,6 +29,7 @@ import { resolveFeatureLabel } from "../feature-label";
 import { computeRoutes, type RouteLeg, type RouteMap } from "./client";
 import { ROUTE_MODES, type RouteMode } from "./profiles";
 import { deriveSteps, type NavigationStep, bearingDeg, haversineM } from "./steps";
+import { easeInOutCubic, isPlausibleTransition, lerpAngle, lerpPoint } from "./motion";
 import type { UserLocation, Destination, LocationStatus, RouteStatus, NavigationState, FollowMode } from "./types";
 
 // Re-export types for consumers
@@ -148,6 +149,12 @@ type Internal = {
   locationStatus: LocationStatus;
   locationError: string | null;
   userLocation: UserLocation | null;
+  /** Smoothed position actually drawn on the map (eases toward userLocation). */
+  displayPos: UserLocation | null;
+  /** Latest fix the display is easing toward; the animation target. */
+  targetPos: UserLocation | null;
+  /** Smoothed heading actually drawn (rotated camera), degrees. */
+  displayHeadingDeg: number | null;
   destination: Destination | null;
   activeMode: RouteMode;
   routeStatus: RouteStatus;
@@ -174,6 +181,8 @@ type Internal = {
   remainingM: number;
   /** Live speed from successive GPS fixes (mph). null until two fixes. */
   speedMph: number | null;
+  /** Posted speed limit of the road under the user (km/h). null when untagged. */
+  speedLimitKmh: number | null;
   /** Compass bearing between the two most recent GPS fixes, deg. */
   headingDeg: number | null;
   /** Full turn-by-turn legs as first derived (before live trimming). */
@@ -193,6 +202,9 @@ function initialState(activeMode: RouteMode): Internal {
     locationStatus: "idle",
     locationError: null,
     userLocation: null,
+    displayPos: null,
+    targetPos: null,
+    displayHeadingDeg: null,
     destination: null,
     activeMode,
     routeStatus: "idle",
@@ -210,6 +222,7 @@ function initialState(activeMode: RouteMode): Internal {
     remainingM: 0,
     speedMph: null,
     headingDeg: null,
+    speedLimitKmh: null,
     baseSteps: [],
     stepIndex: 0,
     nextStepM: 0,
@@ -240,6 +253,7 @@ function signature(s: Internal): string {
     Math.round(s.progressM),
     Math.round(s.remainingM),
     s.speedMph === null ? "n" : s.speedMph.toFixed(1),
+    s.speedLimitKmh === null ? "n" : s.speedLimitKmh,
     s.stepIndex,
     Math.round(s.nextStepM),
   ]);
@@ -259,6 +273,7 @@ function projectOnRoute(coords: [number, number][], lon: number, lat: number) {
   let alongM = 0;
   let bestLateralM = Infinity;
   let bestAlongM = 0;
+  let bestSeg = 0;
   for (let i = 1; i < coords.length; i++) {
     const [ax, ay] = coords[i - 1];
     const [bx, by] = coords[i];
@@ -278,10 +293,11 @@ function projectOnRoute(coords: [number, number][], lon: number, lat: number) {
     if (lateral < bestLateralM) {
       bestLateralM = lateral;
       bestAlongM = cumulative;
+      bestSeg = i - 1; // segment index: coords[bestSeg] -> coords[bestSeg + 1]
     }
     alongM += segM;
   }
-  return { distanceM: bestAlongM, lateralM: bestLateralM };
+  return { distanceM: bestAlongM, lateralM: bestLateralM, segIndex: bestSeg };
 }
 
 /**
@@ -292,18 +308,23 @@ function projectOnRoute(coords: [number, number][], lon: number, lat: number) {
  */
 function updateRouteProgress(s: Internal): void {
   const route = s.routes[s.activeMode];
-  if (!route || !s.userLocation || !route.coordinates?.length) return;
+  if (!route || !s.userLocation || !route.coordinates?.length) {
+    s.speedLimitKmh = null;
+    return;
+  }
 
   const coords = safeCoords(route);
   if (coords.length < 2) {
     s.progressM = 0;
     s.remainingM = route.distanceM ?? 0;
+    s.speedLimitKmh = null;
     return;
   }
 
-  const { distanceM, lateralM } = projectOnRoute(coords, s.userLocation.lon, s.userLocation.lat);
+  const { distanceM, lateralM, segIndex } = projectOnRoute(coords, s.userLocation.lon, s.userLocation.lat);
   s.progressM = Math.max(0, distanceM);
   s.remainingM = Math.max(0, (route.distanceM ?? 0) - s.progressM);
+  s.speedLimitKmh = route.segmentMaxspeed?.[segIndex] ?? null;
 
   // Advance past legs whose cumulative length the user has covered.
   let cum = 0;
@@ -545,6 +566,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       routes: state.routes,
       steps: state.steps,
       speedMph: state.speedMph,
+      speedLimitKmh: state.speedLimitKmh,
       stepIndex: state.stepIndex,
       nextStepM: state.nextStepM,
       recenterPending: state.recenterPending,
@@ -614,55 +636,149 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     pulseFrame = requestAnimationFrame(loop);
   };
 
+  // ---- Smooth follow -----------------------------------------------------
+  // Fresh fixes are only half of tracking well: at ~1 Hz the raw dot and camera
+  // would step several metres each tick. So the drawn position eases toward
+  // each new fix between ticks. Purely visual - publish() still reports the raw
+  // fix, so progress, off-route detection and recalc are unaffected.
+
+  /** How long the drawn dot takes to catch up to a new fix. */
+  const FOLLOW_ANIM_MS = 400;
+  let animFrame = 0;
+  let animStartAt = 0;
+  let animFrom: UserLocation | null = null;
+  let animFromHeading: number | null = null;
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const drawUser = () => {
+    if (state.displayPos) setUserData(state.displayPos);
+  };
+
+  /** Move the camera to the smoothed dot, when following and not parked. */
+  const cameraToDisplay = () => {
+    const p = state.displayPos;
+    if (!p || state.followMode === "none" || state.recenterPending) return;
+    if (state.followMode === "heading" && state.displayHeadingDeg !== null) {
+      map.setBearing(state.displayHeadingDeg);
+    }
+    map.setCenter([p.lon, p.lat]);
+  };
+
+  const stopFollowAnim = () => {
+    if (animFrame) cancelAnimationFrame(animFrame);
+    animFrame = 0;
+  };
+
+  const runFollowAnim = (now: number) => {
+    animFrame = 0;
+    const target = state.targetPos;
+    if (!target) return;
+    const t = animFrom ? easeInOutCubic((now - animStartAt) / FOLLOW_ANIM_MS) : 1;
+    const p = animFrom ? lerpPoint(animFrom, target, t) : target;
+    state.displayPos = {
+      ...p,
+      accuracyM: target.accuracyM,
+      timestamp: target.timestamp,
+    };
+    state.displayHeadingDeg = lerpAngle(animFromHeading, state.headingDeg, t);
+    drawUser();
+    cameraToDisplay();
+    if (t < 1) {
+      animFrame = requestAnimationFrame(runFollowAnim);
+    } else {
+      state.displayPos = target;
+      drawUser();
+    }
+  };
+
+  const startFollowAnim = () => {
+    if (!state.targetPos) return;
+    if (reduceMotion) {
+      state.displayPos = state.targetPos;
+      state.displayHeadingDeg = state.headingDeg;
+      drawUser();
+      cameraToDisplay();
+      return;
+    }
+    animFrom = state.displayPos;
+    animFromHeading = state.displayHeadingDeg;
+    animStartAt = performance.now();
+    // A frame may already be pending from a fix arriving mid-ease; it will pick
+    // up the new target and origin on its next tick.
+    if (animFrame === 0) animFrame = requestAnimationFrame(runFollowAnim);
+  };
+
   const onGeolocation = (pos: GeolocationPosition) => {
     const lon = pos.coords.longitude;
     const lat = pos.coords.latitude;
     if (!Number.isFinite(lon) || !Number.isFinite(lat)) return;
+
+    const now = pos.timestamp;
+    const dtS = state.lastFixAt ? (now - state.lastFixAt) / 1000 : 0;
+    const prevLoc = state.prevFix;
+
+    // A fix implying an impossible speed over the elapsed time is a dropout or
+    // a jump between cell/wifi and GPS, not motion. Following it would fling the
+    // dot and drag the camera with it, so drop it and wait for the next.
+    if (
+      prevLoc &&
+      !isPlausibleTransition({ lon: prevLoc.lon, lat: prevLoc.lat }, { lon, lat }, dtS)
+    ) {
+      return;
+    }
+
     const loc: UserLocation = {
       lon,
       lat,
       accuracyM: Number.isFinite(pos.coords.accuracy) ? pos.coords.accuracy : undefined,
-      timestamp: pos.timestamp,
+      timestamp: now,
     };
     state.userLocation = loc;
+    state.targetPos = loc;
     state.locationStatus = "active";
     state.locationError = null;
-    setUserData(loc);
     startPulse();
 
-    // ---- Live speed + heading from successive fixes ----------------------
-    const dtS = (pos.timestamp - state.lastFixAt) / 1000;
-    state.lastFixAt = pos.timestamp;
-    const prevLoc = state.prevFix;
+    // ---- Live speed + heading: prefer the device's own sensors ------------
+    // coords.speed (m/s) and coords.heading (deg) are more reliable and more
+    // immediate than differencing two fixes, and heading is reported even when
+    // barely moving. Fall back to the two-fix derivation only when absent.
+    state.lastFixAt = now;
     state.prevFix = loc;
-    if (prevLoc && dtS > 0.3 && dtS < 30) {
+    const nativeSpeed = pos.coords.speed;
+    const nativeHeading = pos.coords.heading;
+    const haveSpeed =
+      typeof nativeSpeed === "number" && Number.isFinite(nativeSpeed) && nativeSpeed >= 0;
+    const haveHeading = typeof nativeHeading === "number" && Number.isFinite(nativeHeading);
+    if ((!haveSpeed || !haveHeading) && prevLoc && dtS > 0.3 && dtS < 30) {
       const dist = haversineM(prevLoc.lat, prevLoc.lon, lat, lon);
-      if (dist > 2.5) {
-        state.speedMph = (dist / dtS) * 2.2369363;
-        state.headingDeg = bearingDeg(prevLoc.lon, prevLoc.lat, lon, lat);
+      if (dist > 1) {
+        if (!haveSpeed) state.speedMph = (dist / dtS) * 2.2369363;
+        if (!haveHeading) state.headingDeg = bearingDeg(prevLoc.lon, prevLoc.lat, lon, lat);
       }
     }
+    if (haveSpeed) state.speedMph = nativeSpeed * 2.2369363;
+    if (haveHeading) state.headingDeg = nativeHeading;
 
     // ---- Camera: follow the dot / rotate to course -----------------------
     // In "none" mode the map is never yanked (the button-driven Recenter flow
     // still works). In follow/heading modes the camera tracks the GPS dot
     // unless the user dragged the map away, which parks until they Recentre.
-    state.recenterPending =
-      state.followMode !== "none" ? state.recenterPending : false;
-    if (state.followMode !== "none" && !state.recenterPending) {
-      if (state.followMode === "heading" && state.headingDeg !== null) {
-        map.easeTo({ bearing: state.headingDeg, duration: 550 });
-      } else {
-        map.easeTo({ center: [lon, lat], duration: 550 });
-      }
-    }
+    state.recenterPending = state.followMode !== "none" ? state.recenterPending : false;
 
     // First fix after the button press pans to the user; later fixes just move
-    // the dot so the map is never yanked away while they are looking. A press
-    // inside the recenter flow also parked the map back on the dot here.
+    // the dot so the map is never yanked away while they are looking.
     if (state.firstFlyPending) {
       state.firstFlyPending = false;
+      state.displayPos = loc;
+      state.displayHeadingDeg = state.headingDeg;
+      drawUser();
       map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 16), duration: 700 });
+    } else {
+      startFollowAnim();
     }
 
     if (state.destination && !state.routesFresh) void requestRoutes();
@@ -703,7 +819,9 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     publish();
     watcherId = navigator.geolocation.watchPosition(onGeolocation, onGeolocationError, {
       enableHighAccuracy: true,
-      maximumAge: 30_000,
+      // Accept only fresh fixes. A cached 30 s-old position was why tracking
+      // lagged behind the driver and the speed read stale.
+      maximumAge: 0,
       timeout: 25_000,
     });
   };
@@ -714,13 +832,18 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       watcherId = null;
     }
     stopPulse();
+    stopFollowAnim();
     reqToken++;
     clearRecalc();
     state.userLocation = null;
+    state.displayPos = null;
+    state.targetPos = null;
+    state.displayHeadingDeg = null;
     state.firstFlyPending = false;
     state.recenterPending = false;
     state.speedMph = null;
     state.headingDeg = null;
+    state.speedLimitKmh = null;
     state.prevFix = null;
     state.lastFixAt = 0;
     state.routes = {};
@@ -1074,7 +1197,8 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
 
   const ensureLayersAndRoute = () => {
     ensureLayers();
-    if (state.userLocation) setUserData(state.userLocation);
+    const shown = state.displayPos ?? state.userLocation;
+    if (shown) setUserData(shown);
     if (state.destination) setDestinationData(state.destination.lon, state.destination.lat);
     const active = state.routes[state.activeMode];
     if (state.routesFresh && active) drawRoute(active);
@@ -1090,6 +1214,10 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       if (state.recenterPending && state.userLocation) {
         state.recenterPending = false;
         state.firstFlyPending = false;
+        // Snap the drawn dot to the real fix so it lands under the camera.
+        state.displayPos = state.userLocation;
+        state.displayHeadingDeg = state.headingDeg;
+        drawUser();
         map.flyTo({
           center: [state.userLocation.lon, state.userLocation.lat],
           zoom: Math.max(map.getZoom(), 16),
@@ -1194,8 +1322,13 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
    */
   const onFollowEvent = (mode: FollowMode) => {
     state.followMode = mode;
-    if (mode === "heading" && state.headingDeg !== null) {
-      map.easeTo({ bearing: state.headingDeg, duration: 500 });
+    if (mode === "none") {
+      stopFollowAnim();
+    } else {
+      // Follow/heading engaged: move to the smoothed dot now rather than
+      // waiting for the next fix, so the button feels immediate.
+      state.recenterPending = false;
+      startFollowAnim();
     }
     publish();
   };
@@ -1245,6 +1378,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     },
     dispose() {
       stopPulse();
+      stopFollowAnim();
       if (watcherId !== null) navigator.geolocation.clearWatch(watcherId);
       watcherId = null;
       cancelPress(press);

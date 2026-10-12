@@ -324,6 +324,46 @@ test("routeBetween returns segmentNames parallel to coordinates", () => {
   assert.ok(r.segmentNames.includes("Main Street"), "named road appears in segmentNames");
 });
 
+test("routeBetween returns segmentMaxspeed parallel to coordinates", () => {
+  const g = buildGraph({
+    features: [
+      taggedRoad("residential", { name: "Main Street", maxspeed: "30 mph" }, [
+        [-4.48, 54.16],
+        [-4.478, 54.16],
+      ]),
+    ],
+  });
+  const a = { lon: -4.48, lat: 54.16 };
+  const b = { lon: -4.478, lat: 54.16 };
+  const r = routeBetween(g, a, b, DRIVING);
+  assert.ok(r, "route found");
+  assert.equal(
+    r.segmentMaxspeed.length,
+    r.coordinates.length - 1,
+    "segmentMaxspeed parallel to segments",
+  );
+  const limits = r.segmentMaxspeed.filter((v) => v !== null);
+  assert.ok(limits.length > 0, "tagged limit appears on road segments");
+  assert.ok(Math.abs(limits[0] - 48.28032) < 0.01, "30 mph parsed to km/h");
+});
+
+test("routeBetween leaves segmentMaxspeed null where no maxspeed is tagged", () => {
+  const g = buildGraph({
+    features: [
+      taggedRoad("residential", { name: "Main Street" }, [
+        [-4.48, 54.16],
+        [-4.478, 54.16],
+      ]),
+    ],
+  });
+  const r = routeBetween(g, { lon: -4.48, lat: 54.16 }, { lon: -4.478, lat: 54.16 }, DRIVING);
+  assert.ok(r, "route found");
+  assert.ok(
+    r.segmentMaxspeed.every((v) => v === null),
+    "untagged road yields no invented limit",
+  );
+});
+
 test("routeBetween same-edge reverse is refused for driving on one-way", () => {
   const g = buildGraph({
     features: [

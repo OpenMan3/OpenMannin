@@ -463,37 +463,36 @@ function PageContent() {
       </section>
 
 {/* ---- unified bottom tab bar (always visible) ---- */}
-      {!mobileOpen && (
-        <nav
-          aria-label="Primary sections"
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 rounded-full border border-line bg-page/90 backdrop-blur-xl shadow-lg px-3 py-2 md:px-4 md:py-2"
-        >
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => {
-                if (tab === t.id) {
-                  setPanelOpen(false);
-                } else {
-                  setTab(t.id);
-                  setPanelOpen(true);
-                  setMobileOpen(true);
-                }
-              }}
-              aria-current={tab === t.id ? "page" : undefined}
-              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                tab === t.id
-                  ? "bg-accent text-accent-ink shadow-md"
-                  : "text-ink-3 hover:bg-raised hover:text-ink"
-              }`}
-            >
-              <t.Icon className="h-5 w-5 shrink-0" />
-              <span className="hidden sm:inline">{t.label}</span>
-            </button>
-          ))}
-        </nav>
-      )}
+      <nav
+        aria-label="Primary sections"
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 rounded-full border border-line bg-page/90 backdrop-blur-xl shadow-lg px-3 py-2 md:px-4 md:py-2"
+      >
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => {
+              if (tab === t.id) {
+                setPanelOpen(false);
+                setMobileOpen(false);
+              } else {
+                setTab(t.id);
+                setPanelOpen(true);
+                setMobileOpen(true);
+              }
+            }}
+            aria-current={tab === t.id ? "page" : undefined}
+            className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+              tab === t.id
+                ? "bg-accent text-accent-ink shadow-md"
+                : "text-ink-3 hover:bg-raised hover:text-ink"
+            }`}
+          >
+            <t.Icon className="h-5 w-5 shrink-0" />
+            <span className="hidden sm:inline">{t.label}</span>
+          </button>
+        ))}
+      </nav>
     </main>
   );
 }

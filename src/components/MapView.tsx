@@ -19,7 +19,7 @@ import {
   createInitialStyle,
   applyRasterBasemap,
   applyTerrain,
-  applySeamarkOverlay,
+
   BASEMAPS,
   type BasemapId,
   INITIAL_CENTRE,
@@ -297,13 +297,13 @@ export function MapView({
       // map looks frozen at its first render.
       mapRef.current = map;
 
-      // Full (non-compact) attribution, top-left: clear of the bottom tab
-      // bar and the destination sheet. compact: false keeps the <details>
-      // expanded on every screen size instead of collapsing to an "i" button.
+      // Collapsible attribution, top-left: compact: true collapses the
+      // attribution text into a toggleable "i" button (via a <details> element),
+      // expanded on click. Still clear of the bottom tab bar and destination sheet.
       map.addControl(
         new AttributionControl({
-          compact: false,
-          customAttribution: '<a href="https://maplibre.org/" target="_blank">MapLibre</a>',
+          compact: true,
+          customAttribution: "",
         }),
         "top-left",
       );
@@ -331,7 +331,7 @@ export function MapView({
       map.on("load", () => {
         readyRef.current = true;
         if (terrain3dRef.current) applyTerrain(map, true);
-        applySeamarkOverlay(map, true);
+
         void syncStaticLayers(map, layersRef.current, {
           enabledRef,
           missingRef,
@@ -367,7 +367,7 @@ export function MapView({
         // A style swap drops the DEM source too; restore terrain before the
         // data layers so the map does not briefly render flat then pop up.
         if (terrain3dRef.current) applyTerrain(m, true);
-        applySeamarkOverlay(m, true);
+
         await syncStaticLayers(m, layersRef.current, {
           enabledRef,
           missingRef,

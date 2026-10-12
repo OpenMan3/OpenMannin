@@ -18,7 +18,7 @@ export const BASEMAPS: Record<BasemapId, BasemapDef> = {
       "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
     ],
     attribution:
-      "Map data &copy; OpenStreetMap contributors, SRTM | Map style &copy; OpenTopoMap (CC-BY-SA)",
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors (ODbL) | Map style &copy; <a href="https://opentopomap.org" target="_blank">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/" target="_blank">CC-BY-SA</a>)',
     maxzoom: 17,
   },
 };
@@ -41,8 +41,7 @@ export const TERRAIN_SOURCE_ID = "terrain-rgb";
 export const TERRAIN_TILES = [
   "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png",
 ];
-export const TERRAIN_ATTRIBUTION =
-  "Elevation: Copernicus EU-DEM &amp; SRTM (USGS) via AWS Open Data terrain tiles";
+export const TERRAIN_ATTRIBUTION = "";
 
 /**
  * Switch 3D terrain on or off, and tilt the camera to match.
@@ -73,55 +72,6 @@ export function applyTerrain(map: MapLibreMap, enabled: boolean): void {
     if (map.getSource(TERRAIN_SOURCE_ID)) map.removeSource(TERRAIN_SOURCE_ID);
     map.easeTo({ pitch: 0, duration: 1000 });
   }
-}
-
-/**
- * OpenSeaMap seamark overlay.
- *
- * A keyless, CORS-open raster overlay of nautical marks — buoys, beacons,
- * lights, harbour detail — rendered by the OpenSeaMap project. Underneath it is
- * the same OpenStreetMap database (ODbL); the RENDERED TILES are CC-BY-SA 2.0.
- * It is a display overlay only: OSM seamark characteristics are frequently
- * absent or wrong and this is not a navigation chart.
- */
-export const SEAMARK_SOURCE_ID = "seamark-overlay";
-export const SEAMARK_LAYER_ID = "seamark-overlay";
-export const SEAMARK_TILES = ["https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"];
-export const SEAMARK_ATTRIBUTION =
-  '&copy; <a href="https://www.openseamap.org/">OpenSeaMap</a> contributors (CC-BY-SA 2.0)';
-
-/**
- * Add or remove the OpenSeaMap overlay.
- *
- * The source is REPLACED (not retargeted) on each style swap, exactly like the
- * basemap, because a style swap drops every runtime source. The layer is kept
- * above the basemap but below every data layer, so the marks read as a chart
- * backdrop and never hide the `om-*` layers drawn over them.
- */
-export function applySeamarkOverlay(map: MapLibreMap, on: boolean): void {
-  if (!on) {
-    if (map.getLayer(SEAMARK_LAYER_ID)) map.removeLayer(SEAMARK_LAYER_ID);
-    if (map.getSource(SEAMARK_SOURCE_ID)) map.removeSource(SEAMARK_SOURCE_ID);
-    return;
-  }
-
-  if (!map.getSource(SEAMARK_SOURCE_ID)) {
-    map.addSource(SEAMARK_SOURCE_ID, {
-      type: "raster",
-      tiles: SEAMARK_TILES,
-      tileSize: 256,
-      attribution: SEAMARK_ATTRIBUTION,
-    });
-  }
-  if (map.getLayer(SEAMARK_LAYER_ID)) return;
-
-  // Insert before the first data layer when there is one, otherwise append:
-  // never before `background`, which is opaque and would cover the overlay.
-  const firstDataLayer = map.getStyle().layers?.find((l) => l.id.startsWith("om-"))?.id;
-  map.addLayer(
-    { id: SEAMARK_LAYER_ID, type: "raster", source: SEAMARK_SOURCE_ID },
-    firstDataLayer,
-  );
 }
 
 /** Centre on the Isle of Man, framed so the whole island is visible at z10. */

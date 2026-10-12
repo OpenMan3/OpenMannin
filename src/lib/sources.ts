@@ -180,16 +180,7 @@ export const SOURCES: Record<string, Source> = {
   // the list as a source we do not render. The OSM DATABASE (ODbL) still
   // underpins every layer and the OpenTopoMap and OpenFreeMap basemaps, which
   // is legitimate and credited.
-  openseamap: {
-    id: "openseamap",
-    name: "OpenSeaMap seamark overlay",
-    publisher: "OpenSeaMap (OpenStreetMap data)",
-    url: "https://www.openseamap.org/",
-    licence: "CC-BY-SA-2.0",
-    lastChecked: "2026-10-12",
-    notes:
-      "Keyless, CORS-open raster overlay of nautical marks (buoys, beacons, lights, harbour detail), drawn from the OpenStreetMap seamark schema. The rendered tiles are CC-BY-SA 2.0; the data underneath is ODbL. Optional layer, off by default. Display only — characteristics are frequently absent or wrong in OSM and this is not a navigation chart.",
-  },
+
   openfreemap: {
     id: "openfreemap",
     name: "OpenFreeMap styles (Liberty, bright, positron, dark)",

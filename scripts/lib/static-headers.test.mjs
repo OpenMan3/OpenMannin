@@ -36,7 +36,6 @@ test("the CSP names every origin the browser actually fetches from", () => {
     "https://a.tile.opentopomap.org",
     "https://tiles.openfreemap.org",
     "https://tiles.basemaps.cartocdn.com",
-    "https://tiles.openseamap.org",
   ]) {
     assert.ok(
       CONTENT_SECURITY_POLICY.includes(`connect-src`) && CONTENT_SECURITY_POLICY.includes(origin),

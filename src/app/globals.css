@@ -138,11 +138,15 @@ body {
   z-index: 60 !important;
 }
 .maplibregl-ctrl-attrib {
-  background: rgba(255, 255, 255, 0.95) !important;
-  color: var(--color-ink-3) !important;
   top: 0.5rem !important;
   left: 0.5rem !important;
   margin: 0 !important;
+  position: absolute !important;
+  z-index: 100 !important;
+}
+.maplibregl-ctrl-attrib[open] {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: var(--color-ink-3) !important;
   /* Explicit width: the zero-size containing block would otherwise shrink
    * the control to its longest word. */
   width: min(60vw, 26rem) !important;
@@ -152,8 +156,6 @@ body {
   white-space: normal !important;
   overflow: visible !important;
   text-overflow: unset !important;
-  position: absolute !important;
-  z-index: 100 !important;
 }
 .maplibregl-ctrl-attrib a {
   color: var(--color-ink-3) !important;

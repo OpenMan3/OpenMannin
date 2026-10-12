@@ -447,6 +447,7 @@ function PageContent() {
           onNav={setNav}
           onMapReady={setMap}
           insetBottom={nav?.destination && nav.routeStatus === "ready" ? sheetInset + 68 : 0}
+          mobileBottomInset={64}
           terrain3d={terrain3d}
         />
 

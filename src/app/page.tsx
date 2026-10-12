@@ -333,9 +333,12 @@ function PageContent() {
 
       {/* ---- sidebar / drawer ---- */}
       <aside
-        className={`fixed top-4 bottom-16 left-4 right-4 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col rounded-3xl border border-line bg-page shadow-[0_8px_32px_rgba(0,0,0,0.18)] transition-transform duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] md:rounded-none md:border-r md:border-line md:bg-page ${
+        className={`fixed top-4 left-4 right-4 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col rounded-3xl border border-line bg-page shadow-[0_8px_32px_rgba(0,0,0,0.18)] transition-all duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] md:rounded-none md:border-r md:border-line md:bg-page md:bottom-auto ${
           panelOpen ? "md:w-[var(--aside-w)]" : "md:w-12"
-        } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+        } ${mobileOpen
+          ? "bottom-0 translate-x-0 pb-[calc(64px+env(safe-area-inset-bottom))]"
+          : "bottom-16 -translate-x-[calc(100%+1rem)]"
+        }`}
         style={{ ["--aside-w" as string]: `${asideWidth}px` }}
       >
         <div className="flex h-11 shrink-0 items-center gap-1 border-b border-line px-2">
@@ -491,11 +494,12 @@ function PageContent() {
         />
       </section>
 
-      {/* ---- mobile bottom tab bar ---- */}
-      <nav
-        aria-label="Primary sections"
-        className="fixed inset-x-4 bottom-4 z-50 flex min-h-12 items-stretch rounded-2xl border border-line bg-page/95 backdrop-blur pb-safe md:hidden"
-      >
+      {/* ---- mobile bottom tab bar (hidden when side panel is open) ---- */}
+      {!mobileOpen && (
+        <nav
+          aria-label="Primary sections"
+          className="fixed inset-x-4 bottom-4 z-50 flex min-h-12 items-stretch rounded-2xl border border-line bg-page/95 backdrop-blur pb-safe md:hidden"
+        >
         {TABS.map((t) => (
           <button
             key={t.id}
@@ -511,6 +515,7 @@ function PageContent() {
           </button>
         ))}
       </nav>
+      )}
     </main>
   );
 }

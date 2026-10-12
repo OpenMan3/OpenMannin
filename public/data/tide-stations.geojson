@@ -1,1 +1,181 @@
-{"type":"FeatureCollection","name":"tide-stations","properties":{"generated":"2026-10-04T13:56:28.423Z","source":"https://www.gov.im/media/1363407/ch-21-physical-environment.pdf","sourceVerified":"2018-10-01","licence":"OGL-IoM","caveats":["Positions are the 2018 MMEA publication; gauges may have been relocated or re-surveyed since.","Vertical datums differ by gauge. Port Erin's gauge datum is +6.32 m relative to Douglas02 because it is a bubbler system referenced through a mid-tide pressure outlet; the other five are at 0.00 m.","Tidal range and tidal characteristic figures are NOT included: those in MMEA are supplied by the Proudman Institute under separate terms.","MMEA Figure 14 is captioned 'Laxey not currently installed', so Laxey appears in no gauge list here even though a weather station of that name exists."],"excludedSource":"https://www.gov.im/","licenceId":"OGL-IoM","sourceId":"mea","licenceUrl":"https://www.gov.im/about-this-site/open-government-licence/"},"features":[{"type":"Feature","id":"tide-gauge/douglas","geometry":{"type":"Point","coordinates":[-4.4725,54.147222]},"properties":{"name":"Douglas","kind":"tide-gauge","latitudeDms":"54°08'50\"N","longitudeDms":"4°28'21\"W","verticalDatum":"Douglas02","tideGaugeDatumM":0,"tideGaugeDatumNote":"Mid-tide sensor level","admiraltyChartDatumM":-3.77,"operator":"Isle of Man Department of Infrastructure","coordGrade":"A","coordSource":"Surveyed gauge position published in MMEA Chapter 2.1 (IoM Government, Open Government Licence), transcribed from the tide-gauge table.","source":"https://www.gov.im/media/1363407/ch-21-physical-environment.pdf","licence":"OGL-IoM","sourceVerified":"2018-10-01"}},{"type":"Feature","id":"tide-gauge/ramsey","geometry":{"type":"Point","coordinates":[-4.371944,54.318611]},"properties":{"name":"Ramsey","kind":"tide-gauge","latitudeDms":"54°19'07\"N","longitudeDms":"4°22'19\"W","verticalDatum":"Douglas02","tideGaugeDatumM":0,"tideGaugeDatumNote":"Mid-tide sensor level","admiraltyChartDatumM":-3.94,"operator":"Isle of Man Department of Infrastructure","coordGrade":"A","coordSource":"Surveyed gauge position published in MMEA Chapter 2.1 (IoM Government, Open Government Licence), transcribed from the tide-gauge table.","source":"https://www.gov.im/media/1363407/ch-21-physical-environment.pdf","licence":"OGL-IoM","sourceVerified":"2018-10-01"}},{"type":"Feature","id":"tide-gauge/peel","geometry":{"type":"Point","coordinates":[-4.695278,54.226389]},"properties":{"name":"Peel","kind":"tide-gauge","latitudeDms":"54°13'35\"N","longitudeDms":"4°41'43\"W","verticalDatum":"Douglas02","tideGaugeDatumM":0,"tideGaugeDatumNote":"Mid-tide sensor level","admiraltyChartDatumM":-3.03,"operator":"Isle of Man Department of Infrastructure","coordGrade":"A","coordSource":"Surveyed gauge position published in MMEA Chapter 2.1 (IoM Government, Open Government Licence), transcribed from the tide-gauge table.","source":"https://www.gov.im/media/1363407/ch-21-physical-environment.pdf","licence":"OGL-IoM","sourceVerified":"2018-10-01"}},{"type":"Feature","id":"tide-gauge/port-erin","geometry":{"type":"Point","coordinates":[-4.766944,54.085]},"properties":{"name":"Port Erin","kind":"tide-gauge","latitudeDms":"54°05'06\"N","longitudeDms":"4°46'01\"W","verticalDatum":"Douglas02","tideGaugeDatumM":6.32,"tideGaugeDatumNote":"Mid-tide pressure outlet +0.01 m (re-Douglas02)","admiraltyChartDatumM":-3.03,"operator":"Isle of Man Department of Infrastructure","coordGrade":"A","coordSource":"Surveyed gauge position published in MMEA Chapter 2.1 (IoM Government, Open Government Licence), transcribed from the tide-gauge table.","source":"https://www.gov.im/media/1363407/ch-21-physical-environment.pdf","licence":"OGL-IoM","sourceVerified":"2018-10-01"}},{"type":"Feature","id":"tide-gauge/port-st-mary","geometry":{"type":"Point","coordinates":[-4.732778,54.070833]},"properties":{"name":"Port St Mary","kind":"tide-gauge","latitudeDms":"54°04'15\"N","longitudeDms":"4°43'58\"W","verticalDatum":"Douglas02","tideGaugeDatumM":0,"tideGaugeDatumNote":"Mid-tide sensor level","admiraltyChartDatumM":-3.32,"operator":"Isle of Man Department of Infrastructure","coordGrade":"A","coordSource":"Surveyed gauge position published in MMEA Chapter 2.1 (IoM Government, Open Government Licence), transcribed from the tide-gauge table.","source":"https://www.gov.im/media/1363407/ch-21-physical-environment.pdf","licence":"OGL-IoM","sourceVerified":"2018-10-01"}},{"type":"Feature","id":"tide-gauge/castletown","geometry":{"type":"Point","coordinates":[-4.648056,54.072778]},"properties":{"name":"Castletown","kind":"tide-gauge","latitudeDms":"54°04'22\"N","longitudeDms":"4°38'53\"W","verticalDatum":"Douglas02","tideGaugeDatumM":0,"tideGaugeDatumNote":"Mid-tide sensor level","admiraltyChartDatumM":-3.87,"operator":"Isle of Man Department of Infrastructure","coordGrade":"A","coordSource":"Surveyed gauge position published in MMEA Chapter 2.1 (IoM Government, Open Government Licence), transcribed from the tide-gauge table.","source":"https://www.gov.im/media/1363407/ch-21-physical-environment.pdf","licence":"OGL-IoM","sourceVerified":"2018-10-01"}}]}
+{
+  "type": "FeatureCollection",
+  "name": "tide-stations",
+  "properties": {
+    "generated": "2026-10-12T01:40:42.970Z",
+    "source": "https://www.gov.im/media/1363407/ch-21-physical-environment.pdf",
+    "sourceVerified": "2018-10-01",
+    "licence": "OGL-IoM",
+    "caveats": [
+      "Positions are the 2018 MMEA publication; gauges may have been relocated or re-surveyed since.",
+      "Vertical datums differ by gauge. Port Erin's gauge datum is +6.32 m relative to Douglas02 because it is a bubbler system referenced through a mid-tide pressure outlet; the other five are at 0.00 m.",
+      "Tidal range and tidal characteristic figures are NOT included: those in MMEA are supplied by the Proudman Institute under separate terms.",
+      "MMEA Figure 14 is captioned 'Laxey not currently installed', so Laxey appears in no gauge list here even though a weather station of that name exists."
+    ],
+    "excludedSource": "https://www.gov.im/"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "tide-gauge/douglas",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.4725,
+          54.147222
+        ]
+      },
+      "properties": {
+        "name": "Douglas",
+        "kind": "tide-gauge",
+        "latitudeDms": "54°08'50\"N",
+        "longitudeDms": "4°28'21\"W",
+        "verticalDatum": "Douglas02",
+        "tideGaugeDatumM": 0,
+        "tideGaugeDatumNote": "Mid-tide sensor level",
+        "admiraltyChartDatumM": -3.77,
+        "operator": "Isle of Man Department of Infrastructure",
+        "coordGrade": "A",
+        "coordSource": "Surveyed gauge position published in MMEA Chapter 2.1 (IoM Government, Open Government Licence), transcribed from the tide-gauge table.",
+        "source": "https://www.gov.im/media/1363407/ch-21-physical-environment.pdf",
+        "licence": "OGL-IoM",
+        "sourceVerified": "2018-10-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "tide-gauge/ramsey",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.371944,
+          54.318611
+        ]
+      },
+      "properties": {
+        "name": "Ramsey",
+        "kind": "tide-gauge",
+        "latitudeDms": "54°19'07\"N",
+        "longitudeDms": "4°22'19\"W",
+        "verticalDatum": "Douglas02",
+        "tideGaugeDatumM": 0,
+        "tideGaugeDatumNote": "Mid-tide sensor level",
+        "admiraltyChartDatumM": -3.94,
+        "operator": "Isle of Man Department of Infrastructure",
+        "coordGrade": "A",
+        "coordSource": "Surveyed gauge position published in MMEA Chapter 2.1 (IoM Government, Open Government Licence), transcribed from the tide-gauge table.",
+        "source": "https://www.gov.im/media/1363407/ch-21-physical-environment.pdf",
+        "licence": "OGL-IoM",
+        "sourceVerified": "2018-10-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "tide-gauge/peel",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.695278,
+          54.226389
+        ]
+      },
+      "properties": {
+        "name": "Peel",
+        "kind": "tide-gauge",
+        "latitudeDms": "54°13'35\"N",
+        "longitudeDms": "4°41'43\"W",
+        "verticalDatum": "Douglas02",
+        "tideGaugeDatumM": 0,
+        "tideGaugeDatumNote": "Mid-tide sensor level",
+        "admiraltyChartDatumM": -3.03,
+        "operator": "Isle of Man Department of Infrastructure",
+        "coordGrade": "A",
+        "coordSource": "Surveyed gauge position published in MMEA Chapter 2.1 (IoM Government, Open Government Licence), transcribed from the tide-gauge table.",
+        "source": "https://www.gov.im/media/1363407/ch-21-physical-environment.pdf",
+        "licence": "OGL-IoM",
+        "sourceVerified": "2018-10-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "tide-gauge/port-erin",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.766944,
+          54.085
+        ]
+      },
+      "properties": {
+        "name": "Port Erin",
+        "kind": "tide-gauge",
+        "latitudeDms": "54°05'06\"N",
+        "longitudeDms": "4°46'01\"W",
+        "verticalDatum": "Douglas02",
+        "tideGaugeDatumM": 6.32,
+        "tideGaugeDatumNote": "Mid-tide pressure outlet +0.01 m (re-Douglas02)",
+        "admiraltyChartDatumM": -3.03,
+        "operator": "Isle of Man Department of Infrastructure",
+        "coordGrade": "A",
+        "coordSource": "Surveyed gauge position published in MMEA Chapter 2.1 (IoM Government, Open Government Licence), transcribed from the tide-gauge table.",
+        "source": "https://www.gov.im/media/1363407/ch-21-physical-environment.pdf",
+        "licence": "OGL-IoM",
+        "sourceVerified": "2018-10-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "tide-gauge/port-st-mary",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.732778,
+          54.070833
+        ]
+      },
+      "properties": {
+        "name": "Port St Mary",
+        "kind": "tide-gauge",
+        "latitudeDms": "54°04'15\"N",
+        "longitudeDms": "4°43'58\"W",
+        "verticalDatum": "Douglas02",
+        "tideGaugeDatumM": 0,
+        "tideGaugeDatumNote": "Mid-tide sensor level",
+        "admiraltyChartDatumM": -3.32,
+        "operator": "Isle of Man Department of Infrastructure",
+        "coordGrade": "A",
+        "coordSource": "Surveyed gauge position published in MMEA Chapter 2.1 (IoM Government, Open Government Licence), transcribed from the tide-gauge table.",
+        "source": "https://www.gov.im/media/1363407/ch-21-physical-environment.pdf",
+        "licence": "OGL-IoM",
+        "sourceVerified": "2018-10-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "tide-gauge/castletown",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.648056,
+          54.072778
+        ]
+      },
+      "properties": {
+        "name": "Castletown",
+        "kind": "tide-gauge",
+        "latitudeDms": "54°04'22\"N",
+        "longitudeDms": "4°38'53\"W",
+        "verticalDatum": "Douglas02",
+        "tideGaugeDatumM": 0,
+        "tideGaugeDatumNote": "Mid-tide sensor level",
+        "admiraltyChartDatumM": -3.87,
+        "operator": "Isle of Man Department of Infrastructure",
+        "coordGrade": "A",
+        "coordSource": "Surveyed gauge position published in MMEA Chapter 2.1 (IoM Government, Open Government Licence), transcribed from the tide-gauge table.",
+        "source": "https://www.gov.im/media/1363407/ch-21-physical-environment.pdf",
+        "licence": "OGL-IoM",
+        "sourceVerified": "2018-10-01"
+      }
+    }
+  ]
+}

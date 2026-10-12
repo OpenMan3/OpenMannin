@@ -18,7 +18,6 @@ import { ProgressHUD } from "@/components/ProgressHUD";
 
 
 
-import { MapControls } from "@/components/MapControls";
 import {
   AlertIcon,
   CloseIcon,
@@ -48,8 +47,6 @@ const ASIDE_DEFAULT = 320;
 const ASIDE_KEY = "om:asideWidth";
 /** Persisted 3D-terrain preference. */
 const TERRAIN_KEY = "om:terrain3d";
-/** Persisted OpenSeaMap seamark-overlay preference (off by default). */
-const SEAMARKS_KEY = "om:seamarks";
 
 export default function Page() {
   return <PageContent />;
@@ -63,15 +60,6 @@ function PageContent() {
     if (typeof window === "undefined") return false;
     try {
       return localStorage.getItem(TERRAIN_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
-  /** OpenSeaMap seamark overlay, remembered between visits. */
-  const [seamarks, setSeamarks] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return localStorage.getItem(SEAMARKS_KEY) === "1";
     } catch {
       return false;
     }
@@ -202,15 +190,6 @@ function PageContent() {
       /* private mode: the preference simply does not persist */
     }
   }, [terrain3d]);
-
-  // Persist the OpenSeaMap overlay choice too.
-  useEffect(() => {
-    try {
-      localStorage.setItem(SEAMARKS_KEY, seamarks ? "1" : "0");
-    } catch {
-      /* private mode: the preference simply does not persist */
-    }
-  }, [seamarks]);
 
   // Drag the sidebar's right edge to resize it (desktop only).
   const startResize = useCallback(
@@ -354,7 +333,7 @@ function PageContent() {
 
       {/* ---- sidebar / drawer ---- */}
       <aside
-        className={`fixed top-0 bottom-12 left-0 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col border-r border-line bg-page shadow-2xl transition-transform duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] ${
+        className={`fixed top-4 bottom-16 left-4 right-4 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col rounded-3xl border border-line bg-page shadow-[0_8px_32px_rgba(0,0,0,0.18)] transition-transform duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] md:rounded-none md:border-r md:border-line md:bg-page ${
           panelOpen ? "md:w-[var(--aside-w)]" : "md:w-12"
         } ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
         style={{ ["--aside-w" as string]: `${asideWidth}px` }}
@@ -422,6 +401,8 @@ function PageContent() {
                   onToggle={toggle}
                   onToggleAll={setAll}
                   onShowDetail={setDetail}
+                  terrain3d={terrain3d}
+                  onTerrainChange={setTerrain3d}
                 />
               )}
               {tab === "browse" && (
@@ -467,14 +448,13 @@ function PageContent() {
           onMapReady={setMap}
           insetBottom={nav?.destination && nav.routeStatus === "ready" ? sheetInset + 68 : 0}
           terrain3d={terrain3d}
-          seamarks={seamarks}
         />
 
         <FeaturePopup picked={picked} onClose={() => setPicked(null)} onLocate={centreOn} />
 
         {/* Map overlays (always visible when map is ready) */}
         {map && (
-          <div className="absolute right-3 top-[150px] z-20 flex flex-col items-end gap-2 md:top-[76px]">
+          <div className="absolute right-4 top-[120px] z-20 flex flex-col items-end gap-2 md:top-[80px]">
             {nav && <LocateButton state={nav} onToggle={toggleLocate} />}
             {nav && nav.locationStatus === "active" && (
               <FollowModeButton followMode={nav.followMode} onToggle={setFollowMode} />
@@ -482,12 +462,6 @@ function PageContent() {
             {nav && nav.navigating && (
               <VoiceButton muted={nav.voiceMuted} onToggle={setVoiceMuted} />
             )}
-            <MapControls
-              terrain3d={terrain3d}
-              onTerrainChange={setTerrain3d}
-              seamarks={seamarks}
-              onSeamarksChange={setSeamarks}
-            />
           </div>
         )}
 
@@ -519,7 +493,7 @@ function PageContent() {
       {/* ---- mobile bottom tab bar ---- */}
       <nav
         aria-label="Primary sections"
-        className="absolute inset-x-0 bottom-0 z-50 flex min-h-12 items-stretch border-t border-line bg-page/95 backdrop-blur pb-safe md:hidden"
+        className="fixed inset-x-4 bottom-4 z-50 flex min-h-12 items-stretch rounded-2xl border border-line bg-page/95 backdrop-blur pb-safe md:hidden"
       >
         {TABS.map((t) => (
           <button

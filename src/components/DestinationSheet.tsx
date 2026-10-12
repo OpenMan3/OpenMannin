@@ -152,10 +152,10 @@ export function DestinationSheet({
     return (
       <div
         ref={insetRef}
-        className="om-sheet-in absolute inset-x-0 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 p-3 sm:bottom-3 sm:inset-x-auto sm:right-3 sm:w-[min(24rem,calc(100vw-1.5rem))]"
+        className="om-sheet-in fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 p-0 sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))]"
       >
-        <div role="dialog" aria-label={`Directions to ${destination.title}`} className="card overflow-hidden">
-          <div className="flex items-center justify-between gap-2 px-3 py-2">
+        <div role="dialog" aria-label={`Directions to ${destination.title}`} className="card-floating overflow-hidden">
+          <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wide text-pin uppercase">
                 <span aria-hidden="true" className="inline-block h-2 w-2 rounded-full border border-white/80" />
@@ -203,15 +203,15 @@ export function DestinationSheet({
   return (
     <div
       ref={insetRef}
-      className="om-sheet-in absolute inset-x-0 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 p-3 sm:bottom-3 sm:inset-x-auto sm:right-3 sm:w-[min(24rem,calc(100vw-1.5rem))]"
+      className="om-sheet-in fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 p-0 sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))]"
     >
       <div
         role="dialog"
         aria-label={`Directions to ${destination.title}`}
-        className="card overflow-hidden"
+        className="card-floating overflow-hidden"
       >
         {/* Pin identity */}
-        <div className="flex items-start justify-between gap-2 border-b border-line px-3 py-2.5">
+        <div className="flex items-start justify-between gap-2 border-b border-line px-4 py-3">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wide text-pin uppercase">
               <span

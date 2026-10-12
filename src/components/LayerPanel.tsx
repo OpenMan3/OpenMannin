@@ -38,7 +38,7 @@ import {
   orderSubcategories,
 } from "@/lib/taxonomy";
 import { buildLayerTree } from "@/lib/layer-tree";
-import { InfoIcon } from "./Icons";
+import { InfoIcon, TerrainIcon } from "./Icons";
 
 const GROUP_LABELS: Record<LayerGroup, string> = {
   geography: "Geography",
@@ -205,6 +205,8 @@ export function LayerPanel({
   onToggle,
   onToggleAll,
   onShowDetail,
+  terrain3d,
+  onTerrainChange,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
@@ -219,7 +221,10 @@ export function LayerPanel({
   /** Flip every layer on or off in one switch. */
   onToggleAll?: (on: boolean) => void;
   /** Open the detail drawer for a layer. */
-  onShowDetail?: (layer: LayerDef) => void;
+  onShowDetail?: (LayerDef: LayerDef) => void;
+  /** 3D terrain state. */
+  terrain3d: boolean;
+  onTerrainChange: (on: boolean) => void;
 }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(() => loadCollapsed());
 
@@ -269,6 +274,24 @@ export function LayerPanel({
       </div>
 
       <div className="scroll-thin flex-1 overflow-y-auto">
+        {/* Map Display section */}
+        <section className="border-b border-line-soft">
+          <div className="px-3 py-2">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={terrain3d}
+                onChange={(e) => onTerrainChange(e.target.checked)}
+                className="h-4 w-4 shrink-0 cursor-pointer accent-accent"
+              />
+              <span className="flex items-center gap-1.5">
+                <TerrainIcon className="h-4 w-4 text-accent" aria-hidden="true" />
+                <span className="text-[13px] text-ink">3D Terrain</span>
+              </span>
+            </label>
+          </div>
+        </section>
+
         {CATEGORY_ORDER.filter((c) => byCategory.has(c)).map((category) => {
           const subs = byCategory.get(category)!;
           const catDefs = [...subs.values()].flat();

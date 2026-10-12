@@ -89,7 +89,7 @@ export function GlobalSearch({
   return (
     <div ref={rootRef} className="relative">
       <div className="group relative">
-        <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3 group-focus-within:text-accent" />
+        <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3 group-focus-within:text-accent" />
         <input
           ref={inputRef}
           value={query}
@@ -101,16 +101,16 @@ export function GlobalSearch({
           onKeyDown={onKeyDown}
           placeholder="Search all layers…"
           aria-label="Search across all layers"
-          className="w-full rounded-full border border-line bg-panel py-2.5 pl-10 pr-4 text-[13px] text-ink placeholder:text-ink-3 shadow-sm transition-shadow focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          className="w-full rounded-full bg-panel py-3 pl-11 pr-4 text-[13px] text-ink placeholder:text-ink-3 shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-shadow focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
       </div>
 
       {showResults && (
-        <div className="scroll-thin absolute z-30 mt-1.5 w-full overflow-y-auto rounded-xl border border-line bg-panel shadow-2xl">
-          {error && <p className="p-2 text-[12px] text-danger">Search index failed: {error}</p>}
-          {!error && !index && <p className="p-2 text-[12px] text-ink-3">Loading index…</p>}
+        <div className="scroll-thin absolute z-30 mt-2 w-full overflow-hidden rounded-2xl bg-panel shadow-[0_8px_32px_rgba(0,0,0,0.18)]">
+          {error && <p className="p-3 text-[12px] text-danger">Search index failed: {error}</p>}
+          {!error && !index && <p className="p-3 text-[12px] text-ink-3">Loading index…</p>}
           {!error && index && results.length === 0 && (
-            <p className="p-2 text-[12px] text-ink-3">No matches.</p>
+            <p className="p-3 text-[12px] text-ink-3">No matches.</p>
           )}
           {results.map((r, i) => (
             <button
@@ -118,7 +118,7 @@ export function GlobalSearch({
               type="button"
               onMouseEnter={() => setActive(i)}
               onClick={() => choose(r)}
-              className={`flex w-full items-baseline justify-between gap-2 px-3.5 py-2.5 text-left text-[12px] ${
+              className={`flex w-full items-baseline justify-between gap-2 px-4 py-2.5 text-left text-[12px] ${
                 i === active
                   ? "bg-raised text-accent"
                   : "text-ink hover:bg-raised/60"

@@ -73,7 +73,7 @@ export function LayerDetailDrawer({
       <div
         role="dialog"
         aria-label={`About ${layer.label}`}
-        className="om-sheet-in fixed inset-x-0 bottom-0 z-50 flex max-h-[82vh] flex-col rounded-t-2xl border border-line bg-panel shadow-2xl sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:w-[min(24rem,92vw)] sm:rounded-none sm:rounded-l-2xl"
+        className="om-sheet-in fixed inset-x-4 bottom-4 z-50 flex max-h-[82vh] flex-col rounded-3xl bg-panel shadow-[0_8px_32px_rgba(0,0,0,0.18)] sm:inset-y-4 sm:left-auto sm:right-4 sm:max-h-none sm:w-[min(28rem,calc(100vw-2rem))] sm:rounded-3xl"
       >
         {/* Header */}
         <div className="flex items-start justify-between gap-2 border-b border-line px-4 py-3">

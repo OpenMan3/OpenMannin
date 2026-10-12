@@ -68,17 +68,17 @@ export function ProgressHUD({ state }: ProgressHUDProps) {
   const overLimit = showLimit && speedMph !== null && speedLimitKmh !== null && speedMph > kmhToMph(speedLimitKmh) + 2;
 
   return (
-    <div className="pointer-events-none absolute top-4 left-4 z-20 flex flex-col gap-2">
+    <div className="pointer-events-none fixed top-4 left-4 z-20 flex flex-col gap-2 sm:top-auto sm:right-4 sm:bottom-4 sm:left-auto">
       {/* Off-route warning */}
       {offRoute && (
-        <div className="flex items-center gap-2 rounded-full border border-warn/40 bg-warn/10 px-3 py-1.5 text-[11px] font-medium text-warn shadow-md backdrop-blur">
+        <div className="flex items-center gap-2 rounded-2xl border border-warn/40 bg-warn/10 px-4 py-2 text-[11px] font-medium text-warn shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur">
           <TurnIcon className="h-4 w-4" />
           <span>{routeStatus === "recalculating" ? "Off route — recalculating…" : "Off route — recalculate when convenient"}</span>
         </div>
       )}
 
       {/* Main progress card */}
-      <div className="flex items-center gap-3 rounded-full border border-line bg-panel/95 pl-4 pr-2 py-2 text-[11px] shadow-lg backdrop-blur pointer-events-auto">
+      <div className="flex items-center gap-3 rounded-2xl border border-line bg-panel/95 px-4 py-2.5 text-[11px] shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur pointer-events-auto">
         {/* Distance remaining */}
         <div className="flex flex-col items-end min-w-[4rem]">
           <span className="text-ink-3">remaining</span>

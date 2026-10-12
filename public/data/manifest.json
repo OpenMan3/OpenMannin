@@ -8,7 +8,7 @@
       "file": "toponyms.geojson",
       "present": true,
       "features": 1253,
-      "bytes": 336240,
+      "bytes": 336337,
       "generated": "2026-10-12T01:38:01.822Z",
       "bbox": [
         -4.83767,
@@ -33,9 +33,9 @@
     "roads": {
       "file": "roads.geojson",
       "present": true,
-      "features": 21038,
-      "bytes": 7474254,
-      "generated": "2026-10-12T01:32:34.753Z",
+      "features": 21502,
+      "bytes": 6786073,
+      "generated": "2026-10-12T01:48:56.478Z",
       "bbox": [
         -4.828746,
         54.045986,
@@ -47,8 +47,8 @@
       "file": "bridges.geojson",
       "present": true,
       "features": 558,
-      "bytes": 155095,
-      "generated": "2026-10-12T01:32:46.806Z",
+      "bytes": 135379,
+      "generated": "2026-10-12T01:49:44.836Z",
       "bbox": [
         -4.819093,
         54.049728,
@@ -164,7 +164,7 @@
       "file": "postcodes.geojson",
       "present": true,
       "features": 1414,
-      "bytes": 222266,
+      "bytes": 222363,
       "generated": "2026-10-12T01:43:26.431Z",
       "bbox": [
         -4.79238,
@@ -190,8 +190,8 @@
       "file": "railways.geojson",
       "present": true,
       "features": 284,
-      "bytes": 118529,
-      "generated": "2026-10-12T01:32:39.075Z",
+      "bytes": 116639,
+      "generated": "2026-10-12T01:49:24.126Z",
       "bbox": [
         -4.758286,
         54.077822,
@@ -216,8 +216,8 @@
       "file": "traffic-signals.geojson",
       "present": true,
       "features": 155,
-      "bytes": 44828,
-      "generated": "2026-10-12T01:32:58.667Z",
+      "bytes": 35456,
+      "generated": "2026-10-12T01:49:48.548Z",
       "bbox": [
         -4.763987,
         54.075226,
@@ -229,7 +229,7 @@
       "file": "subsea-cables.geojson",
       "present": true,
       "features": 5,
-      "bytes": 9168,
+      "bytes": 6177,
       "generated": "2026-10-12T01:40:41.796Z",
       "bbox": [
         -4.84492,
@@ -242,7 +242,7 @@
       "file": "cable-landings.geojson",
       "present": true,
       "features": 4,
-      "bytes": 3843,
+      "bytes": 3130,
       "generated": "2026-10-12T01:40:42.748Z",
       "bbox": [
         -4.6957105,
@@ -255,7 +255,7 @@
       "file": "ports.geojson",
       "present": true,
       "features": 27,
-      "bytes": 79996,
+      "bytes": 32815,
       "generated": "2026-10-12T01:40:47.132Z",
       "bbox": [
         -4.803445,
@@ -268,7 +268,7 @@
       "file": "satellite-stations.geojson",
       "present": true,
       "features": 2,
-      "bytes": 6940,
+      "bytes": 6208,
       "generated": "2026-10-12T01:42:13.029Z",
       "bbox": [
         -4.623871,
@@ -281,7 +281,7 @@
       "file": "dumpsites.geojson",
       "present": true,
       "features": 2,
-      "bytes": 7536,
+      "bytes": 6416,
       "generated": "2026-10-12T01:40:43.144Z",
       "bbox": [
         -5.43911,
@@ -294,7 +294,7 @@
       "file": "seamarks.geojson",
       "present": true,
       "features": 106,
-      "bytes": 31646,
+      "bytes": 31742,
       "generated": "2026-10-12T01:38:04.746Z",
       "bbox": [
         -5.12208,
@@ -333,7 +333,7 @@
       "file": "offshore-wind.geojson",
       "present": true,
       "features": 1,
-      "bytes": 3799,
+      "bytes": 3390,
       "generated": "2026-10-12T01:40:43.307Z",
       "bbox": [
         -4.13037,
@@ -359,7 +359,7 @@
       "file": "power.geojson",
       "present": true,
       "features": 107,
-      "bytes": 148989,
+      "bytes": 85170,
       "generated": "2026-10-12T01:42:12.866Z",
       "bbox": [
         -4.76788,
@@ -450,7 +450,7 @@
       "file": "tide-stations.geojson",
       "present": true,
       "features": 6,
-      "bytes": 6627,
+      "bytes": 5167,
       "generated": "2026-10-12T01:40:42.970Z",
       "bbox": [
         -4.766944,

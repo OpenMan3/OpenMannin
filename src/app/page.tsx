@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { GAPS, LAYERS } from "@/lib/layers";
-import { MapView, type BasemapId, type PickedFeature } from "@/components/MapView";
+import { MapView, type PickedFeature } from "@/components/MapView";
 import { LayerPanel } from "@/components/LayerPanel";
 import { LayerDetailDrawer } from "@/components/LayerDetailDrawer";
 import { FeaturePopup } from "@/components/FeaturePopup";
@@ -55,7 +55,6 @@ export default function Page() {
 function PageContent() {
   const [tab, setTab] = useState<Tab>("layers");
   const [picked, setPicked] = useState<PickedFeature | null>(null);
-  const [basemap, setBasemap] = useState<BasemapId>("openfreemap");
   /** 3D terrain + camera pitch, remembered between visits. */
   const [terrain3d, setTerrain3d] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -359,14 +358,6 @@ function PageContent() {
           >
             <CloseIcon className="h-4 w-4" />
           </button>
-          {panelOpen && (
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-bold tracking-tight">
-                Open<span className="text-accent">Mannin</span>
-              </div>
-              <div className="truncate text-[10px] text-ink-3">Isle of Man infrastructure map</div>
-            </div>
-          )}
         </div>
 
         {panelOpen && (
@@ -384,7 +375,7 @@ function PageContent() {
                   key={t.id}
                   type="button"
                   onClick={() => setTab(t.id)}
-                  className={`flex-1 px-1 py-2 text-[11px] font-medium transition-colors ${
+                  className={`flex-1 px-1 py-1.5 text-[11px] font-medium transition-colors ${
                     tab === t.id
                       ? "border-b-2 border-accent text-accent"
                       : "text-ink-3 hover:text-ink-2"
@@ -419,25 +410,6 @@ function PageContent() {
               {tab === "gaps" && <GapsPanel gaps={GAPS} />}
               {tab === "sources" && <TransparencyPanel />}
             </div>
-
-            <div className="shrink-0 border-t border-line px-3 py-2">
-              <label className="flex items-center justify-between gap-2 text-[11px] text-ink-3">
-                Basemap
-                <select
-                  value={basemap}
-                  onChange={(e) => setBasemap(e.target.value as BasemapId)}
-                  className="rounded border border-line bg-panel px-1.5 py-1 text-[11px] text-ink focus:border-accent focus:outline-none"
-                >
-                  <option value="opentopo">OpenTopoMap</option>
-                  <option value="openfreemap">OpenFreeMap (Liberty)</option>
-                  <option value="openfreemap-dark">OpenFreeMap (Dark)</option>
-                </select>
-              </label>
-              <p className="mt-1 text-[10px] leading-snug text-ink-3">
-                OpenTopoMap (CC-BY-SA) and OpenFreeMap (ODbL). The OpenStreetMap
-                raster tiles are not offered — their usage policy is incompatible.
-              </p>
-            </div>
           </>
         )}
 
@@ -461,7 +433,7 @@ function PageContent() {
         <MapView
           layers={LAYERS}
           enabled={enabled}
-          basemap={basemap}
+          basemap="opentopo"
           onPick={setPicked}
           onMissing={onMissing}
           onFeedErrors={onFeedErrors}
@@ -475,20 +447,15 @@ function PageContent() {
         <FeaturePopup picked={picked} onClose={() => setPicked(null)} onLocate={centreOn} />
 
         {/* Map overlays (always visible when map is ready) */}
-        {map && (
-          <div className="absolute right-3 top-[150px] z-20 flex flex-col items-end gap-2 md:top-[76px]">
-            {nav && <LocateButton state={nav} onToggle={toggleLocate} />}
-            {nav && nav.locationStatus === "active" && (
-              <FollowModeButton followMode={nav.followMode} onToggle={setFollowMode} />
-            )}
-            <MapControls
-              basemap={basemap}
-              onBasemapChange={setBasemap}
-              terrain3d={terrain3d}
-              onTerrainChange={setTerrain3d}
-            />
-          </div>
-        )}
+{map && (
+            <div className="absolute right-3 top-[150px] z-20 flex flex-col items-end gap-2 md:top-[76px]">
+              {nav && <LocateButton state={nav} onToggle={toggleLocate} />}
+              {nav && nav.locationStatus === "active" && (
+                <FollowModeButton followMode={nav.followMode} onToggle={setFollowMode} />
+              )}
+              <MapControls terrain3d={terrain3d} onTerrainChange={setTerrain3d} />
+            </div>
+          )}
 
         {nav && <ProgressHUD state={nav} />}
         {nav && (

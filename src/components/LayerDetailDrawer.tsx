@@ -91,8 +91,6 @@ export function LayerDetailDrawer({
 
         {/* Body */}
         <div className="scroll-thin min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
-          <p className="text-[12px] leading-relaxed text-ink-2">{layer.description}</p>
-
           <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-[11px]">
             <div>
               <dt className="label">Confidence</dt>

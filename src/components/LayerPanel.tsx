@@ -34,7 +34,6 @@ import { LICENCES } from "@/lib/licences";
 import {
   CATEGORY_ORDER,
   CATEGORY_LABELS,
-  CATEGORY_BLURBS,
   SUBCATEGORY_LABELS,
   orderSubcategories,
 } from "@/lib/taxonomy";
@@ -247,16 +246,13 @@ export function LayerPanel({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-line px-3 py-2.5">
+      <div className="border-b border-line px-3 py-2">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-ink">Layers</h2>
           <span className="text-xs text-ink-3">
             {onCount} of {layers.length} shown
           </span>
         </div>
-        <p className="mt-1 text-[11px] leading-snug text-ink-3">
-          Grade A is operator or government data. C is a single unconfirmed source.
-        </p>
         {onToggleAll && (
           <button
             type="button"
@@ -289,13 +285,8 @@ export function LayerPanel({
               >
                 <span className="flex items-center gap-1.5">
                   <span className="text-accent">{catExpanded ? "−" : "+"}</span>
-                  <span className="flex flex-col">
-                    <span className="text-[12px] font-bold tracking-wide text-ink uppercase">
-                      {CATEGORY_LABELS[category]}
-                    </span>
-                    <span className="text-[10px] font-normal normal-case text-ink-3">
-                      {CATEGORY_BLURBS[category]}
-                    </span>
+                  <span className="text-[12px] font-bold tracking-wide text-ink uppercase">
+                    {CATEGORY_LABELS[category]}
                   </span>
                 </span>
                 <span className="text-[10px] text-ink-3">

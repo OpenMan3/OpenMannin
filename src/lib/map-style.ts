@@ -1,22 +1,13 @@
 /**
  * Basemap definitions and style creation.
  *
- * Every option is genuinely open-licensed and self-hosting-friendly: no app
- * in this list hits the OpenStreetMap Foundation's own tile servers, whose
- * tile usage policy requires a distinctive User-Agent, caching and
- * no bulk downloading, and which forbids the kind of always-on viewer a map
- * app is. The OpenStreetMap raster basemap was removed for exactly that
- * reason; the OpenStreetMap DATABASE (ODbL) still underpins every other
- * option here, which is legitimate and credited.
- *
- * Remaining options:
- *  - OpenTopoMap: raster hill-shaded tiles, keyless, CORS-open, CC-BY-SA.
- *  - OpenFreeMap Liberty / dark: keyless vector styles on OSM data (ODbL).
+ * OpenTopoMap: raster hill-shaded tiles, keyless, CORS-open, CC-BY-SA.
+ * The OpenStreetMap DATABASE (ODbL) underpins the data.
  */
 
 import type { StyleSpecification, Map as MapLibreMap } from "maplibre-gl";
 
-export type BasemapId = "opentopo" | "openfreemap" | "openfreemap-dark";
+export type BasemapId = "opentopo";
 
 export const BASEMAPS: Record<BasemapId, BasemapDef> = {
   "opentopo": {
@@ -29,20 +20,6 @@ export const BASEMAPS: Record<BasemapId, BasemapDef> = {
     attribution:
       "Map data &copy; OpenStreetMap contributors, SRTM | Map style &copy; OpenTopoMap (CC-BY-SA)",
     maxzoom: 17,
-  },
-  "openfreemap": {
-    kind: "style",
-    styleUrl: "https://tiles.openfreemap.org/styles/liberty",
-    attribution:
-      "Map data &copy; OpenStreetMap contributors | Map style &copy; OpenFreeMap (ODbL)",
-    maxzoom: 16,
-  },
-  "openfreemap-dark": {
-    kind: "style",
-    styleUrl: "https://tiles.openfreemap.org/styles/dark",
-    attribution:
-      "Map data &copy; OpenStreetMap contributors | Map style &copy; OpenFreeMap (ODbL)",
-    maxzoom: 16,
   },
 };
 

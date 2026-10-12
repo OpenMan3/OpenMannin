@@ -35,7 +35,7 @@ import {
 } from "@/lib/map-live";
 import { attachMapInteractions, attachWebGLHandlers, setMapLibreWorkerUrl } from "@/lib/map-interactions";
 import { type NavigationState } from "@/lib/navigation/host";
-import { Map as MapLibreMap } from "maplibre-gl";
+import { AttributionControl, Map as MapLibreMap } from "maplibre-gl";
 
 export interface PickedFeature {
   layer: LayerDef;
@@ -282,7 +282,10 @@ export function MapView({
         zoom: initialView?.zoom ?? INITIAL_ZOOM,
         minZoom: 8,
         maxZoom: bm.maxzoom,
-        attributionControl: { compact: false } as const,
+        // Attribution is added manually at "top-left" below. The default
+        // bottom-right slot sits underneath the floating tab bar, and CSS
+        // cannot move a control between corners.
+        attributionControl: false,
         pitchWithRotate: false,
         dragRotate: false,
         style: initialStyle,
@@ -293,6 +296,17 @@ export function MapView({
       // mapRef.current; without this assignment they all silently no-op and the
       // map looks frozen at its first render.
       mapRef.current = map;
+
+      // Full (non-compact) attribution, top-left: clear of the bottom tab
+      // bar and the destination sheet. compact: false keeps the <details>
+      // expanded on every screen size instead of collapsing to an "i" button.
+      map.addControl(
+        new AttributionControl({
+          compact: false,
+          customAttribution: '<a href="https://maplibre.org/" target="_blank">MapLibre</a>',
+        }),
+        "top-left",
+      );
 
       map.addControl(new (await import("maplibre-gl")).NavigationControl({ visualizePitch: false, showZoom: false }), "top-right");
 

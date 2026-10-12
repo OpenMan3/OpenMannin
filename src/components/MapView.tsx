@@ -282,7 +282,7 @@ export function MapView({
         zoom: initialView?.zoom ?? INITIAL_ZOOM,
         minZoom: 8,
         maxZoom: bm.maxzoom,
-        attributionControl: { compact: false },
+        attributionControl: { compact: false } as const,
         pitchWithRotate: false,
         dragRotate: false,
         style: initialStyle,

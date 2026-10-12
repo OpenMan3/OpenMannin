@@ -64,7 +64,7 @@ function PageContent() {
       return false;
     }
   });
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
   /** Mobile: the drawer is slid in from the left, or closed. */
   const [mobileOpen, setMobileOpen] = useState(false);
   /** Desktop: resizable sidebar width, remembered between visits. */
@@ -310,16 +310,6 @@ function PageContent() {
     [ensureEnabled, centreOn],
   );
 
-  /** Mobile tab bar: open the drawer on that tab, or close it if already open. */
-  const openMobileTab = useCallback(
-    (id: Tab) => {
-      setPanelOpen(true);
-      setTab(id);
-      setMobileOpen((open) => !(open && tab === id));
-    },
-    [tab],
-  );
-
   return (
     <main className="flex h-dvh w-full overflow-hidden bg-page font-sans text-ink">
       {/* ---- drawer backdrop (mobile) ---- */}
@@ -366,35 +356,13 @@ function PageContent() {
           </button>
         </div>
 
-        {panelOpen && (
-          <>
-            <div className="shrink-0 border-b border-line px-3 py-2">
-              <GlobalSearch onSelect={searchSelect} />
-            </div>
+{panelOpen && (
+            <>
+              <div className="shrink-0 border-b border-line px-3 py-2">
+                <GlobalSearch onSelect={searchSelect} />
+              </div>
 
-            <nav
-              aria-label="Panel sections"
-              className="flex shrink-0 border-b border-line"
-            >
-              {TABS.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setTab(t.id)}
-                  aria-current={tab === t.id ? "page" : undefined}
-                  className={`flex-1 px-1 py-1.5 text-[11px] font-medium transition-colors ${
-                    tab === t.id
-                      ? "border-b-2 border-accent text-accent"
-                      : "text-ink-3 hover:text-ink-2"
-                  }`}
-                >
-                  <t.Icon className="mx-auto mb-0.5 h-4 w-4 md:hidden" />
-                  {t.label}
-                </button>
-              ))}
-            </nav>
-
-            <div className="min-h-0 flex-1">
+              <div className="min-h-0 flex-1">
               {tab === "layers" && (
                 <LayerPanel
                   layers={LAYERS}
@@ -494,27 +462,36 @@ function PageContent() {
         />
       </section>
 
-      {/* ---- mobile bottom tab bar (hidden when side panel is open) ---- */}
+{/* ---- unified bottom tab bar (always visible) ---- */}
       {!mobileOpen && (
         <nav
           aria-label="Primary sections"
-          className="fixed inset-x-4 bottom-4 z-50 flex min-h-12 items-stretch rounded-2xl border border-line bg-page/95 backdrop-blur pb-safe md:hidden"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 rounded-full border border-line bg-page/90 backdrop-blur-xl shadow-lg px-3 py-2 md:px-4 md:py-2"
         >
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => openMobileTab(t.id)}
-            aria-current={tab === t.id ? "page" : undefined}
-            className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors ${
-              tab === t.id ? "text-accent" : "text-ink-3 hover:text-ink-2"
-            }`}
-          >
-            <t.Icon className="h-5 w-5" />
-            <span>{t.label}</span>
-          </button>
-        ))}
-      </nav>
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => {
+                if (tab === t.id) {
+                  setPanelOpen(false);
+                } else {
+                  setTab(t.id);
+                  setPanelOpen(true);
+                }
+              }}
+              aria-current={tab === t.id ? "page" : undefined}
+              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                tab === t.id
+                  ? "bg-accent text-accent-ink shadow-md"
+                  : "text-ink-3 hover:bg-raised hover:text-ink"
+              }`}
+            >
+              <t.Icon className="h-5 w-5 shrink-0" />
+              <span className="hidden sm:inline">{t.label}</span>
+            </button>
+          ))}
+        </nav>
       )}
     </main>
   );

@@ -478,6 +478,7 @@ function PageContent() {
                 } else {
                   setTab(t.id);
                   setPanelOpen(true);
+                  setMobileOpen(true);
                 }
               }}
               aria-current={tab === t.id ? "page" : undefined}

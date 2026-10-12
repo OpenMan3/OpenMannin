@@ -19,6 +19,7 @@ import {
   createInitialStyle,
   applyRasterBasemap,
   applyTerrain,
+  applySeamarkOverlay,
   BASEMAPS,
   type BasemapId,
   INITIAL_CENTRE,
@@ -316,6 +317,7 @@ export function MapView({
       map.on("load", () => {
         readyRef.current = true;
         if (terrain3dRef.current) applyTerrain(map, true);
+        applySeamarkOverlay(map, true);
         void syncStaticLayers(map, layersRef.current, {
           enabledRef,
           missingRef,
@@ -351,6 +353,7 @@ export function MapView({
         // A style swap drops the DEM source too; restore terrain before the
         // data layers so the map does not briefly render flat then pop up.
         if (terrain3dRef.current) applyTerrain(m, true);
+        applySeamarkOverlay(m, true);
         await syncStaticLayers(m, layersRef.current, {
           enabledRef,
           missingRef,

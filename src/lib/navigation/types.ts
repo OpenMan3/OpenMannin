@@ -53,8 +53,15 @@ export interface NavigationState {
   recenterPending: boolean;
   /** Camera follow state: none = manual, follow = center on dot, heading = rotate to heading. */
   followMode: FollowMode;
+  /** True when spoken guidance is muted (no announcements). */
+  voiceMuted: boolean;
   /** True when the user has deviated from the route and a recalc is pending. */
   offRoute: boolean;
+  /**
+   * True once the user has pressed Navigate (not merely dropped a pin and seen
+   * a route preview). Gates spoken guidance.
+   */
+  navigating: boolean;
   /** Distance along the route from the user's position (metres). */
   progressM: number;
   /** Distance remaining to destination (metres). */
@@ -84,7 +91,9 @@ export interface Internal {
   fitPending: boolean;
   recenterPending: boolean;
   followMode: FollowMode;
+  voiceMuted: boolean;
   offRoute: boolean;
+  navigating: boolean;
   progressM: number;
   remainingM: number;
   baseSteps: NavigationStep[];

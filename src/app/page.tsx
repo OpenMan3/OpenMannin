@@ -13,6 +13,7 @@ import { TransparencyPanel } from "@/components/TransparencyPanel";
 import { LocateButton } from "@/components/LocateButton";
 import { DestinationSheet } from "@/components/DestinationSheet";
 import { FollowModeButton } from "@/components/FollowModeButton";
+import { VoiceButton } from "@/components/VoiceButton";
 import { ProgressHUD } from "@/components/ProgressHUD";
 
 
@@ -262,6 +263,9 @@ function PageContent() {
   const setFollowMode = useCallback((mode: FollowMode) => {
     window.dispatchEvent(new CustomEvent("openmannin:nav-follow", { detail: { mode } }));
   }, []);
+  const setVoiceMuted = useCallback((muted: boolean) => {
+    window.dispatchEvent(new CustomEvent("openmannin:nav-voice", { detail: { muted } }));
+  }, []);
   const navigate = useCallback(() => {
     setNavigating(true);
     window.dispatchEvent(new CustomEvent("openmannin:navigate"));
@@ -452,6 +456,9 @@ function PageContent() {
               {nav && <LocateButton state={nav} onToggle={toggleLocate} />}
               {nav && nav.locationStatus === "active" && (
                 <FollowModeButton followMode={nav.followMode} onToggle={setFollowMode} />
+              )}
+              {nav && nav.navigating && (
+                <VoiceButton muted={nav.voiceMuted} onToggle={setVoiceMuted} />
               )}
               <MapControls terrain3d={terrain3d} onTerrainChange={setTerrain3d} />
             </div>

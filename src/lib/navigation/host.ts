@@ -30,6 +30,7 @@ import { computeRoutes, type RouteLeg, type RouteMap } from "./client";
 import { ROUTE_MODES, type RouteMode } from "./profiles";
 import { deriveSteps, type NavigationStep, bearingDeg, haversineM, pointAtDistance } from "./steps";
 import { easeInOutCubic, isPlausibleTransition, lerpAngle, lerpPoint } from "./motion";
+import { ARRIVAL_SPEECH, spokenApproach, spokenDeparture, spokenManeuver } from "./voice";
 import type { UserLocation, Destination, LocationStatus, RouteStatus, NavigationState, FollowMode } from "./types";
 
 // Re-export types for consumers
@@ -177,8 +178,12 @@ type Internal = {
   recenterPending: boolean;
   /** Camera follow state: none = manual, follow = center on dot, heading = rotate to heading. */
   followMode: FollowMode;
+  /** Spoken guidance on/off. Persisted so the choice survives a reload. */
+  voiceMuted: boolean;
   /** True when the user has deviated from the route and a recalc is pending. */
   offRoute: boolean;
+  /** True once Navigate is pressed; gates spoken guidance. */
+  navigating: boolean;
   /** Distance along the route from the user's position (metres). */
   progressM: number;
   /** Distance remaining to destination (metres). */
@@ -203,6 +208,16 @@ type Internal = {
   prevFix: UserLocation | null;
 };
 
+/** Spoken guidance starts muted only if the user muted it on a previous visit. */
+function voiceMutedFromStorage(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem("om-voice-muted") === "1";
+  } catch {
+    return false;
+  }
+}
+
 function initialState(activeMode: RouteMode): Internal {
   return {
     locationStatus: "idle",
@@ -223,7 +238,9 @@ function initialState(activeMode: RouteMode): Internal {
     fitPending: false,
     recenterPending: false,
     followMode: "none",
+    voiceMuted: voiceMutedFromStorage(),
     offRoute: false,
+    navigating: false,
     progressM: 0,
     remainingM: 0,
     speedMph: null,
@@ -256,7 +273,9 @@ function signature(s: Internal): string {
     s.steps.map((step) => step.distanceM).join(","),
     s.recenterPending,
     s.followMode,
+    s.voiceMuted,
     s.offRoute,
+    s.navigating,
     Math.round(s.progressM),
     Math.round(s.remainingM),
     s.speedMph === null ? "n" : s.speedMph.toFixed(1),
@@ -595,12 +614,17 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
 
   const state: Internal = initialState("driving");
 
+  // Announcements already made, keyed per leg/threshold, so each is spoken
+  // once. Reset whenever a fresh route is set.
+  let spokenKeys = new Set<string>();
+
   const publish = () => {
     // GPS-driven progress (progress/remaining/off-route/arrived/next step)
     // is derived state, recomputed here so every published snapshot is fresh
     // no matter which event triggered it.
     updateRouteProgress(state);
     drawManeuver(state.nextManeuver);
+    maybeSpeak();
     const sig = signature(state);
     if (sig === state.lastSignature) return;
     state.lastSignature = sig;
@@ -620,7 +644,9 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       nextStepM: state.nextStepM,
       recenterPending: state.recenterPending,
       followMode: state.followMode,
+      voiceMuted: state.voiceMuted,
       offRoute: state.offRoute,
+      navigating: state.navigating,
       progressM: state.progressM,
       remainingM: state.remainingM,
     });
@@ -780,6 +806,69 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     if (animFrame === 0) animFrame = requestAnimationFrame(runFollowAnim);
   };
 
+  // ---- Voice guidance ----------------------------------------------------
+  // Web Speech reads the geometry-derived maneuvers. Purely optional: if the
+  // browser has no synthesis, everything else carries on silently.
+
+  /** Distance at which the pre-turn warning is spoken. */
+  const VOICE_APPROACH_M = 400;
+  /** Distance at which the imminent ("now") instruction is spoken. */
+  const VOICE_NOW_M = 90;
+
+  const cancelSpeech = () => {
+    if (typeof window === "undefined") return;
+    try {
+      window.speechSynthesis?.cancel();
+    } catch {
+      /* synthesis unavailable */
+    }
+  };
+
+  const speakText = (text: string) => {
+    if (state.voiceMuted || typeof window === "undefined") return;
+    const synth = window.speechSynthesis;
+    if (!synth || typeof SpeechSynthesisUtterance === "undefined") return;
+    try {
+      // One instruction at a time: drop anything still queued.
+      synth.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.02;
+      synth.speak(utterance);
+    } catch {
+      /* a failed utterance must never break navigation */
+    }
+  };
+
+  const maybeSpeak = () => {
+    if (state.voiceMuted || !state.navigating || !state.destination) return;
+    if (state.routeStatus === "arrived") {
+      if (!spokenKeys.has("arrived")) {
+        spokenKeys.add("arrived");
+        speakText(ARRIVAL_SPEECH);
+      }
+      return;
+    }
+    if (state.routeStatus !== "ready" && state.routeStatus !== "recalculating") return;
+
+    // The maneuver ahead ends the current leg, i.e. the next step in the list.
+    const nextIdx = state.stepIndex + 1;
+    const upcoming = state.baseSteps[nextIdx];
+
+    if (state.stepIndex === 0 && !spokenKeys.has("depart")) {
+      spokenKeys.add("depart");
+      speakText(spokenDeparture(state.baseSteps[0] ?? null));
+      return;
+    }
+    if (!upcoming) return;
+    if (state.nextStepM <= VOICE_APPROACH_M && !spokenKeys.has(`${nextIdx}-approach`)) {
+      spokenKeys.add(`${nextIdx}-approach`);
+      speakText(spokenApproach(upcoming, state.nextStepM));
+    } else if (state.nextStepM <= VOICE_NOW_M && !spokenKeys.has(`${nextIdx}-now`)) {
+      spokenKeys.add(`${nextIdx}-now`);
+      speakText(spokenManeuver(upcoming));
+    }
+  };
+
   const onGeolocation = (pos: GeolocationPosition) => {
     const lon = pos.coords.longitude;
     const lat = pos.coords.latitude;
@@ -902,6 +991,8 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     }
     stopPulse();
     stopFollowAnim();
+    cancelSpeech();
+    spokenKeys = new Set<string>();
     reqToken++;
     clearRecalc();
     state.userLocation = null;
@@ -1078,6 +1169,9 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
 
   const setActiveMode = (mode: RouteMode) => {
     state.activeMode = mode;
+    // Switching mode is a fresh set of maneuvers: re-announce them.
+    spokenKeys = new Set<string>();
+    cancelSpeech();
     if (state.routesFresh) {
       const route = state.routes[mode];
       drawRoute(route);
@@ -1089,7 +1183,10 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
   const clearDestination = () => {
     reqToken++;
     clearRecalc();
+    cancelSpeech();
+    spokenKeys = new Set<string>();
     state.destination = null;
+    state.navigating = false;
     state.routes = {};
     state.steps = [];
     state.baseSteps = [];
@@ -1153,6 +1250,10 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
   const dropDestination = (lon: number, lat: number, title: string, detail: string) => {
     const dest: Destination = { lon, lat, title, detail };
     state.destination = dest;
+    // A new destination starts a fresh preview: no spoken guidance yet.
+    state.navigating = false;
+    spokenKeys = new Set<string>();
+    cancelSpeech();
     state.routesFresh = false;
     state.routeStatus = "idle";
     state.routeError = null;
@@ -1333,6 +1434,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
   const onNavigateEvent = () => {
     ensureLayers();
     if (!state.destination) return;
+    state.navigating = true;
     state.fitPending = true;
     // Jump into tracking so the view follows the car once the route is live;
     // the user dials heading-up from the follow button if they want it. A
@@ -1410,6 +1512,25 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     onFollowEvent(((e as CustomEvent).detail as { mode?: FollowMode })?.mode ?? "follow");
   };
 
+  const onVoiceEvent = (muted: boolean | undefined) => {
+    state.voiceMuted = typeof muted === "boolean" ? muted : !state.voiceMuted;
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem("om-voice-muted", state.voiceMuted ? "1" : "0");
+      } catch {
+        /* storage may be unavailable (private mode); the choice is still live */
+      }
+    }
+    // Cutting the voice mid-sentence must stop the current utterance too.
+    if (state.voiceMuted) cancelSpeech();
+    publish();
+  };
+
+  const onVoiceWindow = (e: Event) => {
+    e.stopPropagation();
+    onVoiceEvent(((e as CustomEvent).detail as { muted?: boolean })?.muted);
+  };
+
   const onLocateWindow = (e: Event) => {
     e.stopPropagation();
     onLocateEvent();
@@ -1431,6 +1552,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
   window.addEventListener("openmannin:navigate", onNavigateWindow);
   window.addEventListener("openmannin:nav-mode", onModeWindow);
   window.addEventListener("openmannin:nav-follow", onFollowWindow);
+  window.addEventListener("openmannin:nav-voice", onVoiceWindow);
   window.addEventListener("openmannin:clear-nav", onClearWindow);
   window.addEventListener("openmannin:set-destination", onSetDestinationWindow);
 
@@ -1451,6 +1573,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     dispose() {
       stopPulse();
       stopFollowAnim();
+      cancelSpeech();
       if (watcherId !== null) navigator.geolocation.clearWatch(watcherId);
       watcherId = null;
       cancelPress(press);
@@ -1464,6 +1587,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       window.removeEventListener("openmannin:navigate", onNavigateWindow);
       window.removeEventListener("openmannin:nav-mode", onModeWindow);
       window.removeEventListener("openmannin:nav-follow", onFollowWindow);
+      window.removeEventListener("openmannin:nav-voice", onVoiceWindow);
       window.removeEventListener("openmannin:clear-nav", onClearWindow);
       window.removeEventListener("openmannin:set-destination", onSetDestinationWindow);
       clearRecalc();

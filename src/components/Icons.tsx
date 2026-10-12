@@ -301,6 +301,25 @@ export function DirectionsIcon(props: IconProps) {
   ));
 }
 
+export function SpeakerIcon(props: IconProps) {
+  return base(props, (
+    <>
+      <path d="M5 9v6h3l5 4V5L8 9H5z" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+      <path d="M18 6a8 8 0 0 1 0 12" />
+    </>
+  ));
+}
+
+export function SpeakerMutedIcon(props: IconProps) {
+  return base(props, (
+    <>
+      <path d="M5 9v6h3l5 4V5L8 9H5z" />
+      <path d="M16 9l5 6M21 9l-5 6" />
+    </>
+  ));
+}
+
 export function CheckIcon(props: IconProps) {
   return base(props, (
     <path d="M5 13l4 4L19 7" />

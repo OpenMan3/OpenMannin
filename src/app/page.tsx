@@ -519,7 +519,7 @@ function PageContent() {
       {/* ---- mobile bottom tab bar ---- */}
       <nav
         aria-label="Primary sections"
-        className="absolute inset-x-0 bottom-0 z-50 flex h-12 items-stretch border-t border-line bg-page/95 backdrop-blur md:hidden"
+        className="absolute inset-x-0 bottom-0 z-50 flex min-h-12 items-stretch border-t border-line bg-page/95 backdrop-blur pb-safe md:hidden"
       >
         {TABS.map((t) => (
           <button

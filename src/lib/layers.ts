@@ -73,16 +73,17 @@ export const LAYERS: LayerDef[] = [
     defaultOn: true,
     minZoom: 8,
     description:
-      "The island's road network from OpenStreetMap: motorway, trunk, primary, secondary, tertiary, unclassified, residential, service and track. Each segment carries its OSM highway class and route reference where mapped.",
+      "The island's road network from OpenStreetMap: motorway, trunk, primary, secondary, tertiary, unclassified, residential, service, living_street and track (plus their link roads). Each segment carries its OSM highway class, route reference and posted maxspeed where mapped.",
     caveats: [
       "OpenStreetMap, not the Department of Infrastructure road hierarchy. It does not carry the government's own road classification, USRNs, or maintenance responsibility.",
+      "Footways, paths, steps and bridleways are deliberately NOT in this layer — they are in the 'Footpaths & PRoW' layer. Speed limits are NOT a separate layer either: every segment here carries its maxspeed tag where one is mapped.",
       "Not every road is named, and some service roads and tracks are mapped inconsistently.",
       "There are NO published traffic-count or A18 volume datasets. That requires an FOI request to Highway Services.",
       "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
     confidence: "B",
     sourceId: "osmIOM",
-    featureCount: 21481,
+    featureCount: 12020,
   },
   {
     id: "bridges",
@@ -101,26 +102,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 557,
-  },
-  {
-    id: "speedlimits",
-    label: "Speed limits",
-    group: "trails",
-    kind: "geojson",
-    file: "speed-limits.geojson",
-    color: "#dc2626",
-    defaultOn: true,
-    minZoom: 12,
-    description: "Road segments carrying a posted maxspeed tag in OpenStreetMap.",
-    caveats: [
-      "OpenStreetMap maxspeed values, not the Department of Infrastructure's posted-limit dataset. 'national'/'NSL' and missing values are common; coverage is partial.",
-      "This is NOT the IoM Safety Camera Scheme — no speed-camera scheme is evidenced in official sources.",
-      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
-    ],
-    confidence: "C",
-    sourceId: "osmIOM",
-    featureCount: 4207,
+    featureCount: 558,
   },
   {
     id: "emergency",
@@ -134,15 +116,15 @@ export const LAYERS: LayerDef[] = [
     defaultOn: true,
     minZoom: 12,
     description:
-      "Police, fire, ambulance stations and public defibrillators from OpenStreetMap (amenity=police/fire_station/ambulance_station, emergency=defibrillator).",
+      "Police, fire and ambulance stations from OpenStreetMap (amenity=police/fire_station/ambulance_station). Public-access defibrillators are NOT in this layer — they are owned by 'Essential utilities & services' so the two cannot drift.",
     caveats: [
       "Community-mapped; coverage and currency depend on OSM contributors. VERIFY against official sources (gov.im, iomfire.com, nwas.nhs.uk) before relying in an emergency.",
-      "Defibrillators may be inside buildings with restricted access hours — check access tags and opening_hours.",
+      "Defibrillators live in the 'Essential utilities & services' layer, not here.",
       "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 64,
+    featureCount: 13,
   },
   {
     id: "footpaths",
@@ -165,7 +147,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 9250,
+    featureCount: 9265,
   },
   {
     id: "schools-health",
@@ -201,15 +183,16 @@ export const LAYERS: LayerDef[] = [
     defaultOn: true,
     minZoom: 12,
     description:
-      "Tourism features from OpenStreetMap: attractions, viewpoints, museums, galleries, campsites, hostels, hotels, guest houses.",
+      "Tourism features from OpenStreetMap: attractions, museums, galleries, campsites, hostels, hotels, guest houses, artwork, memorials and monuments. Viewpoints and picnic sites are owned by the 'Coastal & outdoor' layer, not repeated here.",
     caveats: [
       "Community-mapped; facilities, opening times and prices change. VERIFY against official tourism sources (visitisleofman.com) before planning a visit.",
       "Campsites and accommodation may be seasonal or require booking.",
+      "Viewpoints and picnic sites live in the 'Coastal & outdoor' layer.",
       "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 323,
+    featureCount: 298,
   },
   {
     id: "worship",
@@ -323,7 +306,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 8395,
+    featureCount: 8396,
   },
   {
     id: "railways",
@@ -367,7 +350,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 60,
+    featureCount: 59,
   },
   {
     id: "traffic-signals",
@@ -544,7 +527,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "B",
     sourceId: "osmIOM",
-    featureCount: 106,
+    featureCount: 102,
   },
   {
     id: "comms-towers",
@@ -732,7 +715,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 189,
+    featureCount: 140,
   },
 
   // ==========================================================================
@@ -775,7 +758,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 1430,
+    featureCount: 1422,
   },
 
   // ==========================================================================
@@ -946,7 +929,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 1065,
+    featureCount: 1067,
   },
 
   // ==========================================================================

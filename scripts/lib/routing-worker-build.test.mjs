@@ -5,11 +5,11 @@
  * test imports the TypeScript source, so they can all pass while the deployed
  * public/routing-worker.mjs is stale, uncompiled, or broken. This executes the
  * artifact - the exact file public/ - inside a real worker thread against real
- * roads.geojson and asserts it comes back with a route.
+ * roads + footpaths data and asserts it comes back with a route.
  *
- * The routing worker fetches /data/roads.geojson itself, so the harness shims
- * `fetch` and provides the committed data via workerData (no 8 MB string
- * marshalled through an eval'd file).
+ * The routing worker fetches /data/roads.geojson and /data/footpaths.geojson
+ * itself, so the harness shims `fetch` and provides the committed data via
+ * workerData (no multi-MB strings marshalled through an eval'd file).
  *
  * Run after npm run build:routing-worker:
  *
@@ -32,6 +32,7 @@ const GRAPH_SOURCES = [
 ].map((p) => join(REPO, p));
 
 const ROADS = readFileSync(join(REPO, "public/data/roads.geojson"), "utf8");
+const FOOTPATHS = readFileSync(join(REPO, "public/data/footpaths.geojson"), "utf8");
 
 /** Douglas seafront (start) and Ramsey (destination): a real, drivable trip. */
 const TRIP = {
@@ -55,18 +56,20 @@ function runWorker(request, timeoutMs = 120_000) {
         postMessage: (data) => require("node:worker_threads").parentPort.postMessage(data),
         __onmessage: null,
       };
-      self.fetch = async () => ({
-        ok: true,
-        status: 200,
-        json: async () => require("node:worker_threads").workerData.roads,
-      });
+      self.fetch = async (url) => {
+        const want = String(url);
+        const body = want.includes("footpaths")
+          ? require("node:worker_threads").workerData.footpaths
+          : require("node:worker_threads").workerData.roads;
+        return { ok: true, status: 200, json: async () => body };
+      };
       // The worker calls bare fetch(), which in a browser worker is self.fetch.
       globalThis.fetch = self.fetch;
       const port = require("node:worker_threads").parentPort;
       port.on("message", (data) => self.__onmessage?.({ data }));
       ${code}
       `,
-      { eval: true, workerData: { roads: JSON.parse(ROADS) } },
+      { eval: true, workerData: { roads: JSON.parse(ROADS), footpaths: JSON.parse(FOOTPATHS) } },
     );
 
     const timer = setTimeout(() => {

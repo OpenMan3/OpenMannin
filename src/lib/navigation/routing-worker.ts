@@ -1,17 +1,23 @@
 /**
  * Point-to-point routing, off the main thread.
  *
- * WHY A WORKER. The first route request parses the ~8 MB roads layer and builds
- * a graph from roughly 21,000 ways. That is hundreds of milliseconds to a couple
- * of seconds of work, and on the main thread it would drop the map to zero
- * frames while the user is looking at the spinner. Once built, the graph is
- * cached in the worker for the rest of the session and later queries are
- * milliseconds.
+ * WHY A WORKER. The first route request parses the ~9 MB of routable layers
+ * (roads + footpaths) and builds a graph from roughly 21,000 ways. That is
+ * hundreds of milliseconds to a couple of seconds of work, and on the main
+ * thread it would drop the map to zero frames while the user is looking at the
+ * spinner. Once built, the graph is cached in the worker for the rest of the
+ * session and later queries are milliseconds.
  *
  * WHY IT FETCHES THE DATA ITSELF. The graph is built from the same
- * /data/roads.geojson the map already serves, under the app's own origin. The
- * worker fetches and parses it directly so the multi-megabyte object never has
- * to be structured-cloned across the thread boundary.
+ * /data/roads.geojson and /data/footpaths.geojson the map already serves, under
+ * the app's own origin. The worker fetches and parses them directly so the
+ * multi-megabyte objects never have to be structured-cloned across the thread
+ * boundary.
+ *
+ * WHY TWO LAYERS. The display layers are deliberately disjoint: roads carries
+ * road classes only, footpaths carries footway/path/steps/bridleway. The router
+ * needs the union of both to walk anywhere off-road, so it fetches both and
+ * merges them here rather than duplicating paths into the roads layer again.
  *
  * Build output: public/routing-worker.mjs, by scripts/build-routing-worker.mjs.
  * The bundler will not compile a module worker into a static export, so this is
@@ -28,7 +34,8 @@ type Request = {
   modes?: RouteMode[];
 };
 
-const ROADS_URL = "/data/roads.geojson";
+/** The routable layers. Roads for vehicle profiles, footpaths for walking. */
+const ROUTABLE_URLS = ["/data/roads.geojson", "/data/footpaths.geojson"];
 
 /** Built once per worker. A rejected build is cleared so a retry can succeed. */
 let graphPromise: Promise<Graph> | null = null;
@@ -36,11 +43,16 @@ let graphPromise: Promise<Graph> | null = null;
 function loadGraph(): Promise<Graph> {
   if (!graphPromise) {
     graphPromise = (async () => {
-      const res = await fetch(ROADS_URL, { cache: "force-cache" });
-      if (!res.ok) throw new Error(`roads data unavailable (HTTP ${res.status})`);
-      const fc = (await res.json()) as { features?: unknown[] };
-      const graph = buildGraph(fc as never);
-      if (graph.nodeCount === 0) throw new Error("roads data had no line geometry to route on");
+      const collections = await Promise.all(
+        ROUTABLE_URLS.map(async (url) => {
+          const res = await fetch(url, { cache: "force-cache" });
+          if (!res.ok) throw new Error(`${url} unavailable (HTTP ${res.status})`);
+          return (await res.json()) as { features?: unknown[] };
+        }),
+      );
+      const features = collections.flatMap((fc) => fc.features ?? []);
+      const graph = buildGraph({ features } as never);
+      if (graph.nodeCount === 0) throw new Error("routable data had no line geometry to route on");
       return graph;
     })().catch((err) => {
       graphPromise = null;

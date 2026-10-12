@@ -1,11 +1,13 @@
 /**
- * A small, dependency-free routable graph built from the roads layer.
+ * A small, dependency-free routable graph built from the routable layers.
  *
  * WHY THIS EXISTS. The app is a static site; there is no server to run a
  * routing engine, and the task is only "get from here to there on the Isle of
- * Man". The island's road network is a single ~8 MB GeoJSON already served to
- * the browser for the roads layer, so the routing engine reuses it: build a
- * graph once, in a Web Worker, from OSM way geometry and run A* per query.
+ * Man". The island's network is served to the browser as two GeoJSON layers
+ * already rendered on the map - roads (~6.6 MB) and footpaths (~2.8 MB) - so the
+ * routing engine reuses them: build a graph once, in a Web Worker, from OSM way
+ * geometry and run A* per query. Callers merge the layers into one collection
+ * (see routing-worker.ts); this module only needs a FeatureCollection.
  *
  * GRAPH SHAPE. Every road vertex becomes a node; consecutive vertex pairs
  * become edges. Vertices closer than a fixed snapping cell (~5 m) map to the

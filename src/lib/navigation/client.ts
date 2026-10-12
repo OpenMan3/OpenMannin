@@ -5,9 +5,10 @@
  * created once, replies are matched to requests by id, a late or missing reply
  * is bounded by a deadline, and a dead worker is discarded rather than reused.
  *
- * The routing layer depends on roads.geojson. The worker fetches that itself, so
- * the first call here can take a second or two while the graph is built; the
- * deadline below is sized accordingly and applies only to the first request.
+ * The routing layer depends on roads.geojson and footpaths.geojson. The worker
+ * fetches both itself, so the first call here can take a second or two while the
+ * graph is built; the deadline below is sized accordingly and applies only to
+ * the first request.
  */
 
 import type { RouteMode } from "./profiles";

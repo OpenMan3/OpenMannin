@@ -236,6 +236,23 @@ out center 1000;`;
     });
   }
 
+  const seenIds = new Set();
+  const byCoord = new Map();
+  for (const f of features) {
+    if (seenIds.has(f.properties.id)) continue; // same OSM element twice
+    seenIds.add(f.properties.id);
+    const key = f.geometry.coordinates.map((n) => n.toFixed(5)).join(",");
+    const existing = byCoord.get(key);
+    if (!existing) {
+      byCoord.set(key, f);
+    } else if (!existing.properties.named && f.properties.named) {
+      // A named light and an unnamed seamark node on the same point are the
+      // same feature mapped twice; keep the one that carries a name.
+      byCoord.set(key, f);
+    }
+  }
+  const deduped = [...byCoord.values()];
+
   const fc = {
     type: "FeatureCollection",
     name: "seamarks",
@@ -249,10 +266,10 @@ out center 1000;`;
         "Chicken Rock, Calf of Man, Point of Ayre and Bradda Head are the notable Manx lights.",
       ],
     },
-    features,
+    features: deduped,
   };
   const bytes = writeJSON("public/data/seamarks.geojson", fc);
-  return { bytes, count: features.length };
+  return { bytes, count: deduped.length };
 }
 
 async function main() {

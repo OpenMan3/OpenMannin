@@ -5,7 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 export const metadata: Metadata = {
   title: "OpenMannin — Isle of Man Infrastructure Map",
   description:
-    "An open-source intelligence map of the Isle of Man: transport, utilities, subsea cables, coastlines, protected sites, live vehicle positions and IP networks. Every layer carries its source, licence and confidence grade.",
+    "An open-source intelligence map of the Isle of Man: transport, utilities, subsea cables, coastlines, protected sites and heritage. Every layer carries its source, licence and confidence grade.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

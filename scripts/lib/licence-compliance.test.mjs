@@ -52,7 +52,7 @@ test("every shipped data file declares an open licenceId", () => {
     const licenceId = fc.properties?.licenceId;
     assert.ok(
       typeof licenceId === "string" && licenceId.length > 0,
-      `${name}: no properties.licenceId — run scripts/backfill-provenance.mjs`,
+      `${name}: no properties.licenceId — re-run the layer's ingest`,
     );
     assert.ok(
       OPEN.has(licenceId),

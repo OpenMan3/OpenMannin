@@ -125,7 +125,7 @@ out center;`,
     label: "monuments & archaeology",
     query: `[out:json][timeout:180];
 (
-  node["historic"~"^(archaeological_site|wayside_cross|boundary_stone|city_gate|castle|fort|monastery|tomb|dolmen|stone_circle|standing_stone|round_tower|earthwork|ruins)$"](${BBOX});
+  node["historic"~"^(archaeological_site|wayside_cross|boundary_stone|city_gate|castle|fort|monastery|tomb|dolmen|stone_circle|standing_stone|round_tower|earthwork)$"](${BBOX});
   way["historic"~"^(archaeological_site|castle|fort|monastery|earthwork)$"](${BBOX});
 );
 out center;`,

@@ -85,8 +85,11 @@ const DATASETS = [
     out: "roads.geojson",
     label: "road network",
     mode: "line",
+    // Road classes ONLY. Footways, paths, steps, bridleways, pedestrian
+    // precincts and cycleways belong to the footpaths layer; querying bare
+    // way["highway"] duplicated that whole layer here (~9,000 features).
     query: `[out:json][timeout:180];
-way["highway"](${BBOX});
+way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|service|living_street|track|road|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link)$"](${BBOX});
 out geom;`,
     keep: { name: "name", highway: "highway", ref: "ref", surface: "surface", oneway: "oneway", junction: "junction", access: "access", motorVehicle: "motor_vehicle", motorcar: "motorcar", vehicle: "vehicle", foot: "foot", bicycle: "bicycle", service: "service", maxspeed: "maxspeed" },
     isFeature: (t) => t.highway && !["proposed", "construction", "razed"].includes(t.highway),
@@ -171,15 +174,6 @@ out geom;`,
     },
   },
   {
-    out: "speed-limits.geojson",
-    label: "speed limits",
-    mode: "line",
-    query: `[out:json][timeout:180];
-way["highway"]["maxspeed"](${BBOX});
-out geom;`,
-    keep: { name: "name", highway: "highway", maxspeed: "maxspeed" },
-  },
-  {
     out: "reservoirs.geojson",
     label: "reservoirs",
     mode: "area",
@@ -203,14 +197,11 @@ out geom;`,
   way["amenity"="fire_station"](${BBOX});
   node["amenity"="ambulance_station"](${BBOX});
   way["amenity"="ambulance_station"](${BBOX});
-  node["emergency"="defibrillator"](${BBOX});
-  way["emergency"="defibrillator"](${BBOX});
 );
 out center;`,
     keep: {
       name: "name",
       amenity: "amenity",
-      emergency: "emergency",
       operator: "operator",
       phone: "phone",
       contactPhone: "contact:phone",
@@ -256,8 +247,8 @@ out center;`,
     mode: "point",
     query: `[out:json][timeout:180];
 (
-  node["tourism"~"^(attraction|viewpoint|museum|gallery|zoo|theme_park|artwork|memorial|monument)$"](${BBOX});
-  way["tourism"~"^(attraction|viewpoint|museum|gallery|zoo|theme_park|artwork|memorial|monument)$"](${BBOX});
+  node["tourism"~"^(attraction|museum|gallery|zoo|theme_park|artwork|memorial|monument)$"](${BBOX});
+  way["tourism"~"^(attraction|museum|gallery|zoo|theme_park|artwork|memorial|monument)$"](${BBOX});
   node["tourism"="camp_site"](${BBOX});
   way["tourism"="camp_site"](${BBOX});
   node["tourism"="hostel"](${BBOX});

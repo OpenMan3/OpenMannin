@@ -20,12 +20,15 @@ import { SOURCES } from "../src/lib/sources.ts";
 import { LICENCES } from "../src/lib/licences.ts";
 import { CATEGORY_ORDER, SUBCATEGORY_LABELS } from "../src/lib/taxonomy.ts";
 import { registryProvenance } from "./lib/registry-provenance.mjs";
+import { sharedCoordinateCount } from "./lib/layer-dedupe.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATA = path.join(ROOT, "public", "data");
 
 const problems = [];
 const fail = (layer, msg) => problems.push(`${layer.id.padEnd(18)} ${msg}`);
+/** file -> features, for the cross-layer duplicate check below. */
+const loaded = new Map();
 
 // ---- layer-level rules ------------------------------------------------------
 
@@ -95,6 +98,7 @@ for (const l of LAYERS) {
         if (g) {
           if (g.type !== "FeatureCollection") fail(l, `${l.file} is ${g.type}, not FeatureCollection`);
           const n = g.features?.length ?? 0;
+          loaded.set(l.file, g.features ?? []);
           if (n === 0) fail(l, `${l.file} contains 0 features`);
           if (l.featureCount === undefined) {
             fail(l, `no featureCount pin — add one and keep it in step with ${l.file}`);
@@ -134,7 +138,7 @@ for (const l of LAYERS) {
               // bare licence NAME cannot be checked against the register, so
               // allowing it was exactly the ambiguity this project forbids.
               if (props.licenceId === undefined) {
-                fail(l, `${l.file} provenance has no licenceId — run scripts/backfill-provenance.mjs`);
+                fail(l, `${l.file} provenance has no licenceId — re-run the layer's ingest`);
                 ok = false;
               } else if (props.licenceId !== expected.licenceId) {
                 fail(l, `${l.file} provenance licenceId "${props.licenceId}" != registry "${expected.licenceId}"`);
@@ -162,6 +166,33 @@ for (const g of GAPS) {
   }
 }
 
+// ---- cross-layer duplicate rules --------------------------------------------
+//
+// Some OSM tags match more than one layer's ingest query, which quietly ships
+// the same geometry in two files. These pairs are the ownership boundaries: the
+// feature belongs to ONE owner, and the other layer must not repeat it. A
+// non-zero count means an ingest query has widened again (or the dedupe pass was
+// skipped), so it is a hard failure rather than a warning.
+const EXCLUSIVE_PAIRS = [
+  { owner: "footpaths", ownerFile: "footpaths.geojson", other: "roads", otherFile: "roads.geojson" },
+  { owner: "essential-utilities", ownerFile: "essential_utilities.geojson", other: "emergency", otherFile: "emergency.geojson" },
+  { owner: "coastal-outdoor", ownerFile: "coastal_outdoor.geojson", other: "tourism", otherFile: "tourism.geojson" },
+  { owner: "tholtans-ruins", ownerFile: "tholtans_ruins.geojson", other: "archaeology", otherFile: "archaeology.geojson" },
+];
+let duplicatePairs = 0;
+for (const pair of EXCLUSIVE_PAIRS) {
+  const a = loaded.get(pair.ownerFile);
+  const b = loaded.get(pair.otherFile);
+  if (!a || !b) continue;
+  const n = sharedCoordinateCount(a, b);
+  if (n > 0) {
+    duplicatePairs += 1;
+    problems.push(
+      `duplicate  ${pair.other} repeats ${n} feature(s) owned by ${pair.owner} — layers must be disjoint`,
+    );
+  }
+}
+
 // ---- provenance totals ------------------------------------------------------
 
 const geo = LAYERS.filter((l) => l.kind === "geojson");
@@ -181,6 +212,9 @@ console.log(
   `  taxonomy    ${LAYERS.filter((l) => l.category).length} themed across ${
     CATEGORY_ORDER.filter((c) => LAYERS.some((l) => l.category === c)).length
   } categories, ${LAYERS.filter((l) => !l.category).length} unthemed`,
+);
+console.log(
+  `  disjoint    ${EXCLUSIVE_PAIRS.length - duplicatePairs}/${EXCLUSIVE_PAIRS.length} exclusive ownership pairs share no geometry`,
 );
 
 if (problems.length) {

@@ -26,7 +26,29 @@ export interface NavigationStep {
   bearing: number;
   /** Street name for this leg, when the road on it is named. */
   streetName?: string | null;
+  /**
+   * Machine-readable maneuver for icons and (later) voice. Derived purely from
+   * the turn geometry; nothing is invented beyond what the polyline shows.
+   */
+  maneuver: ManeuverKind;
+  /** Which way the maneuver turns, when it has a side; otherwise null. */
+  side: "left" | "right" | null;
 }
+
+/** The manoeuvres the geometry can distinguish. */
+export type ManeuverKind =
+  | "depart"
+  | "continue"
+  | "slight-left"
+  | "slight-right"
+  | "left"
+  | "right"
+  | "sharp-left"
+  | "sharp-right"
+  | "uturn"
+  | "roundabout-enter"
+  | "roundabout-exit";
+
 
 const RAD = Math.PI / 180;
 const DEG = 180 / Math.PI;
@@ -65,6 +87,35 @@ export function haversineM(lon1: number, lat1: number, lon2: number, lat2: numbe
   return 2 * 6_371_008.8 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/**
+ * The point a given distance along a polyline, by walking its segments and
+ * interpolating within the one the distance lands in. Used to drop the next
+ * maneuver marker at the end of the current leg. Returns the last vertex for
+ * distances past the end, the first for zero/negative, and null for an empty
+ * line.
+ */
+export function pointAtDistance(
+  coordinates: readonly (readonly [number, number])[],
+  distanceM: number,
+): [number, number] | null {
+  if (coordinates.length === 0) return null;
+  const first = coordinates[0];
+  if (!(distanceM > 0) || coordinates.length === 1) return [first[0], first[1]];
+  let along = 0;
+  for (let i = 1; i < coordinates.length; i++) {
+    const [x1, y1] = coordinates[i - 1];
+    const [x2, y2] = coordinates[i];
+    const seg = haversineM(x1, y1, x2, y2);
+    if (along + seg >= distanceM) {
+      const t = seg > 0 ? (distanceM - along) / seg : 0;
+      return [x1 + (x2 - x1) * t, y1 + (y2 - y1) * t];
+    }
+    along += seg;
+  }
+  const last = coordinates[coordinates.length - 1];
+  return [last[0], last[1]];
+}
+
 const CARDINALS = [
   "north",
   "north-east",
@@ -92,16 +143,19 @@ export function formatStepDistance(m: number): string {
   return formatDistance(m);
 }
 
-function turnPhrase(fromBearing: number, toBearing: number): string {
+/** Machine-readable maneuver kind plus the human phrase, from a bearing change. */
+export function classifyManeuver(
+  fromBearing: number,
+  toBearing: number,
+): { kind: ManeuverKind; phrase: string; side: "left" | "right" | null } {
   const d = bearingDelta(fromBearing, toBearing);
   const abs = Math.abs(d);
-  if (abs < 20) return "Continue";
+  if (abs < 20) return { kind: "continue", phrase: "Continue", side: null };
+  if (abs >= 160) return { kind: "uturn", phrase: "Make a U-turn", side: null };
   const side = d > 0 ? "right" : "left";
-  if (abs >= 160) return "Make a U-turn";
-  if (abs >= 135) return `Turn sharp ${side}`;
-  if (abs >= 60) return `Turn ${side}`;
-  if (abs >= 20) return `Bear ${side}`;
-  return "Continue";
+  if (abs >= 135) return { kind: `sharp-${side}` as ManeuverKind, phrase: `Turn sharp ${side}`, side };
+  if (abs >= 60) return { kind: side, phrase: `Turn ${side}`, side };
+  return { kind: `slight-${side}` as ManeuverKind, phrase: `Bear ${side}`, side };
 }
 
 /** OSM junction values that mean "this segment is part of a roundabout". */
@@ -215,12 +269,17 @@ export function deriveSteps(
     // Everything folded into one leg (e.g. a single straight connector).
     const total = segs.reduce((n, s) => n + s.distanceM, 0);
     const longest = segs.reduce((a, b) => (b.distanceM > a.distanceM ? b : a), segs[0]);
+    const heading = cardinal(segs[0].bearing);
     return [
       {
         bearing: segs[0].bearing,
         distanceM: total,
-        instruction: "",
+        instruction: longest.name
+          ? `Head ${heading} on ${longest.name} for ${formatStepDistance(total)}`
+          : `Head ${heading} for ${formatStepDistance(total)}`,
         streetName: longest.name,
+        maneuver: "depart",
+        side: null,
       },
     ];
   }
@@ -243,30 +302,39 @@ export function deriveSteps(
     const prev = i > 0 ? folded[i - 1] : null;
     const heading = cardinal(leg.bearing);
     let instruction: string;
+    let maneuver: ManeuverKind;
+    let side: "left" | "right" | null = null;
     if (i === 0) {
+      maneuver = "depart";
       instruction = leg.name
         ? `Head ${heading} on ${leg.name} for ${dist}`
         : `Head ${heading} for ${dist}`;
     } else if (leg.roundabout && !prev!.roundabout) {
       // Entering a roundabout: no exit count is invented from geometry alone.
+      maneuver = "roundabout-enter";
       instruction = leg.name
         ? `At the roundabout, continue onto ${leg.name} for ${dist}`
         : `At the roundabout, continue for ${dist}`;
     } else if (!leg.roundabout && prev!.roundabout) {
+      maneuver = "roundabout-exit";
       instruction = leg.name
         ? `Leave the roundabout onto ${leg.name} for ${dist}`
         : `Leave the roundabout, heading ${heading} for ${dist}`;
     } else {
-      const phrase = turnPhrase(prev!.bearing, leg.bearing);
+      const cls = classifyManeuver(prev!.bearing, leg.bearing);
+      maneuver = cls.kind;
+      side = cls.side;
       instruction = leg.name
-        ? `${phrase} onto ${leg.name} for ${dist}`
-        : `${phrase}, heading ${heading} for ${dist}`;
+        ? `${cls.phrase} onto ${leg.name} for ${dist}`
+        : `${cls.phrase}, heading ${heading} for ${dist}`;
     }
     return {
+      bearing: leg.bearing,
+      distanceM: leg.distanceM,
       instruction,
-      distanceM: Math.round(leg.distanceM),
-      bearing: Math.round(leg.bearing),
       streetName: leg.name,
+      maneuver,
+      side,
     };
   });
 }

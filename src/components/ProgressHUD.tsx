@@ -11,7 +11,7 @@
 
 import type { NavigationState } from "@/lib/navigation/host";
 import { formatDistance, formatDuration, formatSpeedMph, kmhToMph, mphToKmh } from "@/lib/units";
-import { ClockIcon, TurnIcon } from "./Icons";
+import { ClockIcon, ManeuverIcon, TurnIcon } from "./Icons";
 
 interface ProgressHUDProps {
   state: NavigationState;
@@ -91,7 +91,7 @@ export function ProgressHUD({ state }: ProgressHUDProps) {
           {showNext && nextStep ? (
             <>
               <div className="flex items-center gap-1.5">
-                <TurnIcon className="h-3.5 w-3.5 text-accent" />
+                <ManeuverIcon kind={nextStep.maneuver} className="h-4 w-4 shrink-0 text-accent" />
                 <span className="truncate text-ink">{nextStep.instruction}</span>
               </div>
               <div className="flex items-center gap-1 pl-5 text-[10px] text-ink-3">

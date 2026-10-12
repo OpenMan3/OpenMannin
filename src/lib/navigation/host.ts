@@ -28,7 +28,7 @@ import { featureCentre } from "../feature-index";
 import { resolveFeatureLabel } from "../feature-label";
 import { computeRoutes, type RouteLeg, type RouteMap } from "./client";
 import { ROUTE_MODES, type RouteMode } from "./profiles";
-import { deriveSteps, type NavigationStep, bearingDeg, haversineM } from "./steps";
+import { deriveSteps, type NavigationStep, bearingDeg, haversineM, pointAtDistance } from "./steps";
 import { easeInOutCubic, isPlausibleTransition, lerpAngle, lerpPoint } from "./motion";
 import type { UserLocation, Destination, LocationStatus, RouteStatus, NavigationState, FollowMode } from "./types";
 
@@ -67,6 +67,8 @@ const PIN_COLOR = "#d93025";
 const PIN_RING = "rgba(217, 48, 37, 0.22)";
 const DOT_COLOR = "#1a73e8";
 const DOT_HALO = "#4285f4";
+const MANEUVER_COLOR = "#202124";
+const MANEUVER_RING = "rgba(32, 33, 36, 0.20)";
 const ACCURACY_FILL = "rgba(26, 115, 232, 0.10)";
 const ACCURACY_STROKE = "rgba(26, 115, 232, 0.35)";
 const ROUTE_COLOR = "#1a73e8";
@@ -111,6 +113,7 @@ const SNAP_LAYER_IDS = new Set([
 const SOURCE_USER = "om-nav-user";
 const SOURCE_DEST = "om-nav-destination";
 const SOURCE_ROUTE = "om-nav-route";
+const SOURCE_MANEUVER = "om-nav-maneuver";
 
 const ROUTE_LAYERS = [
   `${SOURCE_ROUTE}-casing`,
@@ -123,6 +126,7 @@ const USER_LAYERS = [
   `${SOURCE_USER}-dot`,
 ];
 const DEST_LAYERS = [`${SOURCE_DEST}-ring`, `${SOURCE_DEST}-pin`];
+const MANEUVER_LAYERS = [`${SOURCE_MANEUVER}-ring`, `${SOURCE_MANEUVER}-dot`];
 
 /** metres per pixel at lat = the island's mid-latitude, per zoom. */
 const ACCURACY_MULTIPLIERS: [number, number][] = [
@@ -189,8 +193,10 @@ type Internal = {
   baseSteps: NavigationStep[];
   /** Index of the next unfinished leg (0 = the first). */
   stepIndex: number;
-  /** Distance to the next maneuver, metres. */
-  nextStepM: number;
+    /** Distance to the next maneuver, metres. */
+    nextStepM: number;
+    /** Map point of the next maneuver (end of the current leg), or null. */
+    nextManeuver: [number, number] | null;
   /** Timestamps for speed/heading derivation. */
   lastFixAt: number;
   /** Previous GPS fix, used to derive speed + heading between fixes. */
@@ -226,6 +232,7 @@ function initialState(activeMode: RouteMode): Internal {
     baseSteps: [],
     stepIndex: 0,
     nextStepM: 0,
+    nextManeuver: null,
     lastFixAt: 0,
     prevFix: null,
   };
@@ -310,6 +317,7 @@ function updateRouteProgress(s: Internal): void {
   const route = s.routes[s.activeMode];
   if (!route || !s.userLocation || !route.coordinates?.length) {
     s.speedLimitKmh = null;
+    s.nextManeuver = null;
     return;
   }
 
@@ -318,6 +326,7 @@ function updateRouteProgress(s: Internal): void {
     s.progressM = 0;
     s.remainingM = route.distanceM ?? 0;
     s.speedLimitKmh = null;
+    s.nextManeuver = null;
     return;
   }
 
@@ -335,15 +344,23 @@ function updateRouteProgress(s: Internal): void {
     idx = i + 1;
   }
   s.stepIndex = Math.min(idx, s.baseSteps.length);
+  // Distance to the END of the current leg: the next maneuver. (stepIndex is
+  // the count of legs already completed, so the current leg is stepIndex.)
   const nextCumEnd = s.baseSteps
-    .slice(0, s.stepIndex)
+    .slice(0, s.stepIndex + 1)
     .reduce((a, b) => a + b.distanceM, 0);
   s.nextStepM = Math.max(0, nextCumEnd - s.progressM);
+
+  // Mark the next turn on the map, but never the destination itself (the pin
+  // already covers that) - only intermediate maneuvers.
+  s.nextManeuver =
+    s.stepIndex < s.baseSteps.length - 1 ? pointAtDistance(coords, nextCumEnd) : null;
 
   const off = lateralM > OFF_ROUTE_M[s.activeMode];
   if (s.remainingM <= ARRIVED_M) {
     s.routeStatus = "arrived";
     s.offRoute = false;
+    s.nextManeuver = null;
   } else {
     s.offRoute = off;
     if (!off && s.routeStatus === "arrived") s.routeStatus = "ready";
@@ -484,6 +501,36 @@ function addNavLayers(map: Map): void {
     });
   }
 
+  if (!map.getSource(SOURCE_MANEUVER)) {
+    map.addSource(SOURCE_MANEUVER, { type: "geojson", data: emptyCollection() as never });
+  }
+  if (!map.getLayer(`${SOURCE_MANEUVER}-ring`)) {
+    map.addLayer({
+      id: `${SOURCE_MANEUVER}-ring`,
+      type: "circle",
+      source: SOURCE_MANEUVER,
+      paint: {
+        "circle-color": MANEUVER_RING,
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 11, 18, 18],
+        "circle-stroke-color": MANEUVER_COLOR,
+        "circle-stroke-width": 1,
+      },
+    });
+  }
+  if (!map.getLayer(`${SOURCE_MANEUVER}-dot`)) {
+    map.addLayer({
+      id: `${SOURCE_MANEUVER}-dot`,
+      type: "circle",
+      source: SOURCE_MANEUVER,
+      paint: {
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 8, 5, 18, 8],
+        "circle-color": MANEUVER_COLOR,
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": 2,
+      },
+    });
+  }
+
   liftNavLayers(map);
 }
 
@@ -495,6 +542,7 @@ function emptyCollection(): { type: "FeatureCollection"; features: [] } {
 function liftNavLayers(map: Map): void {
   const order = [
     ...ROUTE_LAYERS,
+    ...MANEUVER_LAYERS,
     ...USER_LAYERS,
     ...DEST_LAYERS,
   ];
@@ -552,6 +600,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     // is derived state, recomputed here so every published snapshot is fresh
     // no matter which event triggered it.
     updateRouteProgress(state);
+    drawManeuver(state.nextManeuver);
     const sig = signature(state);
     if (sig === state.lastSignature) return;
     state.lastSignature = sig;
@@ -614,6 +663,26 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     if (map.getSource(SOURCE_USER)) {
       (map.getSource(SOURCE_USER) as GeoJSONSource).setData(emptyCollection() as never);
     }
+  };
+
+  /** Drop (or move) the marker showing where the next turn is. */
+  const drawManeuver = (pt: [number, number] | null) => {
+    const source = map.getSource(SOURCE_MANEUVER) as GeoJSONSource | undefined;
+    if (!source) return;
+    source.setData(
+      pt
+        ? ({
+            type: "FeatureCollection",
+            features: [
+              {
+                type: "Feature",
+                geometry: { type: "Point", coordinates: pt },
+                properties: {},
+              },
+            ],
+          } as never)
+        : (emptyCollection() as never),
+    );
   };
 
   const stopPulse = () => {
@@ -839,6 +908,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     state.displayPos = null;
     state.targetPos = null;
     state.displayHeadingDeg = null;
+    state.nextManeuver = null;
     state.firstFlyPending = false;
     state.recenterPending = false;
     state.speedMph = null;
@@ -899,6 +969,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     if (map.getSource(SOURCE_ROUTE)) {
       (map.getSource(SOURCE_ROUTE) as GeoJSONSource).setData(emptyCollection() as never);
     }
+    drawManeuver(null);
   };
 
   const routeBounds = (route: RouteLeg): [[number, number], [number, number]] => {
@@ -1202,6 +1273,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     if (state.destination) setDestinationData(state.destination.lon, state.destination.lat);
     const active = state.routes[state.activeMode];
     if (state.routesFresh && active) drawRoute(active);
+    drawManeuver(state.nextManeuver);
     liftNavLayers(map);
   };
 

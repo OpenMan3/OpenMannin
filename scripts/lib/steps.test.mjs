@@ -16,10 +16,12 @@ import {
   bearingDeg,
   bearingDelta,
   cardinal,
+  classifyManeuver,
   deriveSteps,
   formatStepDistance,
   haversineM,
   normalizeDeg,
+  pointAtDistance,
 } from "../../src/lib/navigation/steps.ts";
 
 test("normalizeDeg wraps into [0, 360)", () => {
@@ -140,9 +142,79 @@ test("a gentle curve stays one step, a sharp turn splits", () => {
   assert.match(steps[1].instruction, /^Turn right, heading east for \d+ yd$/);
 });
 
+test("pointAtDistance walks and interpolates along the polyline", () => {
+  const coords = [
+    [-4.48, 54.16],
+    [-4.48, 54.162],
+    [-4.479, 54.162],
+  ];
+  assert.deepEqual(pointAtDistance(coords, 0), [-4.48, 54.16]);
+  const leg1 = haversineM(-4.48, 54.16, -4.48, 54.162);
+  const mid = pointAtDistance(coords, leg1 / 2);
+  assert.ok(Math.abs(mid[0] + 4.48) < 1e-9 && mid[1] > 54.16 && mid[1] < 54.162);
+  const corner = pointAtDistance(coords, leg1);
+  assert.ok(Math.abs(corner[0] + 4.48) < 1e-9 && Math.abs(corner[1] - 54.162) < 1e-6);
+  assert.deepEqual(pointAtDistance(coords, 1e9), [-4.479, 54.162]);
+  assert.equal(pointAtDistance([], 10), null);
+});
+
 test("tiny routes and degenerate inputs do not throw", () => {
   assert.deepEqual(deriveSteps([]), []);
   assert.deepEqual(deriveSteps([[-4.48, 54.16]]), []);
   assert.equal(deriveSteps([[-4.48, 54.16], [-4.48, 54.16]]).length, 0, "zero-length folds away");
   assert.ok(haversineM(-4.48, 54.16, -4.48, 54.16) < 1e-6, "zero distance is ~0");
+});
+
+test("classifyManeuver maps bearing change to a kind and side", () => {
+  assert.equal(classifyManeuver(0, 0).kind, "continue");
+  assert.equal(classifyManeuver(0, 10).kind, "continue", "under 20 deg is not a turn");
+  assert.equal(classifyManeuver(0, 40).kind, "slight-right");
+  assert.equal(classifyManeuver(0, 90).kind, "right");
+  assert.equal(classifyManeuver(0, 150).kind, "sharp-right");
+  assert.equal(classifyManeuver(0, 180).kind, "uturn");
+  assert.equal(classifyManeuver(0, -40).kind, "slight-left");
+  assert.equal(classifyManeuver(0, -90).kind, "left");
+  assert.equal(classifyManeuver(0, -150).kind, "sharp-left");
+  // Across north, the shorter arc decides the side.
+  assert.equal(classifyManeuver(355, 5).kind, "continue");
+  assert.equal(classifyManeuver(350, 80).side, "right");
+  assert.equal(classifyManeuver(10, 300).side, "left");
+  // Side is only meaningful for turns.
+  assert.equal(classifyManeuver(0, 180).side, null);
+  assert.equal(classifyManeuver(0, 0).side, null);
+});
+
+test("derived steps carry a maneuver kind and side", () => {
+  const right = deriveSteps([
+    [-4.48, 54.16],
+    [-4.48, 54.162],
+    [-4.479, 54.162],
+  ]);
+  assert.equal(right[0].maneuver, "depart");
+  assert.equal(right[1].maneuver, "right");
+  assert.equal(right[1].side, "right");
+
+  const left = deriveSteps([
+    [-4.48, 54.16],
+    [-4.48, 54.162],
+    [-4.481, 54.162],
+  ]);
+  assert.equal(left[1].maneuver, "left");
+  assert.equal(left[1].side, "left");
+});
+
+test("roundabout legs are phrased and classified as such", () => {
+  // North, then east onto a roundabout segment, then north off it.
+  const coords = [
+    [-4.48, 54.16],
+    [-4.48, 54.162],
+    [-4.479, 54.162],
+    [-4.479, 54.164],
+  ];
+  const steps = deriveSteps(coords, [null, null, null], [null, "roundabout", null]);
+  assert.equal(steps.length, 3);
+  assert.equal(steps[1].maneuver, "roundabout-enter");
+  assert.match(steps[1].instruction, /^At the roundabout/);
+  assert.equal(steps[2].maneuver, "roundabout-exit");
+  assert.match(steps[2].instruction, /^Leave the roundabout/);
 });

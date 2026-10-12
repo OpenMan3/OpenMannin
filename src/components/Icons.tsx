@@ -7,6 +7,8 @@
  * whatever button/label hosts them.
  */
 
+import type { ManeuverKind } from "@/lib/navigation/steps";
+
 type IconProps = { className?: string };
 
 function base(props: IconProps, children: React.ReactNode, size = 24) {
@@ -208,6 +210,86 @@ export function TurnIcon(props: IconProps) {
       <path d="M14 5l4 2-4 2" />
     </>
   ));
+}
+
+/**
+ * Directional maneuver arrows for turn-by-turn. `kind` comes straight from the
+ * geometry-derived steps in navigation/steps.ts; nothing here implies a road
+ * feature (exit numbers, lanes) that the data does not carry.
+ */
+const MANEUVER_GLYPHS: Record<ManeuverKind, React.ReactNode> = {
+  depart: (
+    <>
+      <path d="M12 21V6" />
+      <path d="M8 10l4-4 4 4" />
+    </>
+  ),
+  continue: (
+    <>
+      <path d="M12 21V6" />
+      <path d="M8 10l4-4 4 4" />
+    </>
+  ),
+  right: (
+    <>
+      <path d="M7 21v-8a4 4 0 0 1 4-4h7" />
+      <path d="M15 6l4 3-4 3" />
+    </>
+  ),
+  left: (
+    <>
+      <path d="M17 21v-8a4 4 0 0 0-4-4H6" />
+      <path d="M9 6L5 9l4 3" />
+    </>
+  ),
+  "slight-right": (
+    <>
+      <path d="M8 21l4-8 5-4" />
+      <path d="M13 8h5v5" />
+    </>
+  ),
+  "slight-left": (
+    <>
+      <path d="M16 21l-4-8-5-4" />
+      <path d="M11 8H6v5" />
+    </>
+  ),
+  "sharp-right": (
+    <>
+      <path d="M7 21v-9a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v4" />
+      <path d="M14 13l3 3 3-3" />
+    </>
+  ),
+  "sharp-left": (
+    <>
+      <path d="M17 21v-9a3 3 0 0 0-3-3h-4a3 3 0 0 0-3 3v4" />
+      <path d="M10 13l-3 3-3-3" />
+    </>
+  ),
+  uturn: (
+    <>
+      <path d="M7 21V11a5 5 0 0 1 10 0v10" />
+      <path d="M14 18l3 3 3-3" />
+    </>
+  ),
+  "roundabout-enter": (
+    <>
+      <circle cx="12" cy="11" r="6.5" />
+      <path d="M12 21v-4" />
+      <path d="M9 18l3 3 3-3" />
+    </>
+  ),
+  "roundabout-exit": (
+    <>
+      <circle cx="12" cy="11" r="6.5" />
+      <path d="M15 12h6" />
+      <path d="M18 9l3 3-3 3" />
+    </>
+  ),
+};
+
+export function ManeuverIcon({ kind, className }: { kind: ManeuverKind; className?: string }) {
+  return base({ className }, MANEUVER_GLYPHS[kind] ?? MANEUVER_GLYPHS.continue);
 }
 
 export function DirectionsIcon(props: IconProps) {

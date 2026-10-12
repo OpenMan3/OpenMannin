@@ -226,12 +226,14 @@ export function MapView({
   }, [terrain3d]);
 
   // Keep the overlay sheet clear of the route
+  // Base 24px keeps attribution visible on all screen sizes; mobileBottomInset
+  // adds extra space for the floating tab bar on mobile.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
     map.setPadding({
       top: 0,
-      bottom: insetBottom + mobileBottomInset,
+      bottom: 24 + insetBottom + mobileBottomInset,
       left: 0,
       right: 0,
     });

@@ -29,9 +29,13 @@
   --color-accent-ink: #ffffff;
 
   --color-ok: #188038;
-  --color-info: #1a73e8;
   --color-warn: #b06000;
   --color-danger: #d93025;
+  /* Semantic aliases: the map's info blue is the accent, the red pin is the
+   * danger red, and the GPS dot is the accent blue. They are kept as separate
+   * tokens so a component can say what a colour MEANS rather than reuse the
+   * accent everywhere, and so the palette can diverge later if it needs to. */
+  --color-info: #1a73e8;
   --color-pin: #d93025;
   --color-gps: #1a73e8;
   --color-gps-soft: #4285f4;
@@ -133,8 +137,8 @@ body {
 }
 
 /*
- * On small screens the top search pill and bottom tab bar sit over the
- * map, so MapLibre's own corner chrome must duck below/above them.
+ * On small screens the sidebar drawer and the bottom tab bar sit over the map,
+ * so MapLibre's own corner chrome must duck clear of them.
  */
 @media (max-width: 767px) {
   .maplibregl-ctrl-top-right {

@@ -3,10 +3,15 @@
 /**
  * Progress HUD: live driving summary during active navigation.
  *
- * A compact top-right card showing distance remaining, the next maneuver with
- * a live countdown to it, arrival clock time, and live speed. It only exists
+ * A compact top-left card showing distance remaining, the next maneuver with a
+ * live countdown to it, arrival clock time, and live speed. It only exists
  * while the user is actively navigating and has a GPS fix; see no-route /
  * error handling in the destination sheet instead.
+ *
+ * It is deliberately NOT an aria-live region: the remaining distance and speed
+ * change on every GPS fix, so announcing the whole card would flood a screen
+ * reader. Spoken guidance (voice.ts) is the accessible channel for turns; this
+ * is a glanceable visual aid.
  */
 
 import type { NavigationState } from "@/lib/navigation/host";
@@ -63,11 +68,7 @@ export function ProgressHUD({ state }: ProgressHUDProps) {
   const overLimit = showLimit && speedMph !== null && speedLimitKmh !== null && speedMph > kmhToMph(speedLimitKmh) + 2;
 
   return (
-    <div
-      className="absolute top-4 left-4 z-20 flex flex-col gap-2 pointer-events-none md:left-4"
-      aria-live="polite"
-      aria-atomic="true"
-    >
+    <div className="pointer-events-none absolute top-4 left-4 z-20 flex flex-col gap-2">
       {/* Off-route warning */}
       {offRoute && (
         <div className="flex items-center gap-2 rounded-full border border-warn/40 bg-warn/10 px-3 py-1.5 text-[11px] font-medium text-warn shadow-md backdrop-blur">

@@ -29,11 +29,11 @@ export function TerrainToggle({
           ? "3D terrain on — click for flat map"
           : "3D terrain off — click to tilt and raise the hills"
       }
-      className={`btn-icon !h-8 !w-8 transition-colors ${
+      className={`btn-icon transition-colors ${
         enabled ? "!border-accent/60 !bg-accent/15 !text-accent" : ""
       }`}
     >
-      <TerrainIcon className="h-4 w-4" />
+      <TerrainIcon className="h-5 w-5" />
     </button>
   );
 }

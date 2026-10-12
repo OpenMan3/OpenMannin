@@ -273,7 +273,7 @@ function PageContent() {
     );
   }, []);
 
-// The navigation host owns all the real work; the UI just relays intent.
+  // The navigation host owns all the real work; the UI just relays intent.
   const toggleLocate = useCallback(() => {
     window.dispatchEvent(new CustomEvent("openmannin:locate"));
   }, []);
@@ -391,7 +391,7 @@ function PageContent() {
             </div>
 
             <nav
-              aria-label="Sections"
+              aria-label="Panel sections"
               className="flex shrink-0 border-b border-line"
             >
               {TABS.map((t) => (
@@ -399,6 +399,7 @@ function PageContent() {
                   key={t.id}
                   type="button"
                   onClick={() => setTab(t.id)}
+                  aria-current={tab === t.id ? "page" : undefined}
                   className={`flex-1 px-1 py-1.5 text-[11px] font-medium transition-colors ${
                     tab === t.id
                       ? "border-b-2 border-accent text-accent"
@@ -472,23 +473,23 @@ function PageContent() {
         <FeaturePopup picked={picked} onClose={() => setPicked(null)} onLocate={centreOn} />
 
         {/* Map overlays (always visible when map is ready) */}
-{map && (
-            <div className="absolute right-3 top-[150px] z-20 flex flex-col items-end gap-2 md:top-[76px]">
-              {nav && <LocateButton state={nav} onToggle={toggleLocate} />}
-              {nav && nav.locationStatus === "active" && (
-                <FollowModeButton followMode={nav.followMode} onToggle={setFollowMode} />
-              )}
-              {nav && nav.navigating && (
-                <VoiceButton muted={nav.voiceMuted} onToggle={setVoiceMuted} />
-              )}
-              <MapControls
-                terrain3d={terrain3d}
-                onTerrainChange={setTerrain3d}
-                seamarks={seamarks}
-                onSeamarksChange={setSeamarks}
-              />
-            </div>
-          )}
+        {map && (
+          <div className="absolute right-3 top-[150px] z-20 flex flex-col items-end gap-2 md:top-[76px]">
+            {nav && <LocateButton state={nav} onToggle={toggleLocate} />}
+            {nav && nav.locationStatus === "active" && (
+              <FollowModeButton followMode={nav.followMode} onToggle={setFollowMode} />
+            )}
+            {nav && nav.navigating && (
+              <VoiceButton muted={nav.voiceMuted} onToggle={setVoiceMuted} />
+            )}
+            <MapControls
+              terrain3d={terrain3d}
+              onTerrainChange={setTerrain3d}
+              seamarks={seamarks}
+              onSeamarksChange={setSeamarks}
+            />
+          </div>
+        )}
 
         {nav && <ProgressHUD state={nav} />}
         {nav && (
@@ -517,7 +518,7 @@ function PageContent() {
 
       {/* ---- mobile bottom tab bar ---- */}
       <nav
-        aria-label="Sections"
+        aria-label="Primary sections"
         className="absolute inset-x-0 bottom-0 z-50 flex h-12 items-stretch border-t border-line bg-page/95 backdrop-blur md:hidden"
       >
         {TABS.map((t) => (

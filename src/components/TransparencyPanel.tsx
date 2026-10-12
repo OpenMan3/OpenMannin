@@ -188,10 +188,11 @@ export function TransparencyPanel() {
           ))}
         </div>
         <p className="mt-3 text-[11px] leading-snug text-ink-3">
-          Basemap tiles: OpenTopoMap (CC-BY-SA) and OpenFreeMap (ODbL, light and
-          dark). The OpenStreetMap Foundation&apos;s own raster tiles are not
-          offered; their usage policy is incompatible with an always-on app.
-          Tile attributions render on the map itself.
+          Basemap tiles: OpenTopoMap (CC-BY-SA), plus an optional OpenSeaMap
+          seamark overlay (CC-BY-SA 2.0) and AWS Open Data terrain. The
+          OpenStreetMap Foundation&apos;s own raster tiles are not offered;
+          their usage policy is incompatible with an always-on app. Tile
+          attributions render on the map itself.
         </p>
       </section>
 

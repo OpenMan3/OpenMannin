@@ -28,11 +28,11 @@ export function SeamarkToggle({
           ? "OpenSeaMap seamarks on — click to hide"
           : "OpenSeaMap seamarks off — click to show nautical marks"
       }
-      className={`btn-icon !h-8 !w-8 transition-colors ${
+      className={`btn-icon transition-colors ${
         enabled ? "!border-accent/60 !bg-accent/15 !text-accent" : ""
       }`}
     >
-      <AnchorIcon className="h-4 w-4" />
+      <AnchorIcon className="h-5 w-5" />
     </button>
   );
 }

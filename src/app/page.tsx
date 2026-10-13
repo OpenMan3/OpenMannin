@@ -474,7 +474,10 @@ function PageContent() {
             onClick={() => {
               if (tab === t.id) {
                 setPanelOpen((v) => !v);
-                setMobileOpen((v) => !v);
+                setMobileOpen((v) => {
+                  if (typeof window === 'undefined') return !v;
+                  return window.innerWidth < 768 ? !v : v;
+                });
               } else {
                 setTab(t.id);
                 setPanelOpen(true);

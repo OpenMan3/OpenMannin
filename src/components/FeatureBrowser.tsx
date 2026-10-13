@@ -42,11 +42,13 @@ export function FeatureBrowser({
   enabled,
   onEnsureEnabled,
   onLocate,
+  visible = true,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
   onEnsureEnabled: (id: string) => void;
   onLocate: (lon: number, lat: number) => void;
+  visible?: boolean;
 }) {
   const withFiles = useMemo(() => layersWithFiles(layers), [layers]);
   const [layerId, setLayerId] = useState<string>("");
@@ -131,6 +133,8 @@ export function FeatureBrowser({
       ([k, v]) => !HIDDEN_KEYS.has(k) && v !== null && v !== undefined && v !== "",
     );
   }, [selected]);
+
+  if (!visible) return <div className="flex h-full" hidden />;
 
   return (
     <div className="flex h-full min-h-0 flex-col p-3">

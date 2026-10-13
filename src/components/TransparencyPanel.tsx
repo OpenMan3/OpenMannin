@@ -64,7 +64,9 @@ const LIBRARIES: { name: string; licence: string; url: string; licenceUrl: strin
   },
 ];
 
-export function TransparencyPanel() {
+export function TransparencyPanel({ visible = true }: { visible?: boolean }) {
+  if (!visible) return <div className="h-full" hidden />;
+
   const liveLayers = LAYERS.filter((l) => l.kind === "live");
 
   return (

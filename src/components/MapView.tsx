@@ -30,6 +30,7 @@ import {
   type FeedErrorSetter,
 } from "@/lib/map-live";
 import { attachMapInteractions, attachWebGLHandlers, setMapLibreWorkerUrl } from "@/lib/map-interactions";
+import { LIBERTY_STYLE_URL } from "@/lib/map-style";
 import { type NavigationState } from "@/lib/navigation/host";
 import { AttributionControl, Map as MapLibreMap } from "maplibre-gl";
 
@@ -330,7 +331,7 @@ export function MapView({
 
       // Attach interaction handlers
       const cleanupInteractions = attachMapInteractions(map, layersRef, onPickRef, onViewportRef, suppressClickUntilRef.current, layerAsOfRef);
-      const cleanupWebGL = attachWebGLHandlers(map);
+      const cleanupWebGL = attachWebGLHandlers(map, LIBERTY_STYLE_URL);
 
       // Rebuild everything a style swap tears down, from cached data.
       async function resyncAfterStyleChange(m: MapLibreMap) {

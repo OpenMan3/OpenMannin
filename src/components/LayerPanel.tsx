@@ -207,6 +207,7 @@ export function LayerPanel({
   onShowDetail,
   terrain3d,
   onTerrainChange,
+  visible = true,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
@@ -225,6 +226,8 @@ export function LayerPanel({
   /** 3D terrain state. */
   terrain3d: boolean;
   onTerrainChange: (on: boolean) => void;
+  /** Whether the panel is currently visible. Hidden panels stay mounted. */
+  visible?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(() => loadCollapsed());
 
@@ -248,6 +251,8 @@ export function LayerPanel({
   const countOn = (defs: LayerDef[]) => defs.filter((l) => enabled.has(l.id)).length;
 
   const rowProps = { enabled, missing, feedErrors, onToggle, onShowDetail };
+
+  if (!visible) return <div className="flex h-full" hidden />;
 
   return (
     <div className="flex h-full flex-col">

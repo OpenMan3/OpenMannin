@@ -16,7 +16,9 @@ const SEVERITY = {
   low: { label: "low", className: "bg-raised text-ink-3" },
 } as const;
 
-export function GapsPanel({ gaps }: { gaps: Gap[] }) {
+export function GapsPanel({ gaps, visible = true }: { gaps: Gap[]; visible?: boolean }) {
+  if (!visible) return <div className="h-full" hidden />;
+
   return (
     <div className="scroll-thin h-full overflow-y-auto">
       <div className="border-b border-line px-3 py-2.5">

@@ -363,7 +363,6 @@ function PageContent() {
               </div>
 
               <div className="min-h-0 flex-1">
-              {tab === "layers" && (
                 <LayerPanel
                   layers={LAYERS}
                   enabled={enabled}
@@ -374,19 +373,18 @@ function PageContent() {
                   onShowDetail={setDetail}
                   terrain3d={terrain3d}
                   onTerrainChange={setTerrain3d}
+                  visible={tab === "layers"}
                 />
-              )}
-              {tab === "browse" && (
                 <FeatureBrowser
                   layers={LAYERS}
                   enabled={enabled}
                   onEnsureEnabled={ensureEnabled}
                   onLocate={centreOn}
+                  visible={tab === "browse"}
                 />
-              )}
-              {tab === "gaps" && <GapsPanel gaps={GAPS} />}
-              {tab === "sources" && <TransparencyPanel />}
-            </div>
+                <GapsPanel gaps={GAPS} visible={tab === "gaps"} />
+                <TransparencyPanel visible={tab === "sources"} />
+              </div>
           </>
         )}
 

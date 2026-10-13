@@ -147,15 +147,34 @@ export function attachMapInteractions(
 
 /**
  * Set up the WebGL context lost/restored handlers.
+ *
+ * On restore we reload the style to re-create all sources/layers, which fires
+ * the existing "style.load" handler in MapView (resyncAfterStyleChange) to
+ * re-add static layers, live feeds, and navigation markers.
  */
-export function attachWebGLHandlers(map: MapLibreMap): () => void {
+export function attachWebGLHandlers(
+  map: MapLibreMap,
+  styleUrl: string,
+): () => void {
+  let restoring = false;
+
   const handleContextLost = () => {
     console.warn("[map] WebGL context lost; waiting for restore");
   };
 
-  const handleContextRestored = () => {
-    map.resize();
-    map.triggerRepaint();
+  const handleContextRestored = async () => {
+    if (restoring) return;
+    restoring = true;
+    console.warn("[map] WebGL context restored; reloading style");
+    try {
+      map.resize();
+      await map.setStyle(styleUrl, { diff: false });
+      // style.load event fires and MapView's handler re-adds everything
+    } catch (err) {
+      console.error("[map] style reload after context restore failed:", err);
+    } finally {
+      restoring = false;
+    }
   };
 
   map.on("webglcontextlost", handleContextLost);

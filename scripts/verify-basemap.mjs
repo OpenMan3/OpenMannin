@@ -1,12 +1,13 @@
 /**
- * Assert the OpenTopoMap basemap actually paints, and that a basemap switch
- * keeps every data layer above it, by driving the real UI rather than
- * trusting the config.
+ * Assert the OpenFreeMap Liberty basemap actually paints, and that the data
+ * layers sit above it, by loading the real app rather than trusting the config.
  *
- * Tiles can return 200 with a valid PNG while the map still shows
- * nothing, if the style never picks up the source. So this switches the basemap
- * through the actual <select>, screenshots the result, and measures how much of
- * the canvas is non-basemap colour.
+ * This is a vector basemap: the style JSON, vector tiles, sprites and glyphs
+ * all come from tiles.openfreemap.org. There is no single opaque raster
+ * "basemap" layer to place under the data (that hazard was specific to the old
+ * OpenTopoMap raster basemap), so the checks here are: the style loads, our
+ * data layers are present, the tiles come back over CORS, and the attribution
+ * credits the right provider.
  */
 
 import { spawn } from "node:child_process";
@@ -16,7 +17,7 @@ const PORT = process.env.PORT ?? "3000";
 const CDP_PORT = process.env.CDP_PORT ?? "9232";
 const BASE = `http://localhost:${PORT}`;
 
-// A fresh profile each run: with a reused cache every tile arrives as a
+// A fresh profile each run: with a reused cache every tile arrives as an
 // HTTP-cache hit, transferSize reports 0, and the "really fetched tiles from
 // the network" assertion below becomes meaningless.
 const PROFILE = "/tmp/opencode/chrome-tile";
@@ -52,6 +53,28 @@ async function evaluate(expression, sessionId) {
   return r.result.value;
 }
 
+/** Layer order + source survey for the loaded style. */
+const probe = `(() => {
+  const m = window.__openmanninMap;
+  if (!m) return { error: "no debug handle" };
+  const layers = m.getStyle().layers ?? [];
+  const ids = layers.map(l => l.id);
+  const data = ids.filter(id => id.startsWith("om-"));
+  const sources = Object.values(m.getStyle().sources ?? {});
+  return {
+    layerCount: ids.length,
+    dataCount: data.length,
+    vectorSources: sources.filter(s => s.type === "vector" || s.type === "geojson").length,
+    // The old raster failure mode: an opaque raster layer stacked ON TOP of
+    // the data. Nothing here should have a raster layer above the data.
+    rasterAboveData: (() => {
+      const dataIdx = data.length ? ids.indexOf(data[0]) : -1;
+      if (dataIdx < 0) return false;
+      return layers.some((l, i) => l.type === "raster" && i > dataIdx);
+    })(),
+  };
+})()`;
+
 const fails = [];
 const tileResponses = [];
 try {
@@ -75,8 +98,8 @@ try {
     }
     // Cross-origin tiles omit Timing-Allow-Origin, so performance entries
     // report transferSize 0 and duration 0 even for a healthy network fetch.
-    // The response themselves are the only trustworthy signal.
-    if (msg.method === "Network.responseReceived" && /tile\.opentopomap\.org/.test(msg.params.response.url)) {
+    // The responses themselves are the only trustworthy signal.
+    if (msg.method === "Network.responseReceived" && /tiles\.openfreemap\.org/.test(msg.params.response.url)) {
       tileResponses.push(msg.params.response.status);
     }
   };
@@ -89,144 +112,42 @@ try {
   await send("Page.navigate", { url: BASE }, sessionId);
   await sleep(12000);
 
-  // Switch basemap through the real control.
-  const switched = await evaluate(`(() => {
-    const sel = [...document.querySelectorAll("select")].find(s =>
-      [...s.options].some(o => o.value === "opentopo"));
-    if (!sel) return "no basemap select found";
-    const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set;
-    setter.call(sel, "opentopo");
-    sel.dispatchEvent(new Event("change", { bubbles: true }));
-    return "ok";
-  })()`, sessionId);
-  if (switched !== "ok") fails.push(`could not switch basemap: ${switched}`);
-  await sleep(9000);
-
-  // Direct from OpenTopoMap now, so assert on the upstream host rather than our
-  // own path. If their CORS header goes away this fires, which is the point.
-  const tileErrors = errors.filter((e) => /tile\.opentopomap\.org/i.test(e));
-  if (tileErrors.length) fails.push(`${tileErrors.length} opentopo tile error(s): ${tileErrors[0].slice(0, 140)}`);
-
-  // LAYER ORDER, not layer existence.
-  // addLayer without a beforeId appends to the end, putting an opaque raster
-  // basemap ON TOP of every data layer. Every layer still exists, so an
-  // existence check passes while the map looks empty - and because the effect
-  // runs in both directions, swapping back does not recover it. Only a refresh
-  // rebuilds the style with the basemap first, which is exactly the reported
-  // "it only fixes itself if I reload" symptom.
-  const orderProbe = `(() => {
-    const m = window.__openmanninMap;
-    if (!m) return { error: "no debug handle" };
-    const ids = m.getStyle().layers.map(l => l.id);
-    const basemap = ids.indexOf("basemap");
-    const data = ids.filter(id => id.startsWith("om-"));
-    return {
-      basemapIndex: basemap,
-      dataCount: data.length,
-      firstDataIndex: data.length ? ids.indexOf(data[0]) : -1,
-      basemapBelowAllData:
-        data.length === 0 ? null : basemap !== -1 && basemap < ids.indexOf(data[0]),
-      order: ids,
-    };
-  })()`;
-
-  const assertOrder = (label, probe, { requireBasemap = true } = {}) => {
-    if (probe.error) { fails.push(`${label}: ${probe.error}`); return; }
-    if (probe.dataCount === 0) { fails.push(`${label}: no data layers in style at all`); return; }
-    // Vector basemaps (OpenFreeMap) ship a complete style with no single raster
-    // "basemap" layer; our data layers are appended above the style's own, so
-    // there is no opaque-raster-above-data hazard to check. Raster basemaps
-    // (OpenTopoMap) add one "basemap" layer that must stay below the data.
-    if (probe.basemapIndex === -1) {
-      if (requireBasemap) fails.push(`${label}: expected a raster "basemap" layer but found none`);
-      return;
-    }
-    if (!probe.basemapBelowAllData) {
-      fails.push(
-        `${label}: basemap is NOT below the data layers ` +
-        `(basemap at ${probe.basemapIndex}, first data layer at ${probe.firstDataIndex}) - ` +
-        `an opaque raster layer is covering them. order: ${probe.order.join(" > ")}`,
-      );
-    }
-  };
-
-  const orderAfterSwitch = await evaluate(orderProbe, sessionId);
-  assertOrder("after switching to opentopo", orderAfterSwitch, { requireBasemap: true });
-
-  // And back again: the old bug survived the return trip too. OpenFreeMap
-  // (Liberty) is now the light default and the OSM standard tiles are gone
-  // (their usage policy is incompatible), so switch to it rather than "osm".
-  await evaluate(`(() => {
-    const sel = [...document.querySelectorAll("select")].find(s =>
-      [...s.options].some(o => o.value === "openfreemap"));
-    if (!sel) return "no basemap select found";
-    const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set;
-    setter.call(sel, "openfreemap");
-    sel.dispatchEvent(new Event("change", { bubbles: true }));
-    return "ok";
-  })()`, sessionId);
-  await sleep(4000);
-  const orderAfterBack = await evaluate(orderProbe, sessionId);
-  assertOrder("after switching back to OpenFreeMap", orderAfterBack, { requireBasemap: false });
-
-  // Put it back on opentopo for the screenshot and attribution assertions.
-  await evaluate(`(() => {
-    const sel = [...document.querySelectorAll("select")].find(s =>
-      [...s.options].some(o => o.value === "opentopo"));
-    const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set;
-    setter.call(sel, "opentopo");
-    sel.dispatchEvent(new Event("change", { bubbles: true }));
-    return "ok";
-  })()`, sessionId);
-  await sleep(6000);
-
-  // Count the tile requests the browser actually made.
-  //
-  // These are direct to OpenTopoMap, not through our origin. That is the whole
-  // point of the change: it sends `access-control-allow-origin: *`, so the proxy
-  // had nothing left to do, and going direct removes a hop and a bandwidth bill.
-  // The status of each response is captured by the Network listener above,
-  // because performance.getEntriesByType("resource") cannot be used here:
-  // OpenTopoMap sends no Timing-Allow-Origin, so entry transferSize/duration
-  // are 0 even for a healthy fetch. If OpenTopoMap ever stops sending the CORS
-  // header, MapLibre fails to read the pixels and the canvas assertion in
-  // verify-render catches it; here we catch the narrower HTTP failure.
-  const perf = await evaluate(`(() => performance.getEntriesByType("resource")
-     .filter(e => /tile\\.opentopomap\\.org/.test(e.name))
-     .map(e => ({ name: e.name, size: e.transferSize })) )()`, sessionId);
-  const tile200 = tileResponses.filter((s) => s === 200);
-  if (!tile200.length) {
-    fails.push(
-      `no opentopo tile came back 200 (${tileResponses.length} responses: ${[...new Set(tileResponses)].join(", ") || "none recorded"})`,
-    );
+  const result = await evaluate(probe, sessionId);
+  if (result.error) fails.push(result.error);
+  else {
+    if (result.dataCount === 0) fails.push("no data layers in style at all");
+    if (result.rasterAboveData) fails.push("a raster layer is stacked above the data layers");
+    if (result.vectorSources === 0) fails.push("no vector/geojson source present");
   }
 
-  // The attribution control must credit whoever actually served the tiles.
-  // OpenTopoMap is CC-BY-SA, so leaving the old provider credited on screen
-  // is a licence-compliance bug, not a cosmetic nit - setTiles() would do exactly that.
+  // Credit whoever actually served the tiles. OpenFreeMap requires attribution.
   const attribution = await evaluate(`(() => {
     const el = document.querySelector(".maplibregl-ctrl-attrib-inner")
            || document.querySelector(".maplibregl-ctrl-attrib");
     return el ? el.innerText.replace(/\\s+/g, " ").trim() : "";
   })()`, sessionId);
-  if (!/OpenTopoMap/i.test(attribution ?? "")) {
-    fails.push(`attribution does not credit OpenTopoMap: "${(attribution ?? "").slice(0, 120)}"`);
+  if (!/OpenFreeMap|OpenMapTiles|OpenStreetMap/i.test(attribution ?? "")) {
+    fails.push(`attribution does not credit OpenFreeMap/OSM: "${(attribution ?? "").slice(0, 120)}"`);
   }
-  if (/tile\.openstreetmap\.org/i.test(String(attribution ?? "").replace(/OpenTopoMap|OpenStreetMap/g, "")) && /Standard OSM/i.test(String(attribution ?? ""))) {
-    fails.push(`attribution still credits "Standard OSM" while showing OpenTopoMap tiles: "${(attribution ?? "").slice(0, 120)}"`);
+
+  const tileErrors = errors.filter((e) => /tiles\.openfreemap\.org/i.test(e));
+  if (tileErrors.length) fails.push(`${tileErrors.length} openfreemap tile/host error(s): ${tileErrors[0].slice(0, 140)}`);
+
+  const tile200 = tileResponses.filter((s) => s === 200);
+  if (!tile200.length) {
+    fails.push(
+      `no openfreemap tile came back 200 (${tileResponses.length} responses: ${[...new Set(tileResponses)].join(", ") || "none recorded"})`,
+    );
   }
 
   const shot = await send("Page.captureScreenshot", { format: "png" }, sessionId);
-  fs.writeFileSync("/tmp/opencode/opentopo-basemap.png", Buffer.from(shot.data, "base64"));
+  fs.writeFileSync("/tmp/opencode/openfreemap-basemap.png", Buffer.from(shot.data, "base64"));
 
-  console.log("\nOpenTopoMap basemap check");
-  console.log(`  direct tile requests  ${(perf ?? []).length} (${tile200.length} HTTP 200)`);
-  console.log(`  tile request errors   ${tileErrors.length}`);
-  console.log(`  basemap layer index   ${orderAfterSwitch.basemapIndex} (first data layer ${orderAfterSwitch.firstDataIndex}, ${orderAfterSwitch.dataCount} data layers)`);
-  console.log(`  raster below data     ${orderAfterSwitch.basemapBelowAllData ? "yes" : "NO"}`);
-  console.log(`  vector data present   ${orderAfterBack.dataCount > 0 ? `yes (${orderAfterBack.dataCount} layers)` : "NO"}`);
-  console.log(`  attribution          ${(attribution ?? "(none)").slice(0, 90)}`);
-  console.log("  screenshot            /tmp/opencode/opentopo-basemap.png");
+  console.log("\nOpenFreeMap Liberty basemap check");
+  console.log(`  openfreemap responses ${tileResponses.length} (${tile200.length} HTTP 200)`);
+  console.log(`  style layers          ${result.dataCount ?? "?"} data layers of ${result.layerCount ?? "?"}`);
+  console.log(`  attribution           ${(attribution || "(none)").slice(0, 90)}`);
+  console.log("  screenshot            /tmp/opencode/openfreemap-basemap.png");
   console.log(fails.length ? `\nFAIL:\n  ${fails.join("\n  ")}` : "\nOK");
   process.exitCode = fails.length ? 1 : 0;
 } catch (e) {

@@ -1,40 +1,36 @@
 /**
- * Basemap definitions and style creation.
+ * Basemap definition and style creation.
  *
- * OpenTopoMap: raster hill-shaded tiles, keyless, CORS-open, CC-BY-SA.
- * The OpenStreetMap DATABASE (ODbL) underpins the data.
+ * OpenFreeMap Liberty: keyless, CORS-open vector basemap on ODbL OpenStreetMap
+ * data. Chosen from a five-style evaluation set (Liberty, bright, positron,
+ * fiord, dark) for legibility; the others were stripped out. One host serves
+ * the style JSON, vector tiles, sprites and glyphs.
+ *
+ * The OpenStreetMap DATABASE (ODbL) underpins it.
  */
 
-import type { StyleSpecification, Map as MapLibreMap } from "maplibre-gl";
+import type { Map as MapLibreMap } from "maplibre-gl";
 
-export type BasemapId = "opentopo" | "liberty";
+export type BasemapId = "liberty";
+
+const OPENFREEMAP_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors (ODbL) | Basemap <a href="https://openfreemap.org/" target="_blank">OpenFreeMap</a> | Style &copy; <a href="https://www.openmaptiles.org/" target="_blank">OpenMapTiles</a>';
 
 export const BASEMAPS: Record<BasemapId, BasemapDef> = {
-  "opentopo": {
-    kind: "raster",
-    tiles: [
-      "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
-      "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
-      "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
-    ],
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors (ODbL) | Map style &copy; <a href="https://opentopomap.org" target="_blank">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/" target="_blank">CC-BY-SA</a>)',
-    maxzoom: 17,
-  },
   "liberty": {
     kind: "style",
-    styleUrl: "https://tiles.stadiamaps.com/styles/osm_bright.json",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors (ODbL) | Tiles &copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a>',
+    styleUrl: "https://tiles.openfreemap.org/styles/liberty",
+    attribution: OPENFREEMAP_ATTRIBUTION,
     maxzoom: 17,
   },
 };
 
-export type BasemapDef =
-  | { kind: "raster"; tiles: string[]; attribution: string; maxzoom: number }
-  | { kind: "style"; styleUrl: string; attribution: string; maxzoom: number };
-
-const GLYPHS = "https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf";
+export type BasemapDef = {
+  kind: "style";
+  styleUrl: string;
+  attribution: string;
+  maxzoom: number;
+};
 
 /**
  * 3D terrain: a keyless, CORS-open DEM.
@@ -54,10 +50,10 @@ export const TERRAIN_ATTRIBUTION = "";
  * Switch 3D terrain on or off, and tilt the camera to match.
  *
  * The DEM source is added at runtime rather than baked into createInitialStyle
- * because the OpenFreeMap basemaps swap the whole style on every change: a
- * source declared in the style would be dropped and the terrain silently
- * un-set. Re-adding it after every style.load keeps a style swap from quietly
- * flattening the map under a checkbox that still says "3D on".
+ * because the OpenFreeMap style is loaded by URL: a source declared alongside
+ * it would not survive the style load, and the terrain would silently un-set.
+ * Re-adding it after every style.load keeps the map from quietly flattening
+ * under a checkbox that still says "3D on".
  */
 export function applyTerrain(map: MapLibreMap, enabled: boolean): void {
   if (enabled) {
@@ -85,54 +81,6 @@ export function applyTerrain(map: MapLibreMap, enabled: boolean): void {
 export const INITIAL_CENTRE: [number, number] = [-4.4814, 54.1509];
 export const INITIAL_ZOOM = 10;
 
-export function createInitialStyle(bm: BasemapDef): StyleSpecification | string {
-  if (bm.kind === "style") {
-    return bm.styleUrl;
-  }
-  return {
-    version: 8,
-    glyphs: GLYPHS,
-    sources: {
-      basemap: {
-        type: "raster",
-        tiles: bm.tiles,
-        tileSize: 256,
-        attribution: bm.attribution,
-      },
-    },
-    layers: [
-      { id: "background", type: "background", paint: { "background-color": "#0b0f14" } },
-      { id: "basemap", type: "raster", source: "basemap" },
-    ],
-  };
-}
-
-export function applyRasterBasemap(map: MapLibreMap, bm: Extract<BasemapDef, { kind: "raster" }>): void {
-  // Raster basemap: replace the basemap source/layer in-place.
-  // The raster source has to be REPLACED, not retargeted. Attribution in
-  // MapLibre is a property of the source in the style, and setTiles() keeps
-  // the original attribution - so switching basemaps that way leaves the
-  // control crediting the old provider while different tiles are on screen.
-  // That is a licence-compliance bug, not a cosmetic one.
-  if (map.getLayer("basemap")) map.removeLayer("basemap");
-  if (map.getSource("basemap")) map.removeSource("basemap");
-
-  map.addSource("basemap", {
-    type: "raster",
-    tiles: bm.tiles,
-    tileSize: 256,
-    attribution: bm.attribution,
-  });
-
-  // The basemap MUST be re-inserted at the bottom of the layer stack.
-  // addLayer without a beforeId appends to the end, which would drop an
-  // opaque raster layer on top of every data layer and make the whole map
-  // look empty.
-  const firstDataLayer = map
-    .getStyle()
-    .layers?.find((l) => l.id.startsWith("om-"))?.id;
-  map.addLayer(
-    { id: "basemap", type: "raster", source: "basemap" },
-    firstDataLayer ?? (map.getLayer("background") ? "background" : undefined),
-  );
+export function createInitialStyle(bm: BasemapDef): string {
+  return bm.styleUrl;
 }

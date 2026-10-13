@@ -13,7 +13,7 @@
  * WHY THE CSP IS THIS SHAPE.
  *
  * The map now talks to third-party origins FROM THE BROWSER: satellite passes
- * to CelesTrak, basemap tiles to OpenTopoMap and ArcGIS, glyphs to Carto. An
+ * to CelesTrak, basemap tiles to OpenFreeMap, glyphs to Carto. An
  * older version of this policy had `connect-src 'self'`, which blanks every
  * one of those requests and is the single easiest way to ship a map that looks
  * like it is broken by itself.
@@ -41,12 +41,10 @@
 const CONNECT_SRC = [
   "'self'",
   "https://celestrak.org",
-  "https://a.tile.opentopomap.org",
-  "https://b.tile.opentopomap.org",
-  "https://c.tile.opentopomap.org",
-
+  // Keyless OpenFreeMap vector basemaps: style JSON, vector tiles, sprites and
+  // glyphs all come from this one host, fetched by MapLibre via connect-src.
   "https://tiles.openfreemap.org",
-  "https://tiles.stadiamaps.com",
+  // Carto glyph PBFs referenced by createInitialStyle's GLYPHS.
   "https://tiles.basemaps.cartocdn.com",
   // 3D terrain: AWS Open Data DEM tiles (raster-dem, terrarium). MapLibre
   // fetches these as array buffers, so they need connect-src specifically.

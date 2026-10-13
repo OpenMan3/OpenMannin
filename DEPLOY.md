@@ -228,8 +228,8 @@ Check, in order:
 
 Then load the page and confirm:
 
-- the attribution control credits whoever served the basemap you selected, and
-  changes when you switch basemaps;
+- the attribution control credits the basemap provider (OpenFreeMap,
+  OpenMapTiles, OpenStreetMap);
 - the browser console has no Content-Security-Policy violations (a `connect-src`
   violation means the host is not sending the headers - see the top of this
   file);
@@ -258,10 +258,10 @@ real bugs. If you can test on 22, prefer 22 LTS; otherwise build with
 
 ## Operational notes
 
-- **Attribution is a licence obligation, not decoration.** OpenTopoMap is
-  CC-BY-SA, standard OSM and HOT tiles use the same ODbL as the data, and
-  OpenFreeMap/OpenMapTiles is BuildCC-BY/ODbL; `verify:basemap` asserts that
-  the attribution control follows the basemap.
+- **Attribution is a licence obligation, not decoration.** The OpenFreeMap
+  Liberty basemap is ODbL (data © OpenStreetMap contributors, style ©
+  OpenMapTiles), and `verify:basemap` asserts that the attribution control
+  credits it.
 - **Every source must be free for any use, including commercial.** Open-Meteo's
   free tier was NON-COMMERCIAL and has been removed, as was the Met Office
   DataHub (paid key). A CC-BY-NC licence identifies data that cannot be used

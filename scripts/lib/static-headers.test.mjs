@@ -33,9 +33,10 @@ test("the CSP names every origin the browser actually fetches from", () => {
   // basemap, TLEs that never arrive.
   for (const origin of [
     "https://celestrak.org",
-    "https://a.tile.opentopomap.org",
     "https://tiles.openfreemap.org",
     "https://tiles.basemaps.cartocdn.com",
+    // 3D terrain DEM tiles (raster-dem), fetched by MapLibre as an array buffer.
+    "https://s3.amazonaws.com",
   ]) {
     assert.ok(
       CONTENT_SECURITY_POLICY.includes(`connect-src`) && CONTENT_SECURITY_POLICY.includes(origin),

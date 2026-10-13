@@ -30,7 +30,7 @@ test("glyph, vector-tile and font URLs are classified as protobuf", () => {
 
 test("non-protobuf URLs are passed through untouched", () => {
   assert.ok(!isProtobufUrl("https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle"));
-  assert.ok(!isProtobufUrl("https://a.tile.opentopomap.org/12/2000/1300.png"));
+  assert.ok(!isProtobufUrl("https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/2000/1300.png"));
   assert.ok(!isProtobufUrl("/data/manifest.json"));
 });
 

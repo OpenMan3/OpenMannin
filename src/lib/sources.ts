@@ -162,34 +162,26 @@ export const SOURCES: Record<string, Source> = {
     notes:
       "Satellite teleport at 54.1390 N, -4.4951 — 2 km east of Douglas. Site lineage: SES announced an IoM teleport in Sept 2016, withdrew summer 2021; BlueWave acquired ~2020. Starlink licensed 2021 via BlueWave partnership.",
   },
-  opentopomap: {
-    id: "opentopomap",
-    name: "OpenTopoMap tiles",
-    publisher: "OpenTopoMap (based on OpenStreetMap, SRTM)",
-    url: "https://opentopomap.org/",
-    licence: "CC-BY-4.0",
-    lastChecked: "2026-10-04",
-    notes: "CC-BY-SA derived map data on ODbL geometry. Raster, keyless, ACAO *.",
-  },
-  // NOTE: the OpenStreetMap Foundation's standard raster tiles
-  // (tile.openstreetmap.org) were previously listed here. They are NOT a source
-  // this project uses. Their tile usage policy (distinctive User-Agent,
-  // >=7-day caching, no bulk downloading, blocking without notice) is
-  // incompatible with an always-on viewer, so the basemap was removed on
-  // 2026-10-11 and the entry was DROPPED from the register rather than left in
-  // the list as a source we do not render. The OSM DATABASE (ODbL) still
-  // underpins every layer and the OpenTopoMap and OpenFreeMap basemaps, which
-  // is legitimate and credited.
+  // NOTE: the OpenTopoMap raster basemap (CC-BY-SA, keyless, ACAO *) and the
+  // OpenStreetMap Foundation's own standard raster tiles (tile.openstreetmap.org)
+  // were both previously listed here. Neither is a source this project renders.
+  // The OSMF tiles violate their own usage policy for an always-on viewer
+  // (distinctive User-Agent, >=7-day caching, no bulk downloading) and were
+  // dropped on 2026-10-11. OpenTopoMap was dropped on 2026-10-13 when the
+  // basemap set was narrowed to OpenFreeMap; the entry is DROPPED rather than
+  // left in the register as a source we do not render. The OSM DATABASE (ODbL)
+  // still underpins every layer and the OpenFreeMap basemaps, which is
+  // legitimate and credited.
 
   openfreemap: {
     id: "openfreemap",
-    name: "OpenFreeMap styles (Liberty, bright, positron, dark)",
+    name: "OpenFreeMap basemap (Liberty style)",
     publisher: "OpenFreeMap",
     url: "https://openfreemap.org/",
     licence: "ODbL",
-    lastChecked: "2026-10-11",
+    lastChecked: "2026-10-13",
     notes:
-      "Keyless vector basemap and style set on ODbL OpenStreetMap data, CORS *. Backs the OpenFreeMap light and dark basemaps. The dark style replaced the removed Stadia Maps raster basemaps, which required an API key and returned 401 without one.",
+      "Keyless vector basemap on ODbL OpenStreetMap data, CORS *. One host serves the style JSON, vector tiles, sprites and glyphs. The Liberty style was chosen on 2026-10-13 from a five-style evaluation set (Liberty, bright, positron, fiord, dark); the other four are no longer offered.",
   },
   emodnet: {
     id: "emodnet",

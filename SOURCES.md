@@ -22,7 +22,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | No published licence | no | yes | No terms of use, robots.txt or licence found. Absence of a licence is not a grant. Do not republish without written permission. |
 | Licence not established | no | yes | Verify before use. |
 
-## Source register (22)
+## Source register (20)
 
 | Source | Publisher | Licence | Last checked |
 | --- | --- | --- | --- |
@@ -42,8 +42,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | [Mooir Vannin project documentation](https://cdn.orsted.com/-/media/www/docs/corp/uk/im/240214mooirvanninsummaryreportv60-08654899a-1.pdf) | Ørsted | PUBLIC-DOMAIN | 2026-10-04 |
 | [The Crown Estate offshore wind leasing](https://www.thecrownestate.co.uk/our-business/marine/offshore-wind/morgan-offshore-wind-site) | The Crown Estate | PUBLIC-DOMAIN | 2026-10-04 |
 | [Spaceman teleport / aql Space Services](https://spaceman.im/) | aql (formerly BlueWave Communications) | PUBLIC-DOMAIN | 2026-10-04 |
-| [OpenTopoMap tiles](https://opentopomap.org/) | OpenTopoMap (based on OpenStreetMap, SRTM) | CC-BY-4.0 | 2026-10-04 |
-| [OpenFreeMap styles (Liberty, bright, positron, dark)](https://openfreemap.org/) | OpenFreeMap | ODbL | 2026-10-11 |
+| [OpenFreeMap basemap (Liberty style)](https://openfreemap.org/) | OpenFreeMap | ODbL | 2026-10-13 |
 | [EMODnet Bathymetry](https://emodnet.ec.europa.eu/en/bathymetry) | EMODnet / European Commission | CC-BY-4.0 | 2026-10-04 |
 | [AWS Open Data — Terrain Tiles (Mapzen/Joerd)](https://registry.opendata.aws/terrain-tiles/) | Mapzen (Linux Foundation) / AWS Open Data | COPERNICUS | 2026-10-11 |
 | [OpenMannin compilation](https://github.com/) | OpenMannin | OGL-IoM | 2026-10-04 |

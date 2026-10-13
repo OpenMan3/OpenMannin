@@ -61,8 +61,8 @@ const SUPPRESS_CLICK_MS = 700;
 /** Orange pin colours (#f43f5e is the subsea-cable rose, kept for the pin). */
 /**
  * Visual constants. The route is Google-blue, the pin Google-red and the
- * live dot the light-palette GPS blue — they read well on both the light
- * (Liberty) and dark OpenFreeMap styles as well as on OpenTopoMap.
+ * live dot the light-palette GPS blue — they read well on the OpenFreeMap
+ * Liberty basemap.
  */
 const PIN_COLOR = "#d93025";
 const PIN_RING = "rgba(217, 48, 37, 0.22)";

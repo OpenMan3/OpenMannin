@@ -80,7 +80,6 @@ const UPSTREAM_ROUTES = [
   /celestrak\.org/,
   /overpass(-api|\.de|\.kumi)/,
   /maps\.mail\.ru/,
-  /tile\.opentopomap\.org/,
   /tile\.openstreetmap\.org/,
   /tile\.openstreetmap\.fr/,
   /tiles\.openfreemap\.org/,

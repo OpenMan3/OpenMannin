@@ -17,7 +17,6 @@ import { installPbfGuard } from "@/lib/pbf-guard";
 import { createNavigationIntegration } from "@/lib/map-navigation";
 import {
   createInitialStyle,
-  applyRasterBasemap,
   applyTerrain,
 
   BASEMAPS,
@@ -25,7 +24,6 @@ import {
   INITIAL_CENTRE,
   INITIAL_ZOOM,
 } from "@/lib/map-style";
-import type { StyleSpecification } from "maplibre-gl";
 import { syncStaticLayers } from "@/lib/map-layers";
 import {
   startLivePolls,
@@ -196,27 +194,15 @@ export function MapView({
     startLivePolls(enabledRef, layersRef, mapRef, setFeedError);
   }, [enabled, setFeedError]);
 
-  // React to basemap changes
+  // React to basemap changes. The style basemap is loaded by URL; the
+  // "style.load" event handler runs the post-swap resync.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
     const bm = BASEMAPS[basemap];
-    if (bm.kind === "style") {
-      map.setStyle(bm.styleUrl, { diff: false });
-    } else {
-      applyRasterBasemap(map, bm);
-    }
+    map.setStyle(bm.styleUrl, { diff: false });
     map.setMaxZoom(bm.maxzoom);
-    // For style basemaps the "style.load" event handler runs the resync
-    if (bm.kind === "raster") {
-      void syncStaticLayers(map, layersRef.current, {
-        enabledRef,
-        missingRef,
-        onMissing: reportMissing,
-        onAsOf: reportAsOf,
-      });
-    }
-  }, [basemap, reportMissing, reportAsOf]);
+  }, [basemap]);
 
   // React to the 3D terrain toggle. The map 'load' handler applies the initial
   // value; this only has to handle changes made after the map is ready.
@@ -274,7 +260,7 @@ export function MapView({
       // Set MapLibre worker URL before creating the map
       await setMapLibreWorkerUrl();
 
-      const initialStyle: StyleSpecification | string = createInitialStyle(bm);
+      const initialStyle = createInitialStyle(bm);
 
       const map = new MapLibreMap({
         container: containerRef.current!,

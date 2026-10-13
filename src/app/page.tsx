@@ -356,13 +356,11 @@ function PageContent() {
           </button>
         </div>
 
-{panelOpen && (
-            <>
-              <div className="shrink-0 border-b border-line px-3 py-2">
+<div className="shrink-0 border-b border-line px-3 py-2">
                 <GlobalSearch onSelect={searchSelect} />
               </div>
 
-              <div className="min-h-0 flex-1">
+              <div className="min-h-0 flex-1" hidden={!panelOpen}>
                 <LayerPanel
                   layers={LAYERS}
                   enabled={enabled}
@@ -385,8 +383,6 @@ function PageContent() {
                 <GapsPanel gaps={GAPS} visible={tab === "gaps"} />
                 <TransparencyPanel visible={tab === "sources"} />
               </div>
-          </>
-        )}
 
         {/* desktop resize handle */}
         <div

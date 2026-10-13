@@ -11,10 +11,9 @@ import { GapsPanel } from "@/components/GapsPanel";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { TransparencyPanel } from "@/components/TransparencyPanel";
 import { LocateButton } from "@/components/LocateButton";
-import { DestinationSheet } from "@/components/DestinationSheet";
 import { FollowModeButton } from "@/components/FollowModeButton";
 import { VoiceButton } from "@/components/VoiceButton";
-import { ProgressHUD } from "@/components/ProgressHUD";
+import { NavigationOverlay } from "@/components/NavigationOverlay";
 
 
 
@@ -76,7 +75,9 @@ function PageContent() {
   // Lifted so the map pad (and thus the visible route) tracks its height.
   const [stepsOpen, setStepsOpen] = useState(false);
   /** Measured pixel height of the destination sheet, for map bottom-padding. */
-  const [sheetInset, setSheetInset] = useState(0);
+  /** Map top/bottom insets reported by the navigation overlay. */
+  const [navTopInset, setNavTopInset] = useState(0);
+  const [navBottomInset, setNavBottomInset] = useState(0);
   /** True once the user pressed Navigate; keeps the screen awake until cleared. */
   const [navigating, setNavigating] = useState(false);
   // Layers the registry lists but public/data does not have; populated by the map
@@ -278,6 +279,14 @@ function PageContent() {
     setNavigating(false);
     window.dispatchEvent(new CustomEvent("openmannin:clear-nav"));
   }, []);
+  const endNav = useCallback(() => {
+    setNavigating(false);
+    setStepsOpen(false);
+    window.dispatchEvent(new CustomEvent("openmannin:nav-end"));
+  }, []);
+  const overviewNav = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("openmannin:nav-overview"));
+  }, []);
 
   // A pin-drop without an explicit Navigate press re-opens a stale step list
   // from the previous destination; fold it back in.
@@ -423,7 +432,8 @@ function PageContent() {
           onViewport={setViewport}
           onNav={setNav}
           onMapReady={setMap}
-          insetBottom={nav?.destination && nav.routeStatus === "ready" ? sheetInset + 68 : 0}
+          insetBottom={navBottomInset + 8}
+          insetTop={navTopInset}
           mobileBottomInset={64}
           terrain3d={terrain3d}
         />
@@ -443,16 +453,21 @@ function PageContent() {
           </div>
         )}
 
-        {nav && <ProgressHUD state={nav} />}
         {nav && (
-          <DestinationSheet
+          <NavigationOverlay
             state={nav}
-            onToggleMode={setNavMode}
-            onNavigate={navigate}
-            onClear={clearNav}
             stepsOpen={stepsOpen}
             onToggleSteps={() => setStepsOpen((v) => !v)}
-            onInset={setSheetInset}
+            onToggleMode={setNavMode}
+            onNavigate={navigate}
+            onEnd={endNav}
+            onClear={clearNav}
+            onOverview={overviewNav}
+            onFollow={setFollowMode}
+            onVoice={setVoiceMuted}
+            onLocateToggle={toggleLocate}
+            onTopInset={setNavTopInset}
+            onBottomInset={setNavBottomInset}
             minimized
           />
         )}

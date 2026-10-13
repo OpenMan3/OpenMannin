@@ -53,6 +53,7 @@ export function MapView({
   onNav,
   onMapReady,
   insetBottom = 0,
+  insetTop = 0,
   mobileBottomInset = 0,
   terrain3d = false,
 }: {
@@ -80,6 +81,8 @@ export function MapView({
    * fit/fly/follow all keep the user marker and the active route above it.
    */
   insetBottom?: number;
+  /** Pixels of the map's top edge covered by the navigation banner. */
+  insetTop?: number;
   /**
    * Extra bottom padding for mobile (e.g., floating tab bar height) so
    * attribution and map controls stay visible above it.
@@ -206,12 +209,12 @@ export function MapView({
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
     map.setPadding({
-      top: 0,
+      top: insetTop,
       bottom: 24 + insetBottom + mobileBottomInset,
       left: 0,
       right: 0,
     });
-  }, [insetBottom, mobileBottomInset]);
+  }, [insetBottom, insetTop, mobileBottomInset]);
 
   // ---- create the map once -------------------------------------------------
   useEffect(() => {

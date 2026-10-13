@@ -1561,12 +1561,29 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     onClearEvent();
   };
 
+  const onNavEndEvent = () => {
+    if (!ensureLayersAndRoute) ensureLayers();
+    state.navigating = false;
+    spokenKeys = new Set<string>();
+    cancelSpeech();
+    publish();
+  };
+
+  const onNavOverviewEvent = () => {
+    ensureLayersAndRoute();
+    const active = state.routes[state.activeMode];
+    if (active && state.routeStatus === "ready" && !state.offRoute) fitRoute(active);
+    else if (active) fitRoute(active);
+  };
+
   window.addEventListener("openmannin:locate", onLocateWindow);
   window.addEventListener("openmannin:navigate", onNavigateWindow);
   window.addEventListener("openmannin:nav-mode", onModeWindow);
   window.addEventListener("openmannin:nav-follow", onFollowWindow);
   window.addEventListener("openmannin:nav-voice", onVoiceWindow);
   window.addEventListener("openmannin:clear-nav", onClearWindow);
+  window.addEventListener("openmannin:nav-end", onNavEndEvent);
+  window.addEventListener("openmannin:nav-overview", onNavOverviewEvent);
   window.addEventListener("openmannin:set-destination", onSetDestinationWindow);
 
   // Publish the initial state so the UI renders the controls (the locate
@@ -1602,6 +1619,8 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       window.removeEventListener("openmannin:nav-follow", onFollowWindow);
       window.removeEventListener("openmannin:nav-voice", onVoiceWindow);
       window.removeEventListener("openmannin:clear-nav", onClearWindow);
+      window.removeEventListener("openmannin:nav-end", onNavEndEvent);
+      window.removeEventListener("openmannin:nav-overview", onNavOverviewEvent);
       window.removeEventListener("openmannin:set-destination", onSetDestinationWindow);
       clearRecalc();
     },

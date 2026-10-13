@@ -46,6 +46,7 @@ const CONNECT_SRC = [
   "https://c.tile.opentopomap.org",
 
   "https://tiles.openfreemap.org",
+  "https://tiles.stadiamaps.com",
   "https://tiles.basemaps.cartocdn.com",
   // 3D terrain: AWS Open Data DEM tiles (raster-dem, terrarium). MapLibre
   // fetches these as array buffers, so they need connect-src specifically.

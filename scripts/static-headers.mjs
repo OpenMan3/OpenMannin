@@ -44,7 +44,7 @@ const CONNECT_SRC = [
   // Keyless OpenFreeMap vector basemaps: style JSON, vector tiles, sprites and
   // glyphs all come from this one host, fetched by MapLibre via connect-src.
   "https://tiles.openfreemap.org",
-  // Carto glyph PBFs referenced by createInitialStyle's GLYPHS.
+  // OpenFreeMap's Liberty style pulls its glyph PBFs from this Carto host.
   "https://tiles.basemaps.cartocdn.com",
   // 3D terrain: AWS Open Data DEM tiles (raster-dem, terrarium). MapLibre
   // fetches these as array buffers, so they need connect-src specifically.

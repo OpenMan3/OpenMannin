@@ -15,46 +15,23 @@
  *   5. Toggling it back OFF stops the poller and clears the badge.
  */
 
-import { spawn } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
+import { startBrowser } from "./lib/chrome-driver.mjs";
 
 const URL_UNDER_TEST = process.argv[2] ?? "http://localhost:3111/";
-const PORT = 9333;
 
-const chrome = spawn("chromium", [
-  "--headless=new",
-  `--remote-debugging-port=${PORT}`,
-  "--no-sandbox",
-  "--disable-gpu",
-  "--disable-dev-shm-usage",
-  "--hide-scrollbars",
-  "--window-size=1440,900",
-  "about:blank",
-], { stdio: ["ignore", "ignore", "pipe"] });
+const { send, evaluate, onMessage, navigate, close } = await startBrowser({
+  // Fixed port: this check is expected to run in parallel with the others.
+  port: "9333",
+  windowSize: "1440,900",
+  stdio: ["ignore", "ignore", "pipe"],
+  flags: ["--disable-gpu", "--disable-dev-shm-usage", "--hide-scrollbars"],
+  domains: ["Runtime", "Page", "Network"],
+});
 
-let wsUrl = "";
-for (let i = 0; i < 60 && !wsUrl; i++) {
-  await sleep(250);
-  try {
-    const r = await fetch(`http://127.0.0.1:${PORT}/json/version`);
-    wsUrl = (await r.json()).webSocketDebuggerUrl;
-  } catch { /* not up yet */ }
-}
-if (!wsUrl) { chrome.kill(); throw new Error("chromium did not expose CDP"); }
-
-const ws = new WebSocket(wsUrl);
-await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej; });
-
-let id = 0;
-const pending = new Map();
 const consoleMsgs = [];
-ws.onmessage = (m) => {
-  const msg = JSON.parse(m.data);
-  if (msg.id && pending.has(msg.id)) {
-    const { resolve, reject } = pending.get(msg.id);
-    pending.delete(msg.id);
-    msg.error ? reject(new Error(msg.error.message)) : resolve(msg.result);
-  } else if (msg.method === "Runtime.consoleAPICalled") {
+onMessage((msg) => {
+  if (msg.method === "Runtime.consoleAPICalled") {
     const t = msg.params.type;
     if (t === "error" || t === "warning") {
       consoleMsgs.push(`${t}: ` + msg.params.args.map((a) => a.value ?? a.description ?? a.type).join(" "));
@@ -62,28 +39,10 @@ ws.onmessage = (m) => {
   } else if (msg.method === "Runtime.exceptionThrown") {
     consoleMsgs.push("exception: " + (msg.params.exceptionDetails.exception?.description ?? ""));
   }
-};
-const send = (method, params = {}, sessionId) =>
-  new Promise((resolve, reject) => {
-    const n = ++id;
-    pending.set(n, { resolve, reject });
-    ws.send(JSON.stringify({ id: n, method, params, sessionId }));
-  });
+});
 
-const { targetId } = await send("Target.createTarget", { url: "about:blank" });
-const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
-await send("Page.enable", {}, sessionId);
-await send("Runtime.enable", {}, sessionId);
-await send("Network.enable", {}, sessionId);
-await send("Page.navigate", { url: URL_UNDER_TEST }, sessionId);
+await navigate(URL_UNDER_TEST);
 await sleep(9000);
-
-const evaluate = async (expr) => {
-  const r = await send("Runtime.evaluate",
-    { expression: expr, returnByValue: true, awaitPromise: true }, sessionId);
-  if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description ?? "eval failed");
-  return r.result.value;
-};
 
 const fails = [];
 
@@ -216,6 +175,5 @@ for (const m of noisy.slice(0, 10)) console.log("   " + m);
 if (noisy.length) fails.push(`${noisy.length} console error/warning(s)`);
 
 console.log(fails.length ? `\nFAIL\n  ${fails.join("\n  ")}` : "\nPASS");
-ws.close();
-chrome.kill();
+close();
 process.exit(fails.length ? 1 : 0);

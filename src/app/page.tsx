@@ -410,7 +410,6 @@ function PageContent() {
         <MapView
           layers={LAYERS}
           enabled={enabled}
-          basemap="liberty"
           onPick={setPicked}
           onMissing={onMissing}
           onFeedErrors={onFeedErrors}

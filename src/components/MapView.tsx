@@ -18,9 +18,7 @@ import { createNavigationIntegration } from "@/lib/map-navigation";
 import {
   createInitialStyle,
   applyTerrain,
-
-  BASEMAPS,
-  type BasemapId,
+  LIBERTY_MAXZOOM,
   INITIAL_CENTRE,
   INITIAL_ZOOM,
 } from "@/lib/map-style";
@@ -47,7 +45,6 @@ export interface PickedFeature {
 export function MapView({
   layers,
   enabled,
-  basemap,
   onPick,
   onMissing,
   onFeedErrors,
@@ -60,7 +57,6 @@ export function MapView({
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
-  basemap: BasemapId;
   onPick: (picked: { layer: LayerDef; properties: Record<string, unknown> | null; lon: number; lat: number; asOf?: string } | null) => void;
   /** Reports layers the registry lists but public/data does not have. */
   onMissing?: (missing: Set<string>) => void;
@@ -194,16 +190,6 @@ export function MapView({
     startLivePolls(enabledRef, layersRef, mapRef, setFeedError);
   }, [enabled, setFeedError]);
 
-  // React to basemap changes. The style basemap is loaded by URL; the
-  // "style.load" event handler runs the post-swap resync.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !readyRef.current) return;
-    const bm = BASEMAPS[basemap];
-    map.setStyle(bm.styleUrl, { diff: false });
-    map.setMaxZoom(bm.maxzoom);
-  }, [basemap]);
-
   // React to the 3D terrain toggle. The map 'load' handler applies the initial
   // value; this only has to handle changes made after the map is ready.
   useEffect(() => {
@@ -235,8 +221,6 @@ export function MapView({
       // before MapLibre's decoder loop ever sees their bytes.
       installPbfGuard();
 
-      const bm = BASEMAPS[basemap];
-
       // Deep links carry ?z=&lon=&lat=; honour them when they are present and
       // sane. Read here, in the effect (never during render), so the URL cannot
       // break server-side prerender - this path only runs in the browser.
@@ -251,7 +235,7 @@ export function MapView({
             (v) => Number.isFinite(v) && (v === 0 || Math.abs(v) < 1e3),
           );
           if (sane && isFinite(z)) {
-            const clamped = Math.min(Math.max(z, 8), bm.maxzoom);
+            const clamped = Math.min(Math.max(z, 8), LIBERTY_MAXZOOM);
             initialView = { center: [lon, lat] as [number, number], zoom: clamped };
           }
         }
@@ -260,14 +244,14 @@ export function MapView({
       // Set MapLibre worker URL before creating the map
       await setMapLibreWorkerUrl();
 
-      const initialStyle = createInitialStyle(bm);
+      const initialStyle = createInitialStyle();
 
       const map = new MapLibreMap({
         container: containerRef.current!,
         center: initialView?.center ?? INITIAL_CENTRE,
         zoom: initialView?.zoom ?? INITIAL_ZOOM,
         minZoom: 8,
-        maxZoom: bm.maxzoom,
+        maxZoom: LIBERTY_MAXZOOM,
         // Attribution is added manually at "top-left" below. The default
         // bottom-right slot sits underneath the floating tab bar, and CSS
         // cannot move a control between corners.
@@ -334,10 +318,10 @@ export function MapView({
 
       map.on("style.load", () => {
         if (!readyRef.current) return;
-        // A style swap (OpenFreeMap liberty et al.) drops every source we
-        // added. Re-add the static layers, the cached live feeds, and the
-        // navigation host's own markers/route, in that order, so the map comes
-        // back looking the same rather than empty-but-for-the-basemap.
+        // A style reload drops every source we added. Re-add the static
+        // layers, the cached live feeds, and the navigation host's own
+        // markers/route, in that order, so the map comes back looking the
+        // same rather than empty-but-for-the-basemap.
         void resyncAfterStyleChange(map);
       });
 
@@ -377,10 +361,10 @@ export function MapView({
     };
 
     initMap().catch(console.error);
-    // Intentionally mount-only. The initial basemap is read once, and later
-    // basemap changes are handled by the switch effect above; depending on
-    // `basemap` here would run this effect's cleanup (map.remove()) on every
-    // basemap change and tear the map down. The callbacks passed in are stable.
+    // Intentionally mount-only. Depending on nothing here means the map is
+    // created once and torn down only on unmount; a re-render must not
+    // re-run this effect's cleanup (map.remove()) and recreate the map.
+    // The callbacks passed in are stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -394,5 +378,4 @@ export function MapView({
   );
 }
 
-export type { BasemapId, BasemapDef } from "@/lib/map-style";
 export type { NavigationState } from "@/lib/navigation/host";

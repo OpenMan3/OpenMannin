@@ -1,14 +1,15 @@
 /**
  * Focused check for the one failure that hid everything else: the MapLibre
  * worker. GeoJSON is parsed in that worker, so when it fails to load, MapLibre
- * still paints the raster basemap and every data layer fails silently - a bare
+ * still paints the vector basemap and every data layer fails silently - a bare
  * map with no error. This asserts the worker actually boots and that real
  * features from the registry reach the map, rather than trusting that the page
  * merely loads.
  */
 
-import { spawn } from "node:child_process";
+import { setTimeout as sleep } from "node:timers/promises";
 import fs from "node:fs";
+import { startBrowser } from "./lib/chrome-driver.mjs";
 
 const PORT = process.env.PORT ?? "3000";
 const CDP_PORT = process.env.CDP_PORT ?? "9231";
@@ -17,91 +18,31 @@ const URL_BASE = `http://localhost:${PORT}`;
 const PROFILE = "/tmp/opencode/chrome-verify";
 fs.rmSync(PROFILE, { recursive: true, force: true });
 
-const chrome = spawn("chromium", [
-  "--headless=new",
-  `--remote-debugging-port=${CDP_PORT}`,
-  "--no-sandbox",
-  "--disable-gpu-sandbox",
-  "--use-gl=swiftshader",
-  "--enable-unsafe-swiftshader",
-  "--window-size=1280,900",
-  `--user-data-dir=${PROFILE}`,
-  "about:blank",
-], { stdio: ["ignore", "pipe", "pipe"] });
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-async function wsUrl() {
-  for (let i = 0; i < 60; i++) {
-    try {
-      const r = await fetch(`http://localhost:${CDP_PORT}/json/version`);
-      const j = await r.json();
-      if (j.webSocketDebuggerUrl) return j.webSocketDebuggerUrl;
-    } catch {}
-    await sleep(250);
-  }
-  throw new Error("chromium did not expose CDP");
-}
-
-let ws, id = 0;
-const pending = new Map();
 const consoleErrors = [];
 const pageErrors = [];
-
-function send(method, params = {}, sessionId) {
-  return new Promise((resolve, reject) => {
-    const msg = { id: ++id, method, params };
-    if (sessionId) msg.sessionId = sessionId;
-    pending.set(msg.id, { resolve, reject });
-    ws.send(JSON.stringify(msg));
-  });
-}
-
-async function evaluate(expression, sessionId) {
-  const r = await send(
-    "Runtime.evaluate",
-    { expression, returnByValue: true, awaitPromise: true },
-    sessionId,
-  );
-  if (r.exceptionDetails) {
-    throw new Error(r.exceptionDetails.exception?.description ?? "eval failed");
-  }
-  return r.result.value;
-}
-
 const fails = [];
 
+let browser;
+
 try {
-  wsUrl();
-  const { WebSocket } = await import("node:worker_threads").then(() => ({ WebSocket: globalThis.WebSocket }));
-  ws = new WebSocket(await wsUrl());
-  await new Promise((res, rej) => {
-    ws.onopen = res;
-    ws.onerror = rej;
+  browser = await startBrowser({
+    port: CDP_PORT,
+    userDataDir: PROFILE,
+    flags: ["--disable-gpu-sandbox", "--use-gl=swiftshader", "--enable-unsafe-swiftshader"],
+    domains: ["Runtime", "Page", "Log"],
   });
-  ws.onmessage = (m) => {
-    const msg = JSON.parse(m.data);
-    if (msg.id && pending.has(msg.id)) {
-      const { resolve, reject } = pending.get(msg.id);
-      pending.delete(msg.id);
-      msg.error ? reject(new Error(msg.error.message)) : resolve(msg.result);
-      return;
-    }
+  const { send, evaluate, onMessage, navigate, screenshot } = browser;
+
+  onMessage((msg) => {
     if (msg.method === "Runtime.consoleAPICalled" && msg.params.type === "error") {
       consoleErrors.push(msg.params.args.map((a) => a.value ?? a.description ?? "").join(" "));
     }
     if (msg.method === "Runtime.exceptionThrown") {
       pageErrors.push(msg.params.exceptionDetails?.exception?.description ?? "exception");
     }
-  };
+  });
 
-  const { targetId } = await send("Target.createTarget", { url: "about:blank" });
-  const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
-  await send("Runtime.enable", {}, sessionId);
-  await send("Log.enable", {}, sessionId);
-  await send("Page.enable", {}, sessionId);
-
-  await send("Page.navigate", { url: URL_BASE }, sessionId);
+  await navigate(URL_BASE);
   await sleep(14000); // tiles, worker boot, and layer fetches
 
   // 1. The worker must not have been blocked.
@@ -114,7 +55,7 @@ try {
   const mapState = await evaluate(`(() => {
     const c = document.querySelector("canvas");
     return { canvas: !!c, w: c?.width ?? 0, h: c?.height ?? 0 };
-  })()`, sessionId);
+  })()`);
   if (!mapState.canvas) fails.push("no map canvas on the page");
 
   // 3. The decisive test: query rendered features. If GeoJSON never reached the
@@ -135,7 +76,7 @@ try {
       out.push({ id, ok: true, n: g.features?.length ?? 0 });
     }
     return out;
-  })()`, sessionId);
+  })()`);
   const bad = rendered.filter((r) => !r.ok);
   if (bad.length) fails.push(`${bad.length} layer file(s) failed to fetch: ${bad.map((b) => b.id).join(", ")}`);
   const empty = rendered.filter((r) => r.ok && r.n === 0);
@@ -162,8 +103,8 @@ try {
   if (pageErrors.length) console.log(`    first: ${pageErrors[0].slice(0, 200)}`);
   if (corsBlocked.length) console.log(`    first: ${corsBlocked[0].slice(0, 160)}`);
 
-  const shot = await send("Page.captureScreenshot", { format: "png" }, sessionId);
-  fs.writeFileSync("/tmp/opencode/render-check.png", Buffer.from(shot.data, "base64"));
+  const shot = await screenshot();
+  fs.writeFileSync("/tmp/opencode/render-check.png", Buffer.from(shot, "base64"));
   console.log("  screenshot          /tmp/opencode/render-check.png");
 
   console.log(fails.length ? `\nFAIL:\n  ${fails.join("\n  ")}` : "\nOK");
@@ -172,6 +113,5 @@ try {
   console.error(`render check failed to run: ${e.message}`);
   process.exitCode = 2;
 } finally {
-  chrome.kill();
-  try { ws?.close(); } catch {}
+  browser?.close();
 }

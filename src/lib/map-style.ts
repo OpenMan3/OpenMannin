@@ -11,26 +11,8 @@
 
 import type { Map as MapLibreMap } from "maplibre-gl";
 
-export type BasemapId = "liberty";
-
-const OPENFREEMAP_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors (ODbL) | Basemap <a href="https://openfreemap.org/" target="_blank">OpenFreeMap</a> | Style &copy; <a href="https://www.openmaptiles.org/" target="_blank">OpenMapTiles</a>';
-
-export const BASEMAPS: Record<BasemapId, BasemapDef> = {
-  "liberty": {
-    kind: "style",
-    styleUrl: "https://tiles.openfreemap.org/styles/liberty",
-    attribution: OPENFREEMAP_ATTRIBUTION,
-    maxzoom: 17,
-  },
-};
-
-export type BasemapDef = {
-  kind: "style";
-  styleUrl: string;
-  attribution: string;
-  maxzoom: number;
-};
+export const LIBERTY_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
+export const LIBERTY_MAXZOOM = 17;
 
 /**
  * 3D terrain: a keyless, CORS-open DEM.
@@ -81,6 +63,6 @@ export function applyTerrain(map: MapLibreMap, enabled: boolean): void {
 export const INITIAL_CENTRE: [number, number] = [-4.4814, 54.1509];
 export const INITIAL_ZOOM = 10;
 
-export function createInitialStyle(bm: BasemapDef): string {
-  return bm.styleUrl;
+export function createInitialStyle(): string {
+  return LIBERTY_STYLE_URL;
 }

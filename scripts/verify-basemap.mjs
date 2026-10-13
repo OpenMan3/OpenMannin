@@ -10,8 +10,9 @@
  * credits the right provider.
  */
 
-import { spawn } from "node:child_process";
+import { setTimeout as sleep } from "node:timers/promises";
 import fs from "node:fs";
+import { startBrowser } from "./lib/chrome-driver.mjs";
 
 const PORT = process.env.PORT ?? "3000";
 const CDP_PORT = process.env.CDP_PORT ?? "9232";
@@ -23,35 +24,7 @@ const BASE = `http://localhost:${PORT}`;
 const PROFILE = "/tmp/opencode/chrome-tile";
 fs.rmSync(PROFILE, { recursive: true, force: true });
 
-const chrome = spawn("chromium", [
-  "--headless=new",
-  `--remote-debugging-port=${CDP_PORT}`,
-  "--no-sandbox",
-  "--use-gl=swiftshader",
-  "--enable-unsafe-swiftshader",
-  "--window-size=1280,900",
-  `--user-data-dir=${PROFILE}`,
-  "about:blank",
-], { stdio: "ignore" });
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-let ws, id = 0;
-const pending = new Map();
 const errors = [];
-
-function send(method, params = {}, sessionId) {
-  return new Promise((resolve, reject) => {
-    const msg = { id: ++id, method, params };
-    if (sessionId) msg.sessionId = sessionId;
-    pending.set(msg.id, { resolve, reject });
-    ws.send(JSON.stringify(msg));
-  });
-}
-async function evaluate(expression, sessionId) {
-  const r = await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true }, sessionId);
-  if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description ?? "eval failed");
-  return r.result.value;
-}
 
 /** Layer order + source survey for the loaded style. */
 const probe = `(() => {
@@ -77,22 +50,17 @@ const probe = `(() => {
 
 const fails = [];
 const tileResponses = [];
+let browser;
 try {
-  let wsUrl = null;
-  for (let i = 0; i < 60 && !wsUrl; i++) {
-    try { wsUrl = (await (await fetch(`http://localhost:${CDP_PORT}/json/version`)).json()).webSocketDebuggerUrl; } catch {}
-    if (!wsUrl) await sleep(250);
-  }
-  ws = new WebSocket(wsUrl);
-  await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej; });
-  ws.onmessage = (m) => {
-    const msg = JSON.parse(m.data);
-    if (msg.id && pending.has(msg.id)) {
-      const { resolve, reject } = pending.get(msg.id);
-      pending.delete(msg.id);
-      msg.error ? reject(new Error(msg.error.message)) : resolve(msg.result);
-      return;
-    }
+  browser = await startBrowser({
+    port: CDP_PORT,
+    userDataDir: PROFILE,
+    flags: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"],
+    domains: ["Runtime", "Page", "Network"],
+  });
+  const { send, evaluate, onMessage, navigate, screenshot } = browser;
+
+  onMessage((msg) => {
     if (msg.method === "Runtime.consoleAPICalled" && msg.params.type === "error") {
       errors.push(msg.params.args.map((a) => a.value ?? a.description ?? "").join(" "));
     }
@@ -102,17 +70,12 @@ try {
     if (msg.method === "Network.responseReceived" && /tiles\.openfreemap\.org/.test(msg.params.response.url)) {
       tileResponses.push(msg.params.response.status);
     }
-  };
+  });
 
-  const { targetId } = await send("Target.createTarget", { url: "about:blank" });
-  const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
-  await send("Runtime.enable", {}, sessionId);
-  await send("Network.enable", {}, sessionId);
-  await send("Page.enable", {}, sessionId);
-  await send("Page.navigate", { url: BASE }, sessionId);
+  await navigate(BASE);
   await sleep(12000);
 
-  const result = await evaluate(probe, sessionId);
+  const result = await evaluate(probe);
   if (result.error) fails.push(result.error);
   else {
     if (result.dataCount === 0) fails.push("no data layers in style at all");
@@ -125,7 +88,7 @@ try {
     const el = document.querySelector(".maplibregl-ctrl-attrib-inner")
            || document.querySelector(".maplibregl-ctrl-attrib");
     return el ? el.innerText.replace(/\\s+/g, " ").trim() : "";
-  })()`, sessionId);
+  })()`);
   if (!/OpenFreeMap|OpenMapTiles|OpenStreetMap/i.test(attribution ?? "")) {
     fails.push(`attribution does not credit OpenFreeMap/OSM: "${(attribution ?? "").slice(0, 120)}"`);
   }
@@ -140,8 +103,8 @@ try {
     );
   }
 
-  const shot = await send("Page.captureScreenshot", { format: "png" }, sessionId);
-  fs.writeFileSync("/tmp/opencode/openfreemap-basemap.png", Buffer.from(shot.data, "base64"));
+  const shot = await screenshot();
+  fs.writeFileSync("/tmp/opencode/openfreemap-basemap.png", Buffer.from(shot, "base64"));
 
   console.log("\nOpenFreeMap Liberty basemap check");
   console.log(`  openfreemap responses ${tileResponses.length} (${tile200.length} HTTP 200)`);
@@ -154,6 +117,5 @@ try {
   console.error(`basemap check failed to run: ${e.message}`);
   process.exitCode = 2;
 } finally {
-  chrome.kill();
-  try { ws?.close(); } catch {}
+  browser?.close();
 }

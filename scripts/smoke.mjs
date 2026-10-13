@@ -9,69 +9,24 @@
  * Usage: node scripts/smoke.mjs [url]
  */
 
-import { spawn } from "node:child_process";
 import fs from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 import { decodePng, analyse } from "./lib/png.mjs";
 import { GAPS } from "../src/lib/layers.ts";
+import { startBrowser } from "./lib/chrome-driver.mjs";
 
 const URL_UNDER_TEST = process.argv[2] ?? "http://localhost:3111/";
-// chrome remote debugging port. verify-render and verify-basemap each use a
-// different default so the three headless checks can run concurrently.
-const PORT = process.env.CDP_PORT ?? "9222";
 
-const chrome = spawn("chromium", [
-  "--headless=new",
-  `--remote-debugging-port=${PORT}`,
-  "--no-sandbox",
-  "--disable-gpu",
-  "--disable-dev-shm-usage",
-  "--hide-scrollbars",
-  "--window-size=1440,900",
-  "about:blank",
-], { stdio: ["ignore", "ignore", "pipe"] });
-
-let wsUrl = "";
-for (let i = 0; i < 60 && !wsUrl; i++) {
-  await sleep(250);
-  try {
-    const r = await fetch(`http://127.0.0.1:${PORT}/json/version`);
-    wsUrl = (await r.json()).webSocketDebuggerUrl;
-  } catch { /* not up yet */ }
-}
-if (!wsUrl) { chrome.kill(); throw new Error("chromium did not expose CDP"); }
-
-// Minimal CDP client over the browser-level websocket.
-const ws = new WebSocket(wsUrl);
-await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej; });
-
-let id = 0;
-const pending = new Map();
-const events = [];
-ws.onmessage = (m) => {
-  const msg = JSON.parse(m.data);
-  if (msg.id && pending.has(msg.id)) {
-    const { resolve, reject } = pending.get(msg.id);
-    pending.delete(msg.id);
-    msg.error ? reject(new Error(msg.error.message)) : resolve(msg.result);
-  } else if (msg.method) events.push(msg);
-};
-const send = (method, params = {}, sessionId) =>
-  new Promise((resolve, reject) => {
-    const n = ++id;
-    pending.set(n, { resolve, reject });
-    ws.send(JSON.stringify({ id: n, method, params, sessionId }));
-  });
-
-// Open a tab and attach.
-const { targetId } = await send("Target.createTarget", { url: "about:blank" });
-const { sessionId } = await send("Target.attachToTarget", { targetId, flatten: true });
-await send("Page.enable", {}, sessionId);
-await send("Runtime.enable", {}, sessionId);
-await send("Log.enable", {}, sessionId);
-await send("Network.enable", {}, sessionId);
-await send("Emulation.setDeviceMetricsOverride",
-  { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false }, sessionId);
+const { send, sessionId, evaluate, onMessage, navigate, screenshot, close } = await startBrowser({
+  // chrome remote debugging port. verify-render and verify-basemap each use a
+  // different default so the headless checks can run concurrently.
+  port: process.env.CDP_PORT ?? "9222",
+  windowSize: "1440,900",
+  stdio: ["ignore", "ignore", "pipe"],
+  flags: ["--disable-gpu", "--disable-dev-shm-usage", "--hide-scrollbars"],
+  domains: ["Runtime", "Page", "Network", "Log"],
+  viewport: [1440, 900],
+});
 
 const consoleErrors = [];
 /** Free-tier live upstreams the browser may hit directly; transient outages
@@ -89,8 +44,7 @@ const UPSTREAM_ROUTES = [
 ];
 const upstreamFailures = [];
 
-ws.addEventListener("message", (m) => {
-  const msg = JSON.parse(m.data);
+onMessage((msg) => {
   if (msg.method === "Runtime.consoleAPICalled" && ["error", "warning"].includes(msg.params.type)) {
     consoleErrors.push(`${msg.params.type}: ` +
       msg.params.args.map((a) => a.value ?? a.description ?? a.type).join(" "));
@@ -110,8 +64,7 @@ ws.addEventListener("message", (m) => {
 });
 
 const requests = new Map();
-ws.addEventListener("message", (m) => {
-  const msg = JSON.parse(m.data);
+onMessage((msg) => {
   if (msg.method === "Network.responseReceived") {
     const u = msg.params.response.url;
     if (u.includes("/data/")) requests.set(u.replace(/^https?:\/\/[^/]+/, ""), msg.params.response.status);
@@ -123,17 +76,10 @@ ws.addEventListener("message", (m) => {
 });
 const failedRequests = [];
 
-await send("Page.navigate", { url: URL_UNDER_TEST }, sessionId);
+await navigate(URL_UNDER_TEST);
 
 // MapLibre needs a moment to fetch tiles and lay out sources.
 await sleep(9000);
-
-const evaluate = async (expr) => {
-  const r = await send("Runtime.evaluate",
-    { expression: expr, returnByValue: true, awaitPromise: true }, sessionId);
-  if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description ?? "eval failed");
-  return r.result.value;
-};
 
 const canvas = await evaluate(`(() => {
   const c = document.querySelector("canvas");
@@ -157,8 +103,8 @@ const dom = await evaluate(`(() => ({
 
 // Screenshot. This is the only trustworthy record of what was painted: a WebGL
 // canvas cannot be read back with gl.readPixels() after compositing.
-const shot = await send("Page.captureScreenshot", { format: "png" }, sessionId);
-const png = Buffer.from(shot.data, "base64");
+const shot = await screenshot();
+const png = Buffer.from(shot, "base64");
 fs.writeFileSync("/tmp/opencode/smoke.png", png);
 const painted = analyse(decodePng(png));
 
@@ -271,6 +217,5 @@ console.log("feature popup:", popup ? (popup.hasProvenance ? "opened with proven
 console.log("screenshot:  /tmp/opencode/smoke.png");
 console.log(fails.length ? `\nFAIL\n  ${fails.join("\n  ")}` : "\nPASS");
 
-ws.close();
-chrome.kill();
+close();
 process.exit(fails.length ? 1 : 0);

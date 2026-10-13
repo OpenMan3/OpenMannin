@@ -273,7 +273,6 @@ function compute(req: Request): unknown {
         maxElev: Number(open.maxElev.toFixed(1)),
         durationS: Math.round((lastWhen.getTime() - open.rise.getTime()) / 1000),
       });
-      open = null;
     }
 
     if (passes.length) {

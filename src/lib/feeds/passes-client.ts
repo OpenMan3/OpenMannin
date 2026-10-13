@@ -246,7 +246,7 @@ async function fetchTles(): Promise<string> {
   try {
     res = await fetch(TLE_URL, { signal: AbortSignal.timeout(20_000) });
   } catch (err) {
-    throw new Error(`CelesTrak fetch failed: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(`CelesTrak fetch failed: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
   }
   if (!res.ok) throw new Error(`CelesTrak returned ${res.status}`);
   const text = await res.text();

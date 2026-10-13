@@ -78,14 +78,14 @@ export function installPbfGuard(): void {
     const response = await original(input as RequestInfo | URL, init);
     const contentType = response.headers.get("content-type");
 
-    let head = new Uint8Array(0);
+    let buf: ArrayBuffer;
     try {
-      const buf = await response.clone().arrayBuffer();
-      head = new Uint8Array(buf, 0, Math.min(8, buf.byteLength));
+      buf = await response.clone().arrayBuffer();
     } catch {
       // If the clone cannot be read, fall through and let the decoder try.
       return response;
     }
+    const head = new Uint8Array(buf, 0, Math.min(8, buf.byteLength));
 
     if (!shouldReject(contentType, head)) {
       return response;

@@ -2,7 +2,7 @@
   "name": "openmannin",
   "version": "0.1.0",
   "private": true,
-  "description": "OpenMannin \u2014 Open Source Intelligence Reconnaissance & Infrastructure System for the Isle of Man",
+  "description": "OpenMannin — Open Source Intelligence Reconnaissance & Infrastructure System for the Isle of Man",
   "type": "module",
   "scripts": {
     "copy:worker": "node scripts/copy-maplibre-worker.mjs",
@@ -48,24 +48,24 @@
     "build:routing-worker": "node scripts/build-routing-worker.mjs"
   },
   "dependencies": {
-    "maplibre-gl": "^6.12.0",
-    "next": "^16.3.8",
+    "maplibre-gl": "^6.14.0",
+    "next": "^16.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "satellite.js": "^7.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.0.0",
-    "@types/node": "^22.10.0",
+    "@types/node": "^26.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "esbuild": "^0.28.2",
-    "eslint": "^8.57.0",
-    "eslint-plugin-react": "^7.35.0",
-    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint": "^10.0.0",
+    "eslint-plugin-react-hooks": "^7.1.0",
     "proj4": "^2.22.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0",
-    "typescript-eslint": "^7.0.0"
+    "typescript-eslint": "^8.71.0"
   }
 }

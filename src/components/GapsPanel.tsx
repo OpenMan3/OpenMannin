@@ -16,13 +16,9 @@ const SEVERITY = {
   low: { label: "low", className: "bg-raised text-ink-3" },
 } as const;
 
-export function GapsPanel({ gaps, active = true }: { gaps: Gap[]; active?: boolean }) {
-  const panelStyle: React.CSSProperties = active
-    ? {}
-    : { visibility: "hidden", position: "absolute", pointerEvents: "none", inset: 0 };
-
+export function GapsPanel({ gaps }: { gaps: Gap[] }) {
   return (
-    <div className="scroll-thin h-full overflow-y-auto" style={panelStyle}>
+    <div className="scroll-thin h-full overflow-y-auto">
       <div className="border-b border-line px-3 py-2.5">
         <h2 className="text-sm font-semibold text-ink">What is not on this map</h2>
         <p className="mt-1 text-[12px] leading-snug text-ink-3">

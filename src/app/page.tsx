@@ -102,6 +102,11 @@ function PageContent() {
     () => new Set(LAYERS.filter((l) => l.defaultOn).map((l) => l.id)),
   );
 
+  // FeatureBrowser state lifted to survive tab switches and drawer close.
+  const [browseLayerId, setBrowseLayerId] = useState("");
+  const [browseQuery, setBrowseQuery] = useState("");
+  const [browsePos, setBrowsePos] = useState(0);
+
   const toggle = useCallback((id: string) => {
     setEnabled((prev) => {
       const next = new Set(prev);
@@ -322,8 +327,8 @@ function PageContent() {
       )}
 
       {/* ---- sidebar / drawer ---- */}
-      <aside
-        className={`fixed top-4 left-4 right-4 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col rounded-3xl border border-line bg-page shadow-[0_8px_32px_rgba(0,0,0,0.18)] transition-all duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] md:rounded-none md:border-r md:border-line md:bg-page md:bottom-auto ${
+        <aside
+        className={`fixed top-4 left-4 right-4 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col rounded-3xl border border-line bg-page shadow-[0_8px_32px_rgba(0,0,0,0.18)] transition-all duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] md:rounded-none md:border-r md:border-line md:bg-page md:bottom-auto overflow-hidden ${
           panelOpen ? "md:w-[var(--aside-w)]" : "md:w-12"
         } ${mobileOpen
           ? "bottom-0 translate-x-0 pb-[calc(64px+env(safe-area-inset-bottom))]"
@@ -331,7 +336,7 @@ function PageContent() {
         }`}
         style={{ ["--aside-w" as string]: `${asideWidth}px` }}
       >
-        <div className="flex h-11 shrink-0 items-center gap-1 border-b border-line px-2">
+        <div className="flex h-11 shrink-0 items-center gap-1 border-b border-line px-2" inert={!(panelOpen || mobileOpen)}>
           <button
             type="button"
             onClick={() => setPanelOpen((v) => !v)}
@@ -361,27 +366,35 @@ function PageContent() {
               </div>
 
               <div className="min-h-0 flex-1 relative">
-                <LayerPanel
-                  layers={LAYERS}
-                  enabled={enabled}
-                  missing={missing}
-                  feedErrors={feedErrors}
-                  onToggle={toggle}
-                  onToggleAll={setAll}
-                  onShowDetail={setDetail}
-                  terrain3d={terrain3d}
-                  onTerrainChange={setTerrain3d}
-                  active={tab === "layers"}
-                />
-                <FeatureBrowser
-                  layers={LAYERS}
-                  enabled={enabled}
-                  onEnsureEnabled={ensureEnabled}
-                  onLocate={centreOn}
-                  active={tab === "browse"}
-                />
-                <GapsPanel gaps={GAPS} active={tab === "gaps"} />
-                <TransparencyPanel active={tab === "sources"} />
+                {tab === "layers" && (
+                  <LayerPanel
+                    layers={LAYERS}
+                    enabled={enabled}
+                    missing={missing}
+                    feedErrors={feedErrors}
+                    onToggle={toggle}
+                    onToggleAll={setAll}
+                    onShowDetail={setDetail}
+                    terrain3d={terrain3d}
+                    onTerrainChange={setTerrain3d}
+                  />
+                )}
+                {tab === "browse" && (
+                  <FeatureBrowser
+                    layers={LAYERS}
+                    enabled={enabled}
+                    onEnsureEnabled={ensureEnabled}
+                    onLocate={centreOn}
+                    layerId={browseLayerId}
+                    onLayerChange={setBrowseLayerId}
+                    query={browseQuery}
+                    onQueryChange={setBrowseQuery}
+                    pos={browsePos}
+                    onPosChange={setBrowsePos}
+                  />
+                )}
+                {tab === "gaps" && <GapsPanel gaps={GAPS} />}
+                {tab === "sources" && <TransparencyPanel />}
               </div>
 
         {/* desktop resize handle */}

@@ -16,7 +16,7 @@
  * upstream is contacted. The data is the same GeoJSON the map already caches.
  */
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { LayerDef } from "@/lib/types";
 import { layersWithFiles } from "@/lib/layer-data";
 import { indexFeatures, type BrowseEntry } from "@/lib/feature-index";
@@ -42,22 +42,32 @@ export function FeatureBrowser({
   enabled,
   onEnsureEnabled,
   onLocate,
-  active = true,
+  layerId,
+  onLayerChange,
+  query,
+  onQueryChange,
+  pos,
+  onPosChange,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
   onEnsureEnabled: (id: string) => void;
   onLocate: (lon: number, lat: number) => void;
-  active?: boolean;
+  /** Currently selected layer (lifted to survive unmount/remount). */
+  layerId: string;
+  onLayerChange: (id: string) => void;
+  /** Current filter text (lifted to survive unmount/remount). */
+  query: string;
+  onQueryChange: (q: string) => void;
+  /** Current list position (lifted to survive unmount/remount). */
+  pos: number;
+  onPosChange: (p: number) => void;
 }) {
   const withFiles = useMemo(() => layersWithFiles(layers), [layers]);
-  const [layerId, setLayerId] = useState<string>("");
-  const [query, setQuery] = useState("");
   const [entries, setEntries] = useState<BrowseEntry[] | null>(null);
   const [total, setTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pos, setPos] = useState(0);
   const listRef = useRef<HTMLUListElement | null>(null);
   const rowRefs = useRef<Map<number, HTMLLIElement>>(new Map());
 
@@ -72,10 +82,36 @@ export function FeatureBrowser({
 
   const selected = list.length > 0 ? list[Math.min(pos, list.length - 1)] : null;
 
+  // Load layer data when layerId changes (runs on mount and when tab is reopened).
+  useEffect(() => {
+    if (!layerId) {
+      setEntries(null);
+      setTotal(null);
+      return;
+    }
+    const layer = withFiles.find((l) => l.id === layerId);
+    if (!layer) return;
+    let cancelled = false;
+    setLoading(true);
+    void loadLayerFile(layer).then((result) => {
+      if (cancelled) return;
+      setLoading(false);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setEntries(result.entries ?? []);
+        setTotal(result.entries?.length ?? 0);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [layerId, withFiles]);
+
   const chooseLayer = (id: string) => {
-    setLayerId(id);
-    setPos(0);
-    setQuery("");
+    onLayerChange(id);
+    onPosChange(0);
+    onQueryChange("");
     setError(null);
     setEntries(null);
     setTotal(null);
@@ -86,16 +122,7 @@ export function FeatureBrowser({
     // Browsing a layer implies seeing it: footprints cannot be recognised when
     // the layer underneath is switched off.
     if (!enabled.has(id)) onEnsureEnabled(id);
-    setLoading(true);
-    void loadLayerFile(layer).then((result) => {
-      setLoading(false);
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      setEntries(result.entries ?? []);
-      setTotal(result.entries?.length ?? 0);
-    });
+    // Loading is handled by the effect above.
   };
 
   const goTo = (e: BrowseEntry | null) => {
@@ -114,13 +141,13 @@ export function FeatureBrowser({
   const step = (delta: number) => {
     if (list.length === 0) return;
     const next = (pos + delta + list.length) % list.length;
-    setPos(next);
+    onPosChange(next);
     goTo(list[next]);
   };
 
   const selectRow = (e: BrowseEntry) => {
     const idx = list.findIndex((x) => x.index === e.index);
-    setPos(idx < 0 ? 0 : idx);
+    onPosChange(idx < 0 ? 0 : idx);
     goTo(e);
   };
 
@@ -134,12 +161,8 @@ export function FeatureBrowser({
     );
   }, [selected]);
 
-  const panelStyle: React.CSSProperties = active
-    ? {}
-    : { visibility: "hidden", position: "absolute", pointerEvents: "none", inset: 0 };
-
   return (
-    <div className="flex h-full min-h-0 flex-col p-3" style={panelStyle}>
+    <div className="flex h-full min-h-0 flex-col p-3">
       <label className="block label">
         Feature browser
         <select
@@ -168,8 +191,8 @@ export function FeatureBrowser({
             <input
               value={query}
               onChange={(e) => {
-                setQuery(e.target.value);
-                setPos(0);
+                onQueryChange(e.target.value);
+                onPosChange(0);
               }}
               placeholder="Filter by name, street, ref…"
               aria-label="Filter features"

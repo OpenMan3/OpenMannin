@@ -212,4 +212,15 @@ export const SOURCES: Record<string, Source> = {
     lastChecked: "2026-10-04",
     notes: "Our own compilation from the registered sources above.",
   },
+
+  overturePlaces: {
+    id: "overturePlaces",
+    name: "Overture Maps — Places",
+    publisher: "Overture Maps Foundation / release contributors",
+    url: "https://docs.overturemaps.org/",
+    licence: "CDLA-PERMISSIVE-2.0",
+    lastChecked: "2026-10-14",
+    notes:
+      "Global places release; the OpenMannin ingest reads only records whose contributor is mapped to an unambiguously open licence. Initial layer is CDLA-Permissive-2.0 contributors only. Apache 2.0 (Foursquare) and CC0 (AllThePlaces) records are excluded until separate licence-clean layers exist.",
+  },
 };

@@ -2,7 +2,7 @@
   "name": "openmannin",
   "version": "0.1.0",
   "private": true,
-  "description": "OpenMannin — Open Source Intelligence Reconnaissance & Infrastructure System for the Isle of Man",
+  "description": "OpenMannin \u2014 Open Source Intelligence Reconnaissance & Infrastructure System for the Isle of Man",
   "type": "module",
   "scripts": {
     "copy:worker": "node scripts/copy-maplibre-worker.mjs",
@@ -45,7 +45,8 @@
     "smoke": "node --experimental-strip-types --no-warnings scripts/smoke.mjs",
     "smoke:live": "node scripts/smoke-live.mjs",
     "build:passes-worker": "node scripts/build-passes-worker.mjs",
-    "build:routing-worker": "node scripts/build-routing-worker.mjs"
+    "build:routing-worker": "node scripts/build-routing-worker.mjs",
+    "ingest:overture": "node --experimental-strip-types --no-warnings scripts/ingest-overture-places.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^6.14.0",
@@ -55,6 +56,7 @@
     "satellite.js": "^7.1.0"
   },
   "devDependencies": {
+    "@duckdb/node-api": "^1.5.6-r.1",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^26.0.0",

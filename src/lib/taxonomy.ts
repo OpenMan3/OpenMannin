@@ -59,6 +59,7 @@ export const SUBCATEGORY_ORDER: Record<LayerCategory, LayerSubcategory[]> = {
     "outdoor",
     "tourism",
     "worship",
+    "places",
   ],
 };
 
@@ -88,6 +89,7 @@ export const SUBCATEGORY_LABELS: Record<LayerSubcategory, string> = {
   outdoor: "Coastal & outdoor",
   tourism: "Tourism",
   worship: "Places of worship",
+  places: "Places & businesses",
 };
 
 /**

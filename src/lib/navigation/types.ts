@@ -164,6 +164,7 @@ export const SNAP_LAYER_IDS = new Set([
   "protected",
   "offshore-wind",
   "dumpsites",
+  "overture-places",
 ]);
 
 export const SOURCE_USER = "om-nav-user";

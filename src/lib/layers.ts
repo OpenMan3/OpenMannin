@@ -765,6 +765,30 @@ export const LAYERS: LayerDef[] = [
   // AVIATION
   // ==========================================================================
   {
+    id: "overture-places",
+    label: "Places & businesses",
+    group: "poi",
+    category: "poi",
+    subcategory: "places",
+    kind: "geojson",
+    file: "overture-places.geojson",
+    color: "#f97316",
+    defaultOn: false,
+    minZoom: 13,
+    description:
+      "Places and businesses from the Overture Maps Places release, filtered to the Isle of Man bounding box. Names, addresses, categories and coordinates are not verified by the OpenMannin maintainers and the registry cannot guarantee current trading status.",
+    caveats: [
+      "OVERTURE RELEASE DATA. This is not an official Isle of Man register. Coverage is uneven and contributors may disagree on naming, categories and open/closed status.",
+      "Only records whose PRIMARY CONTRIBUTOR (sources[1] with property == '') declares the CDLA-Permissive-2.0 licence are shipped. Foursquare records carrying Apache-2.0 and AllThePlaces records carrying CC0-1.0 were deliberately excluded.",
+      "A mapped place is not evidence that the business or feature exists today.",
+      "The underlying coordinates are derived from each contributor's location model and may be approximate (tens to hundreds of metres).",
+      "Attribution required: Overture release contributors under CDLA-Permissive-2.0. The sourceDataset property documents the originating contributor for every feature.",
+    ],
+    confidence: "C",
+    sourceId: "overturePlaces",
+    featureCount: 3488,
+  },
+  {
     id: "airport",
     label: "Airports & airstrips",
     group: "aviation",

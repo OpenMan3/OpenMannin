@@ -16,6 +16,8 @@ export type LicenceId =
   | "CC0-1.0"
   | "PD-OURAIRPORTS"
   | "COPERNICUS"
+  | "CDLA-PERMISSIVE-2.0"
+  | "APACHE-2.0"
   | "NO-LICENCE"
   | "UNKNOWN";
 
@@ -115,7 +117,8 @@ export type LayerSubcategory =
   | "tourism"
   | "worship"
   | "public-transport"
-  | "services";
+  | "services"
+  | "places";
 
 export type LayerKind =
   /** Static GeoJSON produced by an ingest script into /public/data */

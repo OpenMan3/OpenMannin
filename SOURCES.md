@@ -6,7 +6,7 @@ OpenMannin renders only data that can be traced to a source, a licence and a con
 
 This project does **not** ingest, cache, trace or derive anything from government maps or map-derived products. The IoM Open Government Licence explicitly **excludes maps and map-derived products** ([OGL](https://www.gov.im/about-this-site/open-government-licence/), [maps exclusion](https://www.gov.im/about-this-site/terms-and-conditions/maps/)), and the Isle of Man Survey base cartography is sold commercially. All island-wide vector coverage is built from independently licensed sources — principally OpenStreetMap (ODbL) and Wikidata (CC0). Coverage that could not be independently sourced is recorded as a gap rather than relicensed.
 
-## Licence register (11)
+## Licence register (13)
 
 | Licence | Commercial | Permission required | Obligation |
 | --- | --- | --- | --- |
@@ -19,10 +19,12 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Creative Commons CC0 1.0 (public domain dedication) ([link](https://creativecommons.org/publicdomain/zero/1.0/)) | yes | no | No rights reserved. Attribution optional. |
 | OurAirports public domain dedication ([link](https://ourairports.com/data/)) | yes | no | OurAirports publishes its airport, runway and heliport tables under a public domain dedication. No attribution required, though crediting OurAirports is appreciated. Note this covers the DATA, not the website's own compiled map styling. |
 | Copernicus / ESA open data ([link](https://www.copernicus.eu/en/access-data/copyright-and-licences)) | yes | no | Free and full open. Attribution to Copernicus/ESA appreciated. |
+| Community Data License Agreement Permissive 2.0 ([link](https://cdla.dev/permissive-2-0/)) | yes | no | Attribution to the Overture release contributors that supplied the data. No share-alike. Verify per-record source datasets in the ingest output. |
+| Apache License 2.0 ([link](https://www.apache.org/licenses/LICENSE-2.0)) | yes | no | Copyright and licence notice plus any NOTICE file contents where present. |
 | No published licence | no | yes | No terms of use, robots.txt or licence found. Absence of a licence is not a grant. Do not republish without written permission. |
 | Licence not established | no | yes | Verify before use. |
 
-## Source register (20)
+## Source register (21)
 
 | Source | Publisher | Licence | Last checked |
 | --- | --- | --- | --- |
@@ -46,6 +48,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | [EMODnet Bathymetry](https://emodnet.ec.europa.eu/en/bathymetry) | EMODnet / European Commission | CC-BY-4.0 | 2026-10-04 |
 | [AWS Open Data — Terrain Tiles (Mapzen/Joerd)](https://registry.opendata.aws/terrain-tiles/) | Mapzen (Linux Foundation) / AWS Open Data | COPERNICUS | 2026-10-11 |
 | [OpenMannin compilation](https://github.com/) | OpenMannin | OGL-IoM | 2026-10-04 |
+| [Overture Maps — Places](https://docs.overturemaps.org/) | Overture Maps Foundation / release contributors | CDLA-PERMISSIVE-2.0 | 2026-10-14 |
 
 ## Layers by source
 
@@ -113,6 +116,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Layer | Source | Licence | Grade | Features |
 | --- | --- | --- | --- | --- |
 | Monuments & archaeology (`archaeology`) | osmIOM | ODbL | C | 140 |
+| Places & businesses (`overture-places`) | overturePlaces | CDLA-PERMISSIVE-2.0 | C | 3488 |
 | Mine shafts, adits & mines (`mine-infrastructure`) | osmIOM | ODbL | C | 19 |
 | Tholtans & ruined buildings (`tholtans-ruins`) | osmIOM | ODbL | C | 848 |
 | Essential utilities & services (`essential-utilities`) | osmIOM | ODbL | C | 187 |

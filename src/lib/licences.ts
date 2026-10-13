@@ -82,6 +82,24 @@ export const LICENCES: Record<LicenceId, Licence> = {
     requiresPermission: false,
     obligation: "Free and full open. Attribution to Copernicus/ESA appreciated.",
   },
+
+  "CDLA-PERMISSIVE-2.0": {
+    id: "CDLA-PERMISSIVE-2.0",
+    name: "Community Data License Agreement Permissive 2.0",
+    url: "https://cdla.dev/permissive-2-0/",
+    commercial: true,
+    requiresPermission: false,
+    obligation:
+      "Attribution to the Overture release contributors that supplied the data. No share-alike. Verify per-record source datasets in the ingest output.",
+  },
+  "APACHE-2.0": {
+    id: "APACHE-2.0",
+    name: "Apache License 2.0",
+    url: "https://www.apache.org/licenses/LICENSE-2.0",
+    commercial: true,
+    requiresPermission: false,
+    obligation: "Copyright and licence notice plus any NOTICE file contents where present.",
+  },
   "NO-LICENCE": {
     id: "NO-LICENCE",
     name: "No published licence",

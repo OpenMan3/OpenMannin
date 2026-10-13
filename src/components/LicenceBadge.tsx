@@ -11,6 +11,8 @@ const LICENCE_CLASS: Record<string, string> = {
   "OGL-IoM": "bg-ok/10 text-ok",
   "OGL-IoM-DERIVED": "bg-ok/10 text-ok",
   ODbL: "bg-ok/10 text-ok",
+  "CDLA-PERMISSIVE-2.0": "bg-ok/10 text-ok",
+  "APACHE-2.0": "bg-ok/10 text-ok",
   "CC-BY-4.0": "bg-ok/10 text-ok",
   "PUBLIC-DOMAIN": "bg-ok/10 text-ok",
   "CC0-1.0": "bg-ok/10 text-ok",

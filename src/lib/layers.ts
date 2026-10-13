@@ -1210,7 +1210,7 @@ export const GAPS: Gap[] = [
     title: "Marine habitats and fishery closures",
     wanted: "Eelgrass, kelp, maerl and Modiolus bed extents, saltmarsh and fishery closure areas.",
     whyUnavailable:
-      "This was a government map layer (434 features) and is removed because it is not openly licensed. Some layers of this type exist in EMODnet (CC-BY 4.0) but no ingest has been built for them yet.",
+      "This was a government map layer (434 features) and is removed because it is not openly licensed. Layers of this type do exist in EMODnet (CC-BY 4.0) but no ingest has been built: the documented OGC feature types were probed on 2026-10-13 and were not reachable, so we ship no Marine Habitats layer rather than one sourced from an unverified or guessed endpoint. Any future ingest must preserve per-product attribution under CC-BY-4.0.",
     whatWeWouldNeed:
       "DEFA marine habitat layers under the OGL, or an EMODnet seabed-habitat ingest with per-product attribution.",
     contact: "EnvironmentalProtection@gov.im",

@@ -129,6 +129,11 @@ export function LayerDetailDrawer({
             <p className="text-[11px] leading-snug text-ink-3">
               {lic.obligation}
               {lic.requiresPermission && <span className="text-warn"> — permission required.</span>}
+              {lic.url && (
+                <a href={lic.url} target="_blank" rel="noopener noreferrer" className="link ml-1">
+                  (licence)
+                </a>
+              )}
             </p>
           )}
 

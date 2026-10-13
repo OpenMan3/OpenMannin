@@ -473,8 +473,8 @@ function PageContent() {
             type="button"
             onClick={() => {
               if (tab === t.id) {
-                setPanelOpen(false);
-                setMobileOpen(false);
+                setPanelOpen((v) => !v);
+                setMobileOpen((v) => !v);
               } else {
                 setTab(t.id);
                 setPanelOpen(true);

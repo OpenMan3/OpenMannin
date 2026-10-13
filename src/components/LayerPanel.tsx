@@ -207,7 +207,7 @@ export function LayerPanel({
   onShowDetail,
   terrain3d,
   onTerrainChange,
-  visible = true,
+  active = true,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
@@ -226,8 +226,8 @@ export function LayerPanel({
   /** 3D terrain state. */
   terrain3d: boolean;
   onTerrainChange: (on: boolean) => void;
-  /** Whether the panel is currently visible. Hidden panels stay mounted. */
-  visible?: boolean;
+  /** Whether this panel is the active tab. Inactive panels preserve layout. */
+  active?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(() => loadCollapsed());
 
@@ -252,10 +252,12 @@ export function LayerPanel({
 
   const rowProps = { enabled, missing, feedErrors, onToggle, onShowDetail };
 
-  if (!visible) return <div className="flex h-full" hidden />;
+  const panelStyle: React.CSSProperties = active
+    ? {}
+    : { visibility: "hidden", position: "absolute", pointerEvents: "none", inset: 0 };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col" style={panelStyle}>
       <div className="border-b border-line px-3 py-2">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-ink">Layers</h2>

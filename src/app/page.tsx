@@ -360,7 +360,7 @@ function PageContent() {
                 <GlobalSearch onSelect={searchSelect} />
               </div>
 
-              <div className="min-h-0 flex-1" hidden={!panelOpen}>
+              <div className="min-h-0 flex-1 relative">
                 <LayerPanel
                   layers={LAYERS}
                   enabled={enabled}
@@ -371,17 +371,17 @@ function PageContent() {
                   onShowDetail={setDetail}
                   terrain3d={terrain3d}
                   onTerrainChange={setTerrain3d}
-                  visible={tab === "layers"}
+                  active={tab === "layers"}
                 />
                 <FeatureBrowser
                   layers={LAYERS}
                   enabled={enabled}
                   onEnsureEnabled={ensureEnabled}
                   onLocate={centreOn}
-                  visible={tab === "browse"}
+                  active={tab === "browse"}
                 />
-                <GapsPanel gaps={GAPS} visible={tab === "gaps"} />
-                <TransparencyPanel visible={tab === "sources"} />
+                <GapsPanel gaps={GAPS} active={tab === "gaps"} />
+                <TransparencyPanel active={tab === "sources"} />
               </div>
 
         {/* desktop resize handle */}

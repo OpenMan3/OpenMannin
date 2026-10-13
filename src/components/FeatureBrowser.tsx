@@ -42,13 +42,13 @@ export function FeatureBrowser({
   enabled,
   onEnsureEnabled,
   onLocate,
-  visible = true,
+  active = true,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
   onEnsureEnabled: (id: string) => void;
   onLocate: (lon: number, lat: number) => void;
-  visible?: boolean;
+  active?: boolean;
 }) {
   const withFiles = useMemo(() => layersWithFiles(layers), [layers]);
   const [layerId, setLayerId] = useState<string>("");
@@ -134,10 +134,12 @@ export function FeatureBrowser({
     );
   }, [selected]);
 
-  if (!visible) return <div className="flex h-full" hidden />;
+  const panelStyle: React.CSSProperties = active
+    ? {}
+    : { visibility: "hidden", position: "absolute", pointerEvents: "none", inset: 0 };
 
   return (
-    <div className="flex h-full min-h-0 flex-col p-3">
+    <div className="flex h-full min-h-0 flex-col p-3" style={panelStyle}>
       <label className="block label">
         Feature browser
         <select

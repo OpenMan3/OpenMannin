@@ -23,9 +23,9 @@ export const BASEMAPS: Record<BasemapId, BasemapDef> = {
   },
   "liberty": {
     kind: "style",
-    styleUrl: "https://maputnik.github.io/osm-liberty/style.json",
+    styleUrl: "https://tiles.stadiamaps.com/styles/osm_bright.json",
     attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors (ODbL) | Style: <a href="https://github.com/maputnik/osm-liberty" target="_blank">OSM Liberty</a>',
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors (ODbL) | Tiles &copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a>',
     maxzoom: 17,
   },
 };

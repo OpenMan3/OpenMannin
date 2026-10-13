@@ -101,7 +101,7 @@ const SNAP_LAYER_IDS = new Set([
   "satellite",
   "airport",
   "tide-stations",
-  "webcams",
+
   "ports",
   "cable-landings",
   "power",
@@ -1267,12 +1267,24 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
   /** Long-press hit: snap to a visible address/landmark feature within 15px. */
   const resolveHit = (x: number, y: number): { lon: number; lat: number; title: string; detail: string } => {
     const r = SNAP_RADIUS_PX;
-    const hits = map.queryRenderedFeatures([[x - r, y - r], [x + r, y + r]], {
-      layers: [...SNAP_LAYER_IDS].map((id) => `om-${id}-circle`),
-    });
+    let hits: unknown[] = [];
+    try {
+      const existingLayers = new Set((map.getStyle().layers || []).map((l) => l.id));
+      const layerFilters = [...SNAP_LAYER_IDS]
+        .map((id) => `om-${id}-circle`)
+        .filter((lid) => existingLayers.has(lid));
+      if (layerFilters.length > 0) {
+        hits = map.queryRenderedFeatures([[x - r, y - r], [x + r, y + r]], {
+          layers: layerFilters,
+        });
+      }
+    } catch (err) {
+      console.warn("[nav] queryRenderedFeatures failed:", err);
+      hits = [];
+    }
 
     let best: { d2: number; lon: number; lat: number; props: Record<string, unknown> | null } | null = null;
-    for (const hit of hits) {
+    for (const hit of hits as any[]) {
       const centre = featureCentre(hit.geometry);
       if (!centre) continue;
       const pt = map.project([centre[0], centre[1]]);

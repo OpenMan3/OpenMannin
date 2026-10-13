@@ -31,18 +31,22 @@ export function attachMapInteractions(
     // does not immediately clear the feature popup.
     if (Date.now() < suppressClickUntilRef.current) return;
 
-    const hits = map.queryRenderedFeatures(e.point);
-    for (const hit of hits) {
-      const layer = layerByMapLayerId(hit.layer.id, layersRef.current);
-      if (!layer) continue;
-      onPickRef.current({
-        layer,
-        properties: hit.properties ?? null,
-        lon: e.lngLat.lng,
-        lat: e.lngLat.lat,
-        asOf: layerAsOfRef.current.get(layer.id),
-      });
-      return;
+    try {
+      const hits = map.queryRenderedFeatures(e.point);
+      for (const hit of hits) {
+        const layer = layerByMapLayerId(hit.layer.id, layersRef.current);
+        if (!layer) continue;
+        onPickRef.current({
+          layer,
+          properties: hit.properties ?? null,
+          lon: e.lngLat.lng,
+          lat: e.lngLat.lat,
+          asOf: layerAsOfRef.current.get(layer.id),
+        });
+        return;
+      }
+    } catch (err) {
+      console.warn("[map] queryRenderedFeatures failed on click:", err);
     }
     onPickRef.current(null);
   };
@@ -54,11 +58,16 @@ export function attachMapInteractions(
     cursorFrame = requestAnimationFrame(() => {
       cursorFrame = 0;
       if (map !== map) return; // defensive
-      const hits = map.queryRenderedFeatures(e.point);
-      const ours = hits.some(
-        (h) => layerByMapLayerId(h.layer.id, layersRef.current) !== undefined,
-      );
-      map.getCanvas().style.cursor = ours ? "pointer" : "";
+      try {
+        const hits = map.queryRenderedFeatures(e.point);
+        const ours = hits.some(
+          (h) => layerByMapLayerId(h.layer.id, layersRef.current) !== undefined,
+        );
+        map.getCanvas().style.cursor = ours ? "pointer" : "";
+      } catch (err) {
+        console.warn("[map] queryRenderedFeatures failed on mousemove:", err);
+        map.getCanvas().style.cursor = "";
+      }
     });
   };
 

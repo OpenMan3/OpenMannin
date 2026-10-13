@@ -135,6 +135,7 @@ async function poll(
       setFeedError(id, (e as Error).message);
     }
     console.warn(`[live] ${id} poll failed:`, (e as Error).message);
+    // Don't throw - just mark unhealthy; failures shouldn't break the UI
   } finally {
     IN_FLIGHT.delete(id);
 

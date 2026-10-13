@@ -168,7 +168,7 @@ for (const [fx, fy] of GRID) {
   }
   await sleep(300);
   popup = await evaluate(`(() => {
-    const el = [...document.querySelectorAll("div")].find(d => d.className.includes("w-[min(22rem"));
+    const el = document.querySelector('[role="dialog"][aria-label]');
     if (!el) return null;
     return {
       text: el.innerText.slice(0, 200),

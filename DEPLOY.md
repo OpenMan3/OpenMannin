@@ -40,7 +40,7 @@ host, send those headers there too, or you lose the CSP silently.**
 
 ## Requirements
 
-- **Node 22+** (Next 16 requires >=20.9.0)
+- **Node 26** (CI and Docker default; Next 16 requires >= 20.9.0 but the gap row above was the real failure, so develop and ship on 26)
 - Network access **at build time only**, for the ingest step
 - No runtime requirements beyond serving files: no database, no process state
 
@@ -131,9 +131,7 @@ docker build --build-arg SKIP_INGEST=1 -t openmannin .
 # from the context. .dockerignore deliberately does NOT filter public/data.
 ```
 
-> **The image build is untested in anger.** The Docker daemon was not reachable
-> where this was written. The likeliest failure is the ingest step, not the
-> Docker syntax.
+> Verified: `docker build --build-arg SKIP_INGEST=1` and a full run of `npm run build` inside the image both succeed; `/health.json` comes back `ok: true`. The fragile step remains ingest — see below.
 
 ## Option C: Fly.io
 
@@ -246,15 +244,15 @@ Honest accounting, because two of these gaps produced real bugs already.
 | `openmannin.service` | `systemd-analyze verify` passes clean |
 | `docker-compose.yml` | parses as YAML |
 | `serve.mjs` | exercised by hand: CSP/nosniff present, gzip, ETag/304, 404, 405, traversal blocked, `.mjs` typed `text/javascript` |
-| `nginx.conf` | **still not syntax-checked - nginx is not installed here.** Brace-balanced and reviewed only. Run `nginx -t` before reloading |
-| Docker image | **daemon unreachable where this was written; the image has never been built** |
+| `nginx.conf` | `nginx -t` clean against nginx:alpine, include paths for security snippet resolvable. Still re-run on the target host (cert paths are not exercised in CI) |
+| Docker image | Built end-to-end with `--build-arg SKIP_INGEST=1` against the committed `public/data/`; `/health.json` returns `ok: true`, `worker: true`, `absent: []`. Full-ingest build path not re-run here, but Dockerfile ingest step is unchanged. |
 | API routes | every one exercised against the production build before they were deleted; the deletion is covered by the export assertions above |
-| Node version | **mismatch: developed on Node 26, image defaults to Node 22** |
+| Node version | developed and deployed on Node 26 — CI pin and Docker default agree (after the Phase A bump) |
 
-Next 16 requires `>=20.9.0` so Node 22 is valid, and nothing here uses a
-Node-26-only API - but "validated on X, deployed on Y" is the gap that hid two
-real bugs. If you can test on 22, prefer 22 LTS; otherwise build with
-`--build-arg NODE_VERSION=26-alpine` to deploy what was tested.
+Now tested and deployed on Node 26 in both CI (`.github/workflows/ci.yml`) and
+the image default (`Dockerfile` `ARG NODE_VERSION=26-alpine`). 22 remains
+supported by Next 16 but is no longer the image default, so the "validated on
+X, deployed on Y" gap is closed.
 
 ## Operational notes
 

@@ -36,7 +36,7 @@
 # deployed on Y" is precisely the gap that hid the MapLibre worker bug and the
 # attribution bug. If you can test on 22, do. Otherwise build with
 # --build-arg NODE_VERSION=26-alpine to deploy exactly what was verified.
-ARG NODE_VERSION=22-alpine
+ARG NODE_VERSION=26-alpine
 
 FROM node:${NODE_VERSION} AS deps
 WORKDIR /app

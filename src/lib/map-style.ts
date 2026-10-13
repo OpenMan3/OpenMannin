@@ -7,7 +7,7 @@
 
 import type { StyleSpecification, Map as MapLibreMap } from "maplibre-gl";
 
-export type BasemapId = "opentopo";
+export type BasemapId = "opentopo" | "liberty";
 
 export const BASEMAPS: Record<BasemapId, BasemapDef> = {
   "opentopo": {
@@ -19,6 +19,13 @@ export const BASEMAPS: Record<BasemapId, BasemapDef> = {
     ],
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors (ODbL) | Map style &copy; <a href="https://opentopomap.org" target="_blank">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/2.0/" target="_blank">CC-BY-SA</a>)',
+    maxzoom: 17,
+  },
+  "liberty": {
+    kind: "style",
+    styleUrl: "https://maputnik.github.io/osm-liberty/style.json",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors (ODbL) | Style: <a href="https://github.com/maputnik/osm-liberty" target="_blank">OSM Liberty</a>',
     maxzoom: 17,
   },
 };

@@ -410,7 +410,7 @@ function PageContent() {
         <MapView
           layers={LAYERS}
           enabled={enabled}
-          basemap="opentopo"
+          basemap="liberty"
           onPick={setPicked}
           onMissing={onMissing}
           onFeedErrors={onFeedErrors}
@@ -475,8 +475,8 @@ function PageContent() {
               if (tab === t.id) {
                 setPanelOpen((v) => !v);
                 setMobileOpen((v) => {
-                  if (typeof window === 'undefined') return !v;
-                  return window.innerWidth < 768 ? !v : v;
+                  if (typeof window === 'undefined') return v;
+                  return window.innerWidth < 768 ? !v : false;
                 });
               } else {
                 setTab(t.id);

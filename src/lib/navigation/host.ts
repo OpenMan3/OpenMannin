@@ -1286,7 +1286,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     let best: { d2: number; lon: number; lat: number; props: Record<string, unknown> | null } | null = null;
     for (const hit of hits as unknown[]) {
       const h = hit as { geometry?: unknown; properties?: Record<string, unknown> | null };
-      const centre = featureCentre(h.geometry as any);
+      const centre = featureCentre(h.geometry as GeoJSON.Geometry | undefined);
       if (!centre) continue;
       const pt = map.project([centre[0], centre[1]]);
       const d2 = (pt.x - x) ** 2 + (pt.y - y) ** 2;

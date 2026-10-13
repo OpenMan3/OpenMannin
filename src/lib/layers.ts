@@ -944,7 +944,7 @@ export const LAYERS: LayerDef[] = [
     // SGP4 arithmetic runs in a Web Worker. See src/lib/feeds/passes-client.ts.
     endpoint: "client:satellite-passes",
     color: "#c084fc",
-    defaultOn: false,
+    defaultOn: true,
     minZoom: 5,
     description:
       "Predicted pass windows for the ISS and other crewed spacecraft over the island's two ground stations, computed in your browser by propagating public-domain two-line element sets with SGP4, in a Web Worker so the map stays responsive.",

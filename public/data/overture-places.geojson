@@ -32212,28 +32212,6 @@
     },
     {
       "type": "Feature",
-      "id": "0a94a959-6bf7-42b7-91c8-7adda501b73d",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -4.48006,
-          54.15329
-        ]
-      },
-      "properties": {
-        "id": "0a94a959-6bf7-42b7-91c8-7adda501b73d",
-        "name": "Peel Harbour",
-        "category": "geographic_entities",
-        "basicCategory": "geographic_entities",
-        "address": "Peel, Isle of Man",
-        "confidence": 0.834,
-        "sourceDataset": "meta",
-        "originLicence": "CDLA-Permissive-2.0",
-        "source": "overture"
-      }
-    },
-    {
-      "type": "Feature",
       "id": "c1dab6f2-aff3-4801-975a-9105188ddf40",
       "geometry": {
         "type": "Point",
@@ -36583,28 +36561,6 @@
         "basicCategory": "casual_eatery",
         "address": "4, Dalton Street",
         "confidence": 0.463,
-        "sourceDataset": "meta",
-        "originLicence": "CDLA-Permissive-2.0",
-        "source": "overture"
-      }
-    },
-    {
-      "type": "Feature",
-      "id": "f575f59b-e525-46e5-b0f5-16510bed902d",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -4.48083,
-          54.15517
-        ]
-      },
-      "properties": {
-        "id": "f575f59b-e525-46e5-b0f5-16510bed902d",
-        "name": "Laxey Health Centre",
-        "category": "real_estate_service",
-        "basicCategory": "real_estate_service",
-        "address": "",
-        "confidence": 0.471,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
         "source": "overture"
@@ -43689,28 +43645,6 @@
         "basicCategory": "event_or_party_service",
         "address": "",
         "confidence": 0.507,
-        "sourceDataset": "meta",
-        "originLicence": "CDLA-Permissive-2.0",
-        "source": "overture"
-      }
-    },
-    {
-      "type": "Feature",
-      "id": "7f5b1f94-9d72-4f17-810a-26135ab6b5ce",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -4.48913,
-          54.17025
-        ]
-      },
-      "properties": {
-        "id": "7f5b1f94-9d72-4f17-810a-26135ab6b5ce",
-        "name": "Port Cornaa",
-        "category": "beach",
-        "basicCategory": "beach",
-        "address": null,
-        "confidence": 0.903,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
         "source": "overture"
@@ -58275,28 +58209,6 @@
         "basicCategory": "sports_and_recreation",
         "address": "Rhenab Farm, Maughold",
         "confidence": 0.934,
-        "sourceDataset": "meta",
-        "originLicence": "CDLA-Permissive-2.0",
-        "source": "overture"
-      }
-    },
-    {
-      "type": "Feature",
-      "id": "09b4d56d-0bf2-4b0e-99dc-d52c08b88747",
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -4.32506,
-          54.29275
-        ]
-      },
-      "properties": {
-        "id": "09b4d56d-0bf2-4b0e-99dc-d52c08b88747",
-        "name": "Foxdale Mines",
-        "category": "historic_site",
-        "basicCategory": "historic_site",
-        "address": null,
-        "confidence": 0.73,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
         "source": "overture"

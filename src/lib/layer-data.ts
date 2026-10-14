@@ -28,6 +28,42 @@ export interface FeatureCollection {
   properties?: Record<string, unknown> | null;
 }
 
+let loaderWorker: Worker | null | undefined;
+let loaderSeq = 0;
+function getLoaderWorker(): Worker | null {
+  if (loaderWorker !== undefined) return loaderWorker;
+  if (typeof window === "undefined" || typeof Worker === "undefined") {
+    loaderWorker = null;
+    return null;
+  }
+  try {
+    loaderWorker = new Worker("/layer-loader-worker.mjs");
+  } catch {
+    loaderWorker = null;
+  }
+  return loaderWorker;
+}
+
+async function fetchLayerInWorker(file: string): Promise<FeatureCollection> {
+  const worker = getLoaderWorker();
+  if (!worker) {
+    const res = await fetch(`/data/${file}`, { cache: "force-cache" });
+    if (!res.ok) throw new Error(`HTTP ${res.status} for /data/${file}`);
+    return (await res.json()) as FeatureCollection;
+  }
+  const id = ++loaderSeq;
+  return new Promise<FeatureCollection>((resolve, reject) => {
+    const onMessage = (ev: MessageEvent) => {
+      if (ev.data?.id !== id) return;
+      worker.removeEventListener("message", onMessage);
+      if (ev.data.ok) resolve(ev.data.data as FeatureCollection);
+      else reject(new Error(ev.data.error ?? `worker failed for /data/${file}`));
+    };
+    worker.addEventListener("message", onMessage);
+    worker.postMessage({ id, file });
+  });
+}
+
 const cache = new Map<string, FeatureCollection>();
 const inflight = new Map<string, Promise<FeatureCollection>>();
 
@@ -40,9 +76,7 @@ export async function loadLayer(file: string): Promise<FeatureCollection> {
 
   const promise = (async () => {
     try {
-      const res = await fetch(`/data/${file}`, { cache: "force-cache" });
-      if (!res.ok) throw new Error(`HTTP ${res.status} for /data/${file}`);
-      const fc = (await res.json()) as FeatureCollection;
+      const fc = await fetchLayerInWorker(file);
       cache.set(file, fc);
       return fc;
     } finally {

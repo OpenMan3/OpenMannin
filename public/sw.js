@@ -1,8 +1,8 @@
 /* eslint-disable no-restricted-globals */
-const VERSION = "openmannin-0.2.0";
+const VERSION = "openmannin-0.2.1";
 const SHELL_CACHE = VERSION + "-shell";
 const DATA_CACHE = VERSION + "-data";
-const SHELL_ASSETS = ["/", "/manifest.webmanifest", "/icon.svg"];
+const SHELL_ASSETS = ["/", "/manifest.webmanifest", "/icon.svg", "/layer-loader-worker.mjs"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

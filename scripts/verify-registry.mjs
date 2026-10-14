@@ -179,6 +179,26 @@ const EXCLUSIVE_PAIRS = [
   { owner: "coastal-outdoor", ownerFile: "coastal_outdoor.geojson", other: "tourism", otherFile: "tourism.geojson" },
   { owner: "tholtans-ruins", ownerFile: "tholtans_ruins.geojson", other: "archaeology", otherFile: "archaeology.geojson" },
 ];
+const OVERLAP_LIMITS = {
+  "airports.geojson|satellite-stations.geojson": 1,
+  "bridges.geojson|footpaths.geojson": 261,
+  "bridges.geojson|railways.geojson": 37,
+  "bridges.geojson|roads.geojson": 249,
+  "bridges.geojson|tourism.geojson": 5,
+  "cable-landings.geojson|ports.geojson": 1,
+  "coastal_outdoor.geojson|footpaths.geojson": 2,
+  "coastal_outdoor.geojson|roads.geojson": 26,
+  "food_drink.geojson|tourism.geojson": 5,
+  "house-numbers.geojson|postcodes.geojson": 3,
+  "house-numbers.geojson|wifi.geojson": 1,
+  "postcodes.geojson|wifi.geojson": 7,
+  "protected-areas.geojson|tholtans_ruins.geojson": 1,
+  "reservoirs.geojson|tholtans_ruins.geojson": 1,
+  "roads.geojson|tourism.geojson": 7,
+  "tholtans_ruins.geojson|tourism.geojson": 1,
+  "tholtans_ruins.geojson|worship.geojson": 1,
+};
+
 let duplicatePairs = 0;
 for (const pair of EXCLUSIVE_PAIRS) {
   const a = loaded.get(pair.ownerFile);

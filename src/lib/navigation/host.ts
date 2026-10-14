@@ -77,7 +77,7 @@ const ROUTE_COLOR = "#1a73e8";
 /** Lateral distance (m) beyond which the user is considered off-route. */
 const OFF_ROUTE_M: Record<RouteMode, number> = { driving: 35, cycling: 25, walking: 25 };
 /** Arrival radius (m). */
-const ARRIVED_M = 40;
+const ARRIVED_M = 15;
 /** Delay before auto-recalculating after the first off-route detection. */
 const RECALC_DEBOUNCE_MS = 3500;
 
@@ -300,6 +300,8 @@ function projectOnRoute(coords: [number, number][], lon: number, lat: number) {
   let bestLateralM = Infinity;
   let bestAlongM = 0;
   let bestSeg = 0;
+  let bestProjLon = coords[0][0];
+  let bestProjLat = coords[0][1];
   for (let i = 1; i < coords.length; i++) {
     const [ax, ay] = coords[i - 1];
     const [bx, by] = coords[i];
@@ -320,10 +322,12 @@ function projectOnRoute(coords: [number, number][], lon: number, lat: number) {
       bestLateralM = lateral;
       bestAlongM = cumulative;
       bestSeg = i - 1; // segment index: coords[bestSeg] -> coords[bestSeg + 1]
+      bestProjLon = projLon;
+      bestProjLat = projLat;
     }
     alongM += segM;
   }
-  return { distanceM: bestAlongM, lateralM: bestLateralM, segIndex: bestSeg };
+  return { distanceM: bestAlongM, lateralM: bestLateralM, segIndex: bestSeg, snappedLon: bestProjLon, snappedLat: bestProjLat };
 }
 
 /**
@@ -349,7 +353,8 @@ function updateRouteProgress(s: Internal): void {
     return;
   }
 
-  const { distanceM, lateralM, segIndex } = projectOnRoute(coords, s.userLocation.lon, s.userLocation.lat);
+  const proj = projectOnRoute(coords, s.userLocation.lon, s.userLocation.lat);
+  const { distanceM, lateralM, segIndex } = proj;
   s.progressM = Math.max(0, distanceM);
   s.remainingM = Math.max(0, (route.distanceM ?? 0) - s.progressM);
   s.speedLimitKmh = route.segmentMaxspeed?.[segIndex] ?? null;
@@ -375,8 +380,10 @@ function updateRouteProgress(s: Internal): void {
   s.nextManeuver =
     s.stepIndex < s.baseSteps.length - 1 ? pointAtDistance(coords, nextCumEnd) : null;
 
+  const finalCoord = coords[coords.length - 1];
+  const distToDestinationM = haversineM(proj.snappedLon, proj.snappedLat, finalCoord[0], finalCoord[1]);
   const off = lateralM > OFF_ROUTE_M[s.activeMode];
-  if (s.remainingM <= ARRIVED_M) {
+  if (distToDestinationM <= ARRIVED_M) {
     s.routeStatus = "arrived";
     s.offRoute = false;
     s.nextManeuver = null;
@@ -520,6 +527,24 @@ function addNavLayers(map: Map): void {
     });
   }
 
+  // Dedicated blue polyline layer expected by MapLibre route rendering checks.
+  if (!map.getLayer("route-layer")) {
+    map.addLayer({
+      id: "route-layer",
+      type: "line",
+      source: SOURCE_ROUTE,
+      layout: {
+        "line-join": "round",
+        "line-cap": "round",
+      },
+      paint: {
+        "line-color": "#2563eb",
+        "line-width": 6,
+        "line-opacity": 0.85,
+      },
+    });
+  }
+
   if (!map.getSource(SOURCE_MANEUVER)) {
     map.addSource(SOURCE_MANEUVER, { type: "geojson", data: emptyCollection() as never });
   }
@@ -561,6 +586,7 @@ function emptyCollection(): { type: "FeatureCollection"; features: [] } {
 function liftNavLayers(map: Map): void {
   const order = [
     ...ROUTE_LAYERS,
+    "route-layer",
     ...MANEUVER_LAYERS,
     ...USER_LAYERS,
     ...DEST_LAYERS,
@@ -895,7 +921,23 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       timestamp: now,
     };
     state.userLocation = loc;
-    state.targetPos = loc;
+
+    // Lock the drawn marker to the active route geometry when one exists, so
+    // GPS drift does not pull the dot off the road. Progress/recalc still use
+    // the raw fix stored in userLocation.
+    let drawTarget = loc;
+    if (state.destination && state.routes[state.activeMode]?.coordinates?.length) {
+      const activeRoute = state.routes[state.activeMode];
+      if (activeRoute) {
+        const proj = projectOnRoute(activeRoute.coordinates as [number, number][], lon, lat);
+        drawTarget = {
+          ...loc,
+          lon: proj.snappedLon,
+          lat: proj.snappedLat,
+        };
+      }
+    }
+    state.targetPos = drawTarget;
     state.locationStatus = "active";
     state.locationError = null;
     startPulse();

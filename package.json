@@ -34,6 +34,7 @@
     "ingest:all": "npm run ingest:osminfra && npm run ingest:osm && npm run ingest:osmlayers && npm run ingest:wikidata && npm run ingest:airports && npm run ingest:cables && npm run ingest:tidestations && npm run ingest:dumpsites && npm run ingest:offshorewind && npm run ingest:ports && npm run ingest:power && npm run ingest:satellite && npm run ingest:busstops && npm run ingest:housenumbers && npm run ingest:postcodes && npm run ingest:comms-towers && npm run ingest:overture && npm run ingest:wifi && npm run ingest:update && npm run ingest:parishes && npm run annotate:nearest && npm run build:manifest && npm run build:search",
     "ingest:osm": "node scripts/ingest-osm.mjs",
     "verify:registry": "node --experimental-strip-types --no-warnings scripts/verify-registry.mjs",
+    "verify:data-quality": "node --experimental-strip-types --no-warnings scripts/verify-data-quality.mjs",
     "verify:render": "node scripts/verify-render.mjs",
     "verify:basemap": "node scripts/verify-basemap.mjs",
     "build:manifest": "node --experimental-strip-types --no-warnings scripts/build-manifest.mjs",

@@ -4,7 +4,7 @@ import type { Gap, LayerDef } from "./types";
  * The layer registry.
  *
  * Ordering rules that matter:
- *  1. As of 2026-10-07 every layer is `defaultOn: true` — the reader should be
+ *  1. As of 2026-10-07 every layer is `defaultOn: false` — the reader should be
  *    shown the evidence, including the weak and the disputed, rather than a
  *    curated subset. Disputed (grade D) layers are still rendered but flagged,
  *    and on-hold live feeds badge themselves without ever fetching.
@@ -47,7 +47,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "heritage.geojson",
     color: "#a6785a",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 14,
     description:
       "Places on the Isle of Man that carry a heritage designation in Wikidata (heritage designation P1435, country P17 = Isle of Man Q9676) and a published coordinate. Predominantly 'registered building' entries, plus scheduled monuments and Manx National Heritage records.",
@@ -70,7 +70,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "roads.geojson",
     color: "#8d8577",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 8,
     description:
       "The island's road network from OpenStreetMap: motorway, trunk, primary, secondary, tertiary, unclassified, residential, service, living_street and track (plus their link roads). Each segment carries its OSM highway class, route reference and posted maxspeed where mapped.",
@@ -92,7 +92,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "bridges.geojson",
     color: "#78716c",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 12,
     description:
       "Road, rail and foot bridges mapped in OpenStreetMap as ways tagged bridge=*.",
@@ -113,7 +113,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "emergency.geojson",
     color: "#ef4444",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 12,
     description:
       "Police, fire and ambulance stations from OpenStreetMap (amenity=police/fire_station/ambulance_station). Public-access defibrillators are NOT in this layer — they are owned by 'Essential utilities & services' so the two cannot drift.",
@@ -135,7 +135,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "footpaths.geojson",
     color: "#22c55e",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 13,
     description:
       "Public rights of way and recreational paths from OpenStreetMap: footway, path, bridleway, steps. Includes designation tags (public_footpath, public_bridleway, etc.) where mapped.",
@@ -158,7 +158,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "schools-health.geojson",
     color: "#06b6d4",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 12,
     description:
       "Schools (school, college, university, kindergarten) and healthcare (hospital, clinic, doctors, dentist, pharmacy, veterinary) from OpenStreetMap.",
@@ -180,7 +180,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "tourism.geojson",
     color: "#f59e0b",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 12,
     description:
       "Tourism features from OpenStreetMap: attractions, museums, galleries, campsites, hostels, hotels, guest houses, artwork, memorials and monuments. Viewpoints and picnic sites are owned by the 'Coastal & outdoor' layer, not repeated here.",
@@ -203,7 +203,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "worship.geojson",
     color: "#a855f7",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 13,
     description:
       "Places of worship from OpenStreetMap (amenity=place_of_worship) with religion and denomination where mapped.",
@@ -251,7 +251,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "bus-stops.geojson",
     color: "#2563eb",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 13,
     description:
       "Bus stops from OpenStreetMap (highway=bus_stop and public_transport=platform), with per-stop services taken from OSM bus route relations where the stop is a member.",
@@ -273,7 +273,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "postcodes.geojson",
     color: "#a78bfa",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 10,
     description:
       "1,414 postcode centroids derived from OSM addr:postcode tags. Each point is the mean of all addresses sharing that postcode.",
@@ -295,7 +295,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "house-numbers.geojson",
     color: "#34d399",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 14,
     description:
       "8,395 address points from OpenStreetMap: 6,949 with addr:housenumber (numbered street addresses) and 1,446 named rural/heritage properties mapped with addr:housename instead of a number. Each point is a building, entrance or standalone address node.",
@@ -317,7 +317,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "railways.geojson",
     color: "#111827",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 10,
     description:
       "Rail and tram alignments from OpenStreetMap (railway=rail, light_rail, tram, narrow_gauge). Every railway on the Isle of Man is HERITAGE and seasonal — there is no mainline rail: Manx Electric Railway, Isle of Man Steam Railway, Snaefell Mountain Railway, Horse Trams, Groudle Glen Railway and the Great Laxey Mine Railway.",
@@ -340,7 +340,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "ev-charging.geojson",
     color: "#10b981",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 14,
     description:
       "Electric-vehicle charging points mapped in OpenStreetMap (amenity=charging_station), with operator, socket and capacity tags where present.",
@@ -359,7 +359,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "traffic-signals.geojson",
     color: "#f59e0b",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 13,
     description:
       "Traffic signals (highway=traffic_signals) and marked crossings (highway=crossing) mapped in OpenStreetMap.",
@@ -385,7 +385,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "subsea-cables.geojson",
     color: "#e11d48",
-    defaultOn: true,
+    defaultOn: false,
     dashed: true,
     minZoom: 5,
     featureCount: 5,
@@ -410,7 +410,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "cable-landings.geojson",
     color: "#f43f5e",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 8,
     featureCount: 4,
     description:
@@ -437,7 +437,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "ports.geojson",
     color: "#0f766e",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 8,
     description:
       "The nine statutory ports of the Isle of Man — Douglas, Ramsey, Peel, Castletown, Port Erin, Port St Mary, Laxey, Port Cornaa and Groudle — plus 13 mapped harbour areas, Douglas and Peel marinas and 12 piers, linkspans, groins and oil jetties. Marine Operations Centre on the 2nd floor of the Sea Terminal, Douglas, 24 hours. All eight mapped basins are tidal; the north-east approaches run about 8 m, which sizes vessels above roughly 7 m out of the island.",
@@ -463,7 +463,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "satellite-stations.geojson",
     color: "#a855f7",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 10,
     description:
       "Two features, because two sites is how many have a citable position — not how many exist. The Spaceman teleport (aql Space Services, formerly BlueWave Communications) at 54.1390 N, -4.4951, about 2 km east of Douglas: carrier-neutral, chosen for low horizon clutter and separately allocated spectrum, with dark fibre into the aql UK network and access to BlueWave masts including the adjacent 40 m CARNANE1 tower. Also the IOMS GNSS reference station at the airport, documented in OS Net and Leica SmartNet.",
@@ -488,7 +488,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "dumpsites.geojson",
     color: "#ea580c",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 5,
     description:
       "Beaufort's Dyke: a glacial tunnel valley in the North Channel, 200-312 m deep, a designated MoD ordnance disposal ground after WWI and the UK's largest offshore dump site post-WWII. Over 1 million tonnes of conventional munitions; ~14,000-14,500 tonnes of 5-inch artillery rockets with phosgene dumped July 1945 plus ~14,000 t phosgene loose-dumped 1946-47; ~2 tonnes of low-level radioactive waste in concrete-encased drums authorised in the 1950s-60s. Dumping closed under the London and Oslo Conventions 1972, last dumping ~1976. A magnitude 2.5 explosion was registered on 8 February 1986. Shown as a grade-C indicative 50 x 3.5 km corridor along the OSPAR disposal axis, plus the grade-B axis itself.",
@@ -515,7 +515,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "seamarks.geojson",
     color: "#eab308",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 10,
     description:
       "106 lights, light-vessels, beacons and buoys from OpenStreetMap, including Chicken Rock, Calf of Man, Point of Ayre and Bradda Head. Unnamed beacons are kept and flagged rather than discarded.",
@@ -538,7 +538,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "comms-towers.geojson",
     color: "#7c3aed",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 10,
     description:
       "OSM-tagged cell/mast and antenna structures island-wide: man_made=tower, man_made=mast and man_made=communications_tower, with the communication-specific tower:type where mapped. This is the only open route to this data — no operator mast register is published for the Isle of Man.",
@@ -560,7 +560,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "wifi.geojson",
     color: "#0ea5e9",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 13,
     description:
       "OSM-tagged internet_access=wlan/yes and amenity=wifi features: cafes, pubs, hotels and other venues a mapper has recorded as offering WiFi. No open public-WiFi hotspot register exists for the island, so this is the only open signal — thin and self-reported.",
@@ -584,7 +584,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "offshore-wind.geojson",
     color: "#0ea5e9",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 5,
     description:
       "One project, and it is a refusal rather than a lease. Mooir Vannin (Ørsted, ~1.4 GW, up to 100 turbines, 6-12 nm off Maughold Head) reached the Marine Infrastructure Consent process and its application CLOSED UNCONSENTED on 9 September 2026. Nothing is operating or consented. Shown as a single grade-D indicative point at the midpoint of the published distance band. Now shown by default like every other layer — but it is grade D and a refusal, not a consented project, so read it as a recorded proposal that did not proceed.",
@@ -609,7 +609,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "reservoirs.geojson",
     color: "#0d9488",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 10,
     description:
       "Reservoirs and impounding water bodies mapped in OpenStreetMap (landuse=reservoir / water=reservoir). Manx Utilities' operational reservoirs include West Baldwin, Sulby, Clypse and Kerrowdhoo.",
@@ -630,7 +630,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "power.geojson",
     color: "#ea580c",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 10,
     description:
       "Four generation sites joined to MEA Ch.6.1 capacities: Pulrose (135MW — an 87MW combined-cycle gas turbine plus five diesel engines at 48MW), Peel (38.4MW, four diesel engines), the Island Energy from Waste plant (7MW capable, typically supplying ~3MW), and Sulby hydro (1MW). Manx Utilities has over 178MW of generation capacity, 1,300 km of underground cable and 530 km of overhead line, on three independent supply chains. Also 24 named and 53 unnamed substations, 23 solar arrays and 1 wind generator mapped by OSM.",
@@ -658,7 +658,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "power-lines.geojson",
     color: "#f97316",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 12,
     description:
       "The distribution and transmission network the substation layer deliberately omits: overhead and underground power lines (power=line/minor_line) and the towers, poles and transformers on them (power=tower/pole/transformer), from OpenStreetMap. Voltage is carried where a mapper recorded it.",
@@ -681,7 +681,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "water-works.geojson",
     color: "#0891b2",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 12,
     description:
       "Manx Utilities' treatment and distribution assets where OSM maps them: water works, water towers, pumping stations, wells and covered reservoirs (man_made=water_works/water_tower/pumping_station/water_well/reservoir_covered). Complements the reservoirs layer, which draws the raw water bodies rather than the plant.",
@@ -703,7 +703,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "archaeology.geojson",
     color: "#b45309",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 13,
     description:
       "The island's recorded archaeological monuments from OpenStreetMap: archaeological sites, keeills and wayside crosses, boundary stones, standing stones, stone circles, dolmens, castles, forts, earthworks and monastic remains (historic=*). Where the Wikidata heritage layer records statutory designation, this layer records the physical monument itself.",
@@ -728,7 +728,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "protected-areas.geojson",
     color: "#22c55e",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 8,
     description:
       "Protected areas from OpenStreetMap: boundary=protected_area and leisure=nature_reserve polygons, with protection_title / designation / operator tags where mapped (ASSIs, nature reserves and similar).",
@@ -748,7 +748,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "hydrography.geojson",
     color: "#38bdf8",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 11,
     description:
       "Watercourses from OpenStreetMap (waterway=river, stream, canal, drain, ditch), each carrying its name and waterway class where mapped.",
@@ -795,7 +795,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "airports.geojson",
     color: "#f43f5e",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 8,
     featureCount: 7,
     description:
@@ -821,7 +821,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "tide-stations.geojson",
     color: "#818cf8",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 9,
     featureCount: 6,
     description:
@@ -849,7 +849,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "mine_infrastructure.geojson",
     color: "#b45309",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 13,
     description:
       "The surface evidence of the Isle of Man's metal-mining heritage, from OpenStreetMap: mine shafts (man_made=mineshaft), adits (man_made=adit), and mines (historic=mine / historic=mine_disused). This is the lead, copper, zinc and silver country of Laxey, Foxdale and Snaefell, plus the many smaller workings — records no official open dataset publishes.",
@@ -872,7 +872,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "tholtans_ruins.geojson",
     color: "#78716c",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 14,
     description:
       "Manx tholtans — abandoned and ruinous structures — from OpenStreetMap: historic=ruins, building=ruins, abandoned:building=* and disused=yes. Farmsteads, cottages, mills and industrial remains scattered across the island.",
@@ -896,7 +896,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "essential_utilities.geojson",
     color: "#0891b2",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 13,
     description:
       "Everyday essential services from OpenStreetMap: fuel stations, cash machines, banks, public toilets and public-access defibrillators (amenity=fuel/atm/bank/toilets, emergency=defibrillator).",
@@ -919,7 +919,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "food_drink.geojson",
     color: "#d97706",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 13,
     description:
       "Places to eat and drink from OpenStreetMap: restaurants, cafes, pubs and bars (amenity=restaurant/cafe/pub/bar), carrying cuisine, operator and opening hours where mapped.",
@@ -941,7 +941,7 @@ export const LAYERS: LayerDef[] = [
     kind: "geojson",
     file: "coastal_outdoor.geojson",
     color: "#0d9488",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 12,
     description:
       "Coastal and outdoor recreation points from OpenStreetMap: slipways, viewpoints, picnic sites and car parks (leisure=slipway, tourism=viewpoint/picnic_site, amenity=parking).",
@@ -968,7 +968,7 @@ export const LAYERS: LayerDef[] = [
     // SGP4 arithmetic runs in a Web Worker. See src/lib/feeds/passes-client.ts.
     endpoint: "client:satellite-passes",
     color: "#c084fc",
-    defaultOn: true,
+    defaultOn: false,
     minZoom: 5,
     description:
       "Predicted pass windows for the ISS and other crewed spacecraft over the island's two ground stations, computed in your browser by propagating public-domain two-line element sets with SGP4, in a Web Worker so the map stays responsive.",

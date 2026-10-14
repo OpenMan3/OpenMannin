@@ -96,9 +96,9 @@ function PageContent() {
     layers?: Record<string, { generated?: string; bbox?: [number, number, number, number] }>;
   } | null>(null);
 
-  // Start from whatever the registry marked defaultOn - which is everything.
-  // Every layer is shown by default; weak and disputed ones carry their
-  // caveats, and live-feed failures say so right in the layer row.
+  // Start from the registry's curated defaults: only a small amount of
+  // lightweight context (toponyms + parishes) is on; the rest is off by
+  // default so new users are not overwhelmed. Others remain one toggle away.
   const [enabled, setEnabled] = useState<Set<string>>(
     () => new Set(LAYERS.filter((l) => l.defaultOn).map((l) => l.id)),
   );

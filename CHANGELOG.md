@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.4] - 2026-10-14
+### Added
+- Marine habitats layer: EMODnet Seabed Habitats biogenic-substrate records (Modiolus modiolus beds and related) around the Isle of Man, as points and clipped bed extents, streamed as PMTiles with a GeoJSON fallback. CC-BY 4.0 with per-survey attribution.
+- A bbox clip helper and tests, used to trim whole-Atlantic bed extents to the island.
+
+### Changed
+- The "marine habitats and fishery closures" gap is narrowed to fishery closures only, since habitats are now shipped.
+
 ## [0.3.3] - 2026-10-14
 ### Added
 - Building footprints layer: 46,106 Overture Maps buildings across the island (OpenStreetMap outlines plus Microsoft ML roofprints), streamed as PMTiles with a GeoJSON fallback. ODbL, including share-alike.

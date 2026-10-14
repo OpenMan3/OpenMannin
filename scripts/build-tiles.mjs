@@ -24,7 +24,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATA = path.join(ROOT, "public", "data");
 const OUT = path.join(ROOT, "public", "tiles");
 
-const DEFAULT_LAYERS = ["roads", "footpaths", "overture-places", "house-numbers", "power-lines", "buildings"];
+const DEFAULT_LAYERS = ["roads", "footpaths", "overture-places", "house-numbers", "power-lines", "buildings", "marine-habitats"];
 const layersArg = process.env.TILE_LAYERS;
 const LAYERS_TO_TILE = layersArg ? layersArg.split(",").map((s) => s.trim()).filter(Boolean) : DEFAULT_LAYERS;
 

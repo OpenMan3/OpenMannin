@@ -36,6 +36,12 @@
       "tiles": 426,
       "bytes": 2054017,
       "sourceBytes": 15850226
+    },
+    {
+      "id": "marine-habitats",
+      "tiles": 125,
+      "bytes": 28864,
+      "sourceBytes": 4100
     }
   ]
 }

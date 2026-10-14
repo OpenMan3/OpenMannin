@@ -193,6 +193,17 @@ export const SOURCES: Record<string, Source> = {
     notes:
       "Free, keyless, CORS *. The old services.emodnet-geoservices host no longer resolves — moved to tiles.emodnet-bathymetry.eu. Gotcha: the WMTS layer id (mean_multicolour_latest) differs from the URL path segment (latest/mean_multicolour); use the path.",
   },
+
+  emodnetHabitats: {
+    id: "emodnetHabitats",
+    name: "EMODnet Seabed Habitats — biogenic substrate",
+    publisher: "EMODnet / European Commission",
+    url: "https://emodnet.ec.europa.eu/en/seabed-habitats",
+    licence: "CC-BY-4.0",
+    lastChecked: "2026-10-14",
+    notes:
+      "Biogenic substrate 2025 points and polygons from the EMODnet Seabed Habitats WFS (geoserver workspace emodnet_view). Published in EPSG:3857; the ingest asks for srsName=EPSG:4326 and clips the whole-Atlantic bed extents to the IoM bbox (scripts/lib/geo-clip.mjs). CC-BY 4.0 attribution is per-product: each feature carries the originating survey in sourceDataset, to be credited alongside EMODnet. The WFS is reachable (probed 2026-10-14); earlier OGC probes failed on a stale host.",
+  },
   awsTerrain: {
     id: "awsTerrain",
     name: "AWS Open Data — Terrain Tiles (Mapzen/Joerd)",

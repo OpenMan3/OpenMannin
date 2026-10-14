@@ -24,7 +24,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | No published licence | no | yes | No terms of use, robots.txt or licence found. Absence of a licence is not a grant. Do not republish without written permission. |
 | Licence not established | no | yes | Verify before use. |
 
-## Source register (22)
+## Source register (23)
 
 | Source | Publisher | Licence | Last checked |
 | --- | --- | --- | --- |
@@ -46,6 +46,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | [Spaceman teleport / aql Space Services](https://spaceman.im/) | aql (formerly BlueWave Communications) | PUBLIC-DOMAIN | 2026-10-04 |
 | [OpenFreeMap basemap (Liberty style)](https://openfreemap.org/) | OpenFreeMap | ODbL | 2026-10-13 |
 | [EMODnet Bathymetry](https://emodnet.ec.europa.eu/en/bathymetry) | EMODnet / European Commission | CC-BY-4.0 | 2026-10-04 |
+| [EMODnet Seabed Habitats — biogenic substrate](https://emodnet.ec.europa.eu/en/seabed-habitats) | EMODnet / European Commission | CC-BY-4.0 | 2026-10-14 |
 | [AWS Open Data — Terrain Tiles (Mapzen/Joerd)](https://registry.opendata.aws/terrain-tiles/) | Mapzen (Linux Foundation) / AWS Open Data | COPERNICUS | 2026-10-11 |
 | [OpenMannin compilation](https://github.com/) | OpenMannin | OGL-IoM | 2026-10-04 |
 | [Overture Maps — Places](https://docs.overturemaps.org/) | Overture Maps Foundation / release contributors | CDLA-PERMISSIVE-2.0 | 2026-10-14 |
@@ -132,6 +133,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | --- | --- | --- | --- | --- |
 | Protected areas (`protected`) | osmIOM | ODbL | C | 13 |
 | Rivers & streams (`hydro`) | osmIOM | ODbL | C | 1422 |
+| Marine habitats (biogenic substrate) (`marine-habitats`) | emodnetHabitats | CC-BY-4.0 | C | 8 |
 
 ### aviation
 
@@ -178,6 +180,6 @@ Coverage that could not be sourced under a usable licence. Rendered in the app a
 | Bus route alignments (`bus-route-alignments`) | medium | The previous bus-routes layer was a 2015 government network and is removed. OSM bus route relations exist but only a fraction of stops are members, and the alignments were not extracted into a comparable layer. |
 | TT and Billown course infrastructure (`tt-course`) | low | The previous layer was a government 'MotorCourse' service and is removed. No open, licensed alignment is published; the widely quoted 37.73 mile length is Wikipedia-only with no official linear referencing. |
 | Coastal access points (`coastal-access`) | low | This was a government map layer (40 points) and is removed because it is not openly licensed. No official open equivalent exists, but a community substitute is now built: the 'Coastal & outdoor' layer carries OpenStreetMap slipways, viewpoints, picnic sites and car parks, and slipways are the practical access points. It is community-mapped and does not reproduce the government's 40 points. |
-| Marine habitats and fishery closures (`marine-habitats`) | medium | This was a government map layer (434 features) and is removed because it is not openly licensed. Layers of this type do exist in EMODnet (CC-BY 4.0) but no ingest has been built: the documented OGC feature types were probed on 2026-10-13 and were not reachable, so we ship no Marine Habitats layer rather than one sourced from an unverified or guessed endpoint. Any future ingest must preserve per-product attribution under CC-BY-4.0. |
+| Fishery closure areas (`fishery-closures`) | medium | Marine habitats are now shipped from EMODnet (see the Marine habitats layer), but this was originally a government map layer (434 features) that bundled habitats with fishery closures and was removed because it is not openly licensed. The closure component has no open replacement: DEFA's fisheries closures are published as notices and PDFs rather than a machine-readable, licensed geometry, and the Marine Management Organisation's equivalent does not extend to Isle of Man waters. |
 | Live AIS vessel tracking (`ais-live`) | medium | There is NO free, no-key programmatic AIS source. AISStream is free but requires an API key, caps 3 connections per account AND per originating IP, prohibits direct browser connections in its own docs, and publishes no terms document — an undocumented-licence gap we will not silently build on. MarineTraffic is sales-gated and paid; Global Fishing Watch is CC BY-NC (blocks ad-supported deployment). A browser-side WebSocket client was built and evaluated on 2026-10-07, then removed, because a client shipped without a deployer-provided key would be dead code and would still lean on an undocumented licence. |
 | Overture Maps places: non-CDL-A contributors (`overture-non-cdla`) | low | Overture Places is mixed-licence by contributor. Foursquare records carry Apache-2.0 and AllThePlaces records carry CC0-1.0, so both were excluded rather than being relabelled as CDLA-Permissive-2.0 and shipped in overture-places.geojson. |

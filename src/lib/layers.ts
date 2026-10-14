@@ -780,6 +780,31 @@ export const LAYERS: LayerDef[] = [
     sourceId: "osmIOM",
     featureCount: 1422,
   },
+  {
+    id: "marine-habitats",
+    label: "Marine habitats (biogenic substrate)",
+    group: "environment",
+    category: "foundational",
+    subcategory: "environmental-baseline",
+    kind: "geojson",
+    file: "marine-habitats.geojson",
+    pmtiles: "tiles/marine-habitats.pmtiles",
+    color: "#22d3ee",
+    defaultOn: false,
+    minZoom: 8,
+    description:
+      "Mapped biogenic-substrate records around the Isle of Man from EMODnet Seabed Habitats 2025: point observations and bed extents for Modiolus modiolus (horse mussel) beds and related biogenic habitats, clipped to the island bounding box.",
+    caveats: [
+      "PRESENCE-ONLY. A record means a survey mapped that habitat; an empty area means no survey reached it, NOT that the habitat is absent.",
+      "CC-BY 4.0. Attribution is per-product: credit EMODnet Seabed Habitats and the originating survey named in each feature's sourceDataset.",
+      "Bed extents are clipped to the island bounding box (west 4.9 W to 4.2 W, south 54.0 N to 54.45 N) and visually stop at that edge even where the seabed feature continues beyond it.",
+      "Compiled from multiple surveys of differing date and method; extents and positions are indicative and uneven in coverage.",
+      "Not for navigation, fisheries management, seabed tenure or marine licensing.",
+    ],
+    confidence: "C",
+    sourceId: "emodnetHabitats",
+    featureCount: 8,
+  },
 
   // ==========================================================================
   // AVIATION
@@ -1304,13 +1329,14 @@ export const GAPS: Gap[] = [
     severity: "low",
   },
   {
-    id: "marine-habitats",
-    title: "Marine habitats and fishery closures",
-    wanted: "Eelgrass, kelp, maerl and Modiolus bed extents, saltmarsh and fishery closure areas.",
+    id: "fishery-closures",
+    title: "Fishery closure areas",
+    wanted:
+      "Legally closed fishing areas and seasonal gear restrictions in Manx waters (the 3-mile and 12-mile limits, scallop and queenie closures, and the protected areas that carry fishing restrictions).",
     whyUnavailable:
-      "This was a government map layer (434 features) and is removed because it is not openly licensed. Layers of this type do exist in EMODnet (CC-BY 4.0) but no ingest has been built: the documented OGC feature types were probed on 2026-10-13 and were not reachable, so we ship no Marine Habitats layer rather than one sourced from an unverified or guessed endpoint. Any future ingest must preserve per-product attribution under CC-BY-4.0.",
+      "Marine habitats are now shipped from EMODnet (see the Marine habitats layer), but this was originally a government map layer (434 features) that bundled habitats with fishery closures and was removed because it is not openly licensed. The closure component has no open replacement: DEFA's fisheries closures are published as notices and PDFs rather than a machine-readable, licensed geometry, and the Marine Management Organisation's equivalent does not extend to Isle of Man waters.",
     whatWeWouldNeed:
-      "DEFA marine habitat layers under the OGL, or an EMODnet seabed-habitat ingest with per-product attribution.",
+      "DEFA Fisheries to publish closure areas and seasonal restrictions under the OGL as a point or polygon service, or a documented open dataset of Manx fishery closures with a licence that permits reuse.",
     contact: "EnvironmentalProtection@gov.im",
     severity: "medium",
   },

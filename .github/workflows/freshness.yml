@@ -1,0 +1,25 @@
+name: freshness
+
+on:
+  schedule:
+    # Every Monday 06:00 UTC — surfaces stale sources/data even without a push.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Freshness report
+        run: npm run check:freshness

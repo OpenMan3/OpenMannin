@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.3.6] - 2026-10-14
+### Added
+- Drawer focus trap and aria-live improvements for offline status and download progress.
+- Added `check:freshness` npm script (alias of `verify:freshness`).
+
+### Changed
+- CI now runs `verify-offline.mjs` as part of the headless verification chain.
+- Added a weekly scheduled `freshness` workflow that runs the freshness report.
+
 ## [0.3.5] - 2026-10-14
 ### Changed
 - Wikidata heritage records are now enriched where Wikidata holds the data: inception year, Wikimedia Commons image, official website and administrative parish or town, alongside the designation(s). Item count is unchanged (319).

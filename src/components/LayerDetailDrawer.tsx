@@ -14,7 +14,7 @@
  * owns the map handle and the enabled set.
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { LayerDef } from "@/lib/types";
 import { SOURCES } from "@/lib/sources";
 import { LICENCES } from "@/lib/licences";
@@ -48,10 +48,21 @@ export function LayerDetailDrawer({
   onToggle?: (id: string) => void;
   onZoomToLayer?: (layer: LayerDef) => void;
 }) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     if (!layer) return;
+    closeBtnRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") { e.stopPropagation(); onClose(); return; }
+      if (e.key === "Tab" && rootRef.current) {
+        const focusables = rootRef.current.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (document.activeElement === last && !e.shiftKey) { first.focus(); e.preventDefault(); }
+        else if (document.activeElement === first && e.shiftKey) { last.focus(); e.preventDefault(); }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -71,8 +82,11 @@ export function LayerDetailDrawer({
         className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
       />
       <div
+        ref={rootRef}
         role="dialog"
+        aria-modal="true"
         aria-label={`About ${layer.label}`}
+        tabIndex={-1}
         className="om-sheet-in fixed inset-x-4 bottom-4 z-50 flex max-h-[82vh] flex-col rounded-3xl bg-panel shadow-[0_8px_32px_rgba(0,0,0,0.18)] sm:inset-y-4 sm:left-auto sm:right-4 sm:max-h-none sm:w-[min(28rem,calc(100vw-2rem))] sm:rounded-3xl"
       >
         {/* Header */}
@@ -84,7 +98,7 @@ export function LayerDetailDrawer({
             </div>
             <p className="mt-0.5 truncate text-[11px] text-ink-3">{src?.name ?? layer.sourceId}</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="btn-icon !h-8 !w-8">
+          <button type="button" onClick={onClose} aria-label="Close" className="btn-icon !h-8 !w-8" ref={closeBtnRef}>
             <CloseIcon className="h-4 w-4" />
           </button>
         </div>

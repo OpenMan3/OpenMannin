@@ -207,7 +207,7 @@ export function TransparencyPanel() {
       <section className="border-b border-line-soft px-3 py-2.5">
         <h3 className="label mb-2">Offline data</h3>
         <div className="mb-2 flex items-center justify-between text-[11px] text-ink-3">
-          <span>{isOnline ? "Online" : "Offline"}</span>
+          <span aria-live="polite" aria-label="Network status">{isOnline ? "Online" : "Offline"}</span>
           {storageUsage !== null && storageQuota !== null && (
             <span>
               {(storageUsage / (1024 * 1024)).toFixed(1)} / {(storageQuota / (1024 * 1024)).toFixed(0)} MB cached
@@ -218,9 +218,15 @@ export function TransparencyPanel() {
           Cache all map data bundles locally for offline use.
         </p>
         {offlineState === "downloading" && (
-          <div className="mb-2 h-1.5 w-full overflow-hidden rounded bg-soft">
+          <div className="mb-2 h-1.5 w-full overflow-hidden rounded bg-soft" aria-live="polite" aria-label="Offline download progress">
             <div className="h-full bg-accent transition-all" style={{ width: `${offlineProgress}%` }} />
           </div>
+        )}
+        {offlineState === "done" && (
+          <p className="mb-2 text-[11px] text-ink-3" aria-live="polite">All offline data is cached</p>
+        )}
+        {offlineState === "error" && (
+          <p className="mb-2 text-[11px] text-ink-3" aria-live="polite">Download failed</p>
         )}
         <div className="flex gap-2">
           <button
@@ -371,7 +377,7 @@ export function TransparencyPanel() {
       {/* ---- recent OSM activity ---- */}
       <CommunityFeed embedded />
       <p className="border-t border-line px-3 py-2 text-[10px] text-ink-3">
-        OpenMannin 0.3.5
+        OpenMannin 0.3.6
       </p>
     </div>
   );

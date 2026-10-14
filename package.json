@@ -1,6 +1,6 @@
 {
   "name": "openmannin",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "private": true,
   "description": "OpenMannin \u2014 Open Source Intelligence Reconnaissance & Infrastructure System for the Isle of Man",
   "type": "module",

@@ -52,10 +52,11 @@ export const LAYERS: LayerDef[] = [
     defaultOn: false,
     minZoom: 14,
     description:
-      "Places on the Isle of Man that carry a heritage designation in Wikidata (heritage designation P1435, country P17 = Isle of Man Q9676) and a published coordinate. Predominantly 'registered building' entries, plus scheduled monuments and Manx National Heritage records.",
+      "Places on the Isle of Man that carry a heritage designation in Wikidata (heritage designation P1435, country P17 = Isle of Man Q9676) and a published coordinate. Predominantly 'registered building' entries, plus scheduled monuments and Manx National Heritage records. Records are enriched where Wikidata holds it, with an inception year, a Wikimedia Commons image, an official website and the administrative parish or town.",
     caveats: [
       "WIKIDATA, NOT THE OFFICIAL REGISTER. This is a community-maintained, georeferenced subset. The authoritative statutory register of registered buildings is held by the Department of Infrastructure/DEFA and is not published as open data. Wikidata lags and is incomplete.",
       "A heritage listing is a legal status, not a statement of structural condition.",
+      "Enrichment fields (inception, image, website) are present only on a minority of records and are as reliable as the underlying Wikidata statement.",
       "Wikidata structured data is CC0 — no attribution or share-alike obligation.",
     ],
     confidence: "C",

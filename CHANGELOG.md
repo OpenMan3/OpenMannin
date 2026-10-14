@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.5] - 2026-10-14
+### Changed
+- Wikidata heritage records are now enriched where Wikidata holds the data: inception year, Wikimedia Commons image, official website and administrative parish or town, alongside the designation(s). Item count is unchanged (319).
+- The heritage layer's descriptions and caveats note the enrichment.
+
 ## [0.3.4] - 2026-10-14
 ### Added
 - Marine habitats layer: EMODnet Seabed Habitats biogenic-substrate records (Modiolus modiolus beds and related) around the Isle of Man, as points and clipped bed extents, streamed as PMTiles with a GeoJSON fallback. CC-BY 4.0 with per-survey attribution.

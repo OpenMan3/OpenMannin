@@ -35,6 +35,7 @@
     "ingest:osm": "node scripts/ingest-osm.mjs",
     "verify:registry": "node --experimental-strip-types --no-warnings scripts/verify-registry.mjs",
     "verify:data-quality": "node --experimental-strip-types --no-warnings scripts/verify-data-quality.mjs",
+    "verify:freshness": "node --experimental-strip-types --no-warnings scripts/verify-freshness.mjs",
     "verify:render": "node scripts/verify-render.mjs",
     "verify:basemap": "node scripts/verify-basemap.mjs",
     "build:manifest": "node --experimental-strip-types --no-warnings scripts/build-manifest.mjs",

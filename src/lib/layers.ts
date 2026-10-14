@@ -1004,6 +1004,29 @@ export const LAYERS: LayerDef[] = [
     confidence: "C",
     sourceId: "celestrak",
   },
+  {
+    id: "wikidata-memorials",
+    label: "Wikidata memorials & monuments",
+    group: "poi",
+    category: "heritage",
+    subcategory: "designated",
+    kind: "geojson",
+    file: "wikidata-memorials.geojson",
+    color: "#8b5cf6",
+    defaultOn: false,
+    minZoom: 13,
+    description:
+      "Memorials, monuments, statues and war memorials recorded in Wikidata for the Isle of Man (Q9676) with an instance of monument, memorial, war memorial or statue and a coordinate. Complements the heritage layer, which is limited to items carrying a formal heritage designation, and records sites that are commemorative rather than designated buildings.",
+    caveats: [
+      "WIKIDATA COMMUNITY DATA, NOT AN OFFICIAL REGISTER. Coordinates are as supplied by Wikidata contributors and may be approximate; verification against an Ordnance Survey or monument survey is recommended before any visit.",
+      "This layer is about memory, not current permissions. A war memorial in a road junction may be in a public highway and off-limits to vehicles but visible; a statue may be on private land. Do not trespass to inspect any memorial and verify local rules before photographing or placing material.",
+      "Wikidata is searchable and incomplete. Absence here is not evidence that a memorial does not exist; some may be unlisted, mis-geolocated or unmappably small.",
+      "Wikidata structured data is CC0 — no attribution or share-alike obligation.",
+    ],
+    confidence: "C",
+    sourceId: "wikidata",
+    featureCount: 12,
+  },
 ];
 
 /**

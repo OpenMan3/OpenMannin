@@ -3,14 +3,14 @@
   "layers": [
     {
       "id": "roads",
-      "tiles": 470,
-      "bytes": 2641137,
+      "tiles": 4938,
+      "bytes": 4728805,
       "sourceBytes": 3923681
     },
     {
       "id": "footpaths",
-      "tiles": 453,
-      "bytes": 1997694,
+      "tiles": 3439,
+      "bytes": 3450157,
       "sourceBytes": 3224770
     },
     {

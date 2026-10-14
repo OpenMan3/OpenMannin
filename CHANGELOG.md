@@ -1,3 +1,7 @@
+## [0.3.2] - 2026-10-14
+### Changed
+- Higher detail PMTiles for roads and footpaths (zoom raised to 16).
+
 # Changelog
 
 ## [0.3.1] - 2026-10-14

@@ -29,6 +29,10 @@ const layersArg = process.env.TILE_LAYERS;
 const LAYERS_TO_TILE = layersArg ? layersArg.split(",").map((s) => s.trim()).filter(Boolean) : DEFAULT_LAYERS;
 
 const MAX_ZOOM = Number(process.env.TILE_MAX_ZOOM ?? 14);
+const ZOOM_OVERRIDES = {
+  roads: 16,
+  footpaths: 16,
+};
 const MIN_ZOOM_OVERRIDE = process.env.TILE_MIN_ZOOM ? Number(process.env.TILE_MIN_ZOOM) : null;
 
 const manifest = JSON.parse(fs.readFileSync(path.join(DATA, "manifest.json"), "utf8"));
@@ -60,16 +64,17 @@ for (const id of LAYERS_TO_TILE) {
   const [minLon, minLat, maxLon, maxLat] = info.bbox ?? [-4.9, 54.0, -4.2, 54.45];
   const minZoom = MIN_ZOOM_OVERRIDE ?? Math.max(0, Math.min(12, info.minzoom ?? 8));
 
+  const layerMaxZoom = ZOOM_OVERRIDES[id] ?? MAX_ZOOM;
   const index = new geojsonvt(geojson, {
-    maxZoom: MAX_ZOOM,
-    indexMaxZoom: MAX_ZOOM,
+    maxZoom: layerMaxZoom,
+    indexMaxZoom: layerMaxZoom,
     tolerance: 0.375,
     extent: 4096,
     buffer: 64,
   });
 
   const tiles = [];
-  for (let z = minZoom; z <= MAX_ZOOM; z++) {
+  for (let z = minZoom; z <= layerMaxZoom; z++) {
     const x0 = lon2x(minLon, z);
     const x1 = lon2x(maxLon, z);
     const y0 = lat2y(maxLat, z);
@@ -100,9 +105,9 @@ for (const id of LAYERS_TO_TILE) {
     tiles,
     metadata,
     minZoom,
-    maxZoom: MAX_ZOOM,
+    maxZoom: layerMaxZoom,
     bounds: [minLon, minLat, maxLon, maxLat],
-    center: [centerLon, centerLat, Math.min(MAX_ZOOM, Math.round((minZoom + MAX_ZOOM) / 2))],
+    center: [centerLon, centerLat, Math.min(layerMaxZoom, Math.round((minZoom + layerMaxZoom) / 2))],
   });
 
   const outFile = path.join(OUT, `${id}.pmtiles`);

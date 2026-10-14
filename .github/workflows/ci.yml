@@ -36,7 +36,7 @@ jobs:
         run: npm run lint
 
       - name: Registry and data integrity
-        run: npm run verify:registry
+        run: npm run verify:registry && npm run verify:data-quality
 
       - name: Full static build (worker, headers, health, next export)
         run: npm run build

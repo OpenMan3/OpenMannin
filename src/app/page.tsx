@@ -376,6 +376,19 @@ function PageContent() {
 
               <div className="min-h-0 flex-1 relative">
                 {tab === "layers" && (
+                  <div className="flex gap-2 border-b border-line px-3 py-2" role="group" aria-label="Layer display presets">
+                    <button type="button" className="btn flex-1 text-xs" onClick={() => setEnabled(new Set(LAYERS.filter((l) => l.defaultOn).map((l) => l.id)))} aria-label="Show context layers">
+                      Context
+                    </button>
+                    <button type="button" className="btn flex-1 text-xs" onClick={() => setAll(true)} aria-label="Show all layers">
+                      All
+                    </button>
+                    <button type="button" className="btn flex-1 text-xs" onClick={() => setAll(false)} aria-label="Hide all layers">
+                      None
+                    </button>
+                  </div>
+                )}
+                {tab === "layers" && (
                   <LayerPanel
                     layers={LAYERS}
                     enabled={enabled}

@@ -123,6 +123,12 @@ export function LayerDetailDrawer({
                 <dd className="font-mono text-ink">{generated.toISOString().slice(0, 10)}</dd>
               </div>
             )}
+            {src?.lastChecked && (
+              <div>
+                <dt className="label">Source checked</dt>
+                <dd className="font-mono text-ink">{src.lastChecked}</dd>
+              </div>
+            )}
           </dl>
 
           {lic && (

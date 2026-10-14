@@ -51,7 +51,8 @@
     "build:routing-worker": "node scripts/build-routing-worker.mjs",
     "ingest:overture": "node --experimental-strip-types --no-warnings scripts/ingest-overture-places.mjs",
     "smoke:navigation": "node --experimental-strip-types --no-warnings scripts/smoke-navigation.mjs",
-    "verify:sidebar": "node scripts/verify-sidebar.mjs"
+    "verify:sidebar": "node scripts/verify-sidebar.mjs",
+    "verify:offline": "node scripts/verify-offline.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^6.14.0",

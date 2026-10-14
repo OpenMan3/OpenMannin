@@ -1,10 +1,13 @@
 /**
  * Overture Maps places within the Isle of Man bbox.
  *
+ * The release is pinned in scripts/lib/overture-release.mjs; see scripts/lib/overture-release.test.mjs.
+ *
  *   npm run ingest:overture
  */
 
 import { classifyOvertureRecord, summariseOvertureRecords } from "./lib/overture-licence.mjs";
+import { OVERTURE_RELEASE } from "./lib/overture-release.mjs";
 import { writeJSON, roundCoords } from "./lib/fetch.mjs";
 import { SOURCES } from "../src/lib/sources.ts";
 
@@ -20,10 +23,8 @@ async function main() {
   await conn.run("INSTALL spatial; LOAD spatial;");
   await conn.run("SET s3_region='us-west-2';");
 
-  const stac = await conn.runAndReadAll("SELECT latest FROM 'https://stac.overturemaps.org/catalog.json'");
-  const release = stac.getRowObjects()[0]?.latest;
-  if (!release) throw new Error("STAC catalog did not report a latest release");
-  console.log(`Overture ingest (release ${release})`);
+  const release = OVERTURE_RELEASE;
+  console.log(`Overture ingest (pinned release ${release})`);
 
   const query = `
     SELECT

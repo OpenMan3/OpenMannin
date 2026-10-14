@@ -44,6 +44,28 @@ host, send those headers there too, or you lose the CSP silently.**
 - Network access **at build time only**, for the ingest step
 - No runtime requirements beyond serving files: no database, no process state
 
+## Refreshing Overture Maps data safely
+
+Overture is ingested from a pinned release by `scripts/lib/overture-release.mjs`.
+
+To accept a new upstream release, update that constant explicitly and treat all
+downstream artifacts as part of the same change:
+
+1. Inspect the release identifier (currently expected as `YYYY-MM.D`):
+   `node -e "fetch('https://stac.overturemaps.org/catalog.json').then(r=>r.json()).then(c=>console.log(c.latest))"`
+2. Update `OVERTURE_RELEASE` in `scripts/lib/overture-release.mjs`.
+3. Run `npm run ingest:overture`.
+4. Refresh derived artifacts:
+   `npm run build:manifest`
+   `npm run build:search`
+   `npm run build:sources`
+5. Re-run `npm run verify:registry`.
+   If the feature count changed, update `featureCount` in `src/lib/layers.ts`.
+6. Run `npm test`, `npm run typecheck`, and `npm run lint`.
+
+The ingest deliberately does not follow STAC `latest` silently, so a routine
+`npm run ingest:all` cannot move Overture between releases.
+
 ## Build
 
 ```bash

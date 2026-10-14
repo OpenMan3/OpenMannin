@@ -221,6 +221,6 @@ export const SOURCES: Record<string, Source> = {
     licence: "CDLA-PERMISSIVE-2.0",
     lastChecked: "2026-10-14",
     notes:
-      "Global places release; the OpenMannin ingest reads only records whose contributor is mapped to an unambiguously open licence. Initial layer is CDLA-Permissive-2.0 contributors only. Apache 2.0 (Foursquare) and CC0 (AllThePlaces) records are excluded until separate licence-clean layers exist.",
+      "Global places release; the OpenMannin ingest reads only records whose contributor is mapped to an unambiguously open licence. Initial layer is CDLA-Permissive-2.0 contributors only. Apache 2.0 (Foursquare) and CC0 (AllThePlaces) records are excluded until separate licence-clean layers exist. Overture is ingested from the pinned release in scripts/lib/overture-release.mjs; its .geojson release property is the source of truth.",
   },
 };

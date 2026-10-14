@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Data sources & transparency.
@@ -70,6 +70,78 @@ export function TransparencyPanel() {
   const liveLayers = LAYERS.filter((l) => l.kind === "live");
   const [offlineState, setOfflineState] = useState<"idle" | "downloading" | "done" | "error">("idle");
   const [offlineProgress, setOfflineProgress] = useState(0);
+  const [isOnline, setIsOnline] = useState<boolean>(typeof navigator === "undefined" ? true : navigator.onLine);
+  const [storageUsage, setStorageUsage] = useState<number | null>(null);
+  const [storageQuota, setStorageQuota] = useState<number | null>(null);
+
+  useEffect(() => {
+    const onOnline = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, []);
+
+  const refreshStorage = async () => {
+    try {
+      if (navigator.storage?.estimate) {
+        const est = await navigator.storage.estimate();
+        setStorageUsage(typeof est.usage === "number" ? est.usage : null);
+        setStorageQuota(typeof est.quota === "number" ? est.quota : null);
+      }
+    } catch {
+      /* storage estimate is optional */
+    }
+  };
+
+  const checkOfflineReady = async () => {
+    try {
+      if (!("caches" in window)) return;
+      const manifest = await (await fetch("/data/manifest.json")).json();
+      const files = new Set<string>();
+      for (const def of Object.values(manifest?.layers ?? {})) {
+        if (def && typeof def === "object" && "file" in def && typeof (def as { file?: unknown }).file === "string") {
+          files.add((def as { file: string }).file);
+        }
+      }
+      const keys = await caches.keys();
+      const dataCacheKey = keys.find((k) => k.includes("-data"));
+      if (!dataCacheKey) return;
+      const cache = await caches.open(dataCacheKey);
+      let ready = true;
+      for (const file of files) {
+        if (!(await cache.match(`/data/${file}`))) {
+          ready = false;
+          break;
+        }
+      }
+      setOfflineState(ready ? "done" : "idle");
+    } catch {
+      /* readiness probe is best-effort */
+    }
+  };
+
+  useEffect(() => {
+    void refreshStorage();
+    void checkOfflineReady();
+  }, []);
+
+  const clearOfflineData = async () => {
+    try {
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((k) => k.includes("-data")).map((k) => caches.delete(k)));
+      }
+      setOfflineState("idle");
+      setOfflineProgress(0);
+      await refreshStorage();
+    } catch {
+      setOfflineState("error");
+    }
+  };
 
   const downloadOfflineData = async () => {
     setOfflineState("downloading");
@@ -92,6 +164,7 @@ export function TransparencyPanel() {
         }),
       );
       setOfflineState("done");
+      await refreshStorage();
     } catch {
       setOfflineState("error");
     }
@@ -109,21 +182,45 @@ export function TransparencyPanel() {
 
       <section className="border-b border-line-soft px-3 py-2.5">
         <h3 className="label mb-2">Offline data</h3>
+        <div className="mb-2 flex items-center justify-between text-[11px] text-ink-3">
+          <span>{isOnline ? "Online" : "Offline"}</span>
+          {storageUsage !== null && storageQuota !== null && (
+            <span>
+              {(storageUsage / (1024 * 1024)).toFixed(1)} / {(storageQuota / (1024 * 1024)).toFixed(0)} MB cached
+            </span>
+          )}
+        </div>
         <p className="mb-2 text-[12px] leading-snug text-ink-3">
           Cache all map data bundles locally for offline use.
         </p>
-        <button
-          type="button"
-          onClick={() => void downloadOfflineData()}
-          disabled={offlineState === "downloading"}
-          className="btn w-full text-xs"
-        >
-          {offlineState === "downloading"
-            ? `Downloading… ${offlineProgress}%`
-            : offlineState === "done"
-              ? "Offline data ready"
-              : "Download offline data"}
-        </button>
+        {offlineState === "downloading" && (
+          <div className="mb-2 h-1.5 w-full overflow-hidden rounded bg-soft">
+            <div className="h-full bg-accent transition-all" style={{ width: `${offlineProgress}%` }} />
+          </div>
+        )}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => void downloadOfflineData()}
+            disabled={offlineState === "downloading"}
+            className="btn flex-1 text-xs"
+          >
+            {offlineState === "downloading"
+              ? `Downloading… ${offlineProgress}%`
+              : offlineState === "done"
+                ? "Offline data ready"
+                : "Download offline data"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void clearOfflineData()}
+            disabled={offlineState === "downloading"}
+            className="btn text-xs"
+            title="Clear cached offline data"
+          >
+            Clear
+          </button>
+        </div>
         {offlineState === "error" && (
           <p className="mt-2 text-[11px] text-danger">Download failed. Try again.</p>
         )}
@@ -250,7 +347,7 @@ export function TransparencyPanel() {
       {/* ---- recent OSM activity ---- */}
       <CommunityFeed embedded />
       <p className="border-t border-line px-3 py-2 text-[10px] text-ink-3">
-        OpenMannin 0.2.2
+        OpenMannin 0.2.3
       </p>
     </div>
   );

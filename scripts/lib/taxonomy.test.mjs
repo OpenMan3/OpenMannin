@@ -17,7 +17,7 @@ import {
   orderSubcategories,
 } from "../../src/lib/taxonomy.ts";
 
-test("all five categories have labels and blurbs", () => {
+test("all six categories have labels and blurbs", () => {
   for (const c of CATEGORY_ORDER) {
     assert.ok(CATEGORY_LABELS[c], `missing label for ${c}`);
     assert.ok(CATEGORY_BLURBS[c], `missing blurb for ${c}`);
@@ -56,8 +56,9 @@ test("orderSubcategories handles empty input", () => {
   assert.deepEqual(orderSubcategories("heritage", []), []);
 });
 
-test("CATEGORY_ORDER covers exactly the five reader-facing themes", () => {
+test("CATEGORY_ORDER covers all reader-facing themes", () => {
   assert.deepEqual(CATEGORY_ORDER, [
+    "foundational",
     "heritage",
     "prow",
     "infrastructure",
@@ -66,9 +67,10 @@ test("CATEGORY_ORDER covers exactly the five reader-facing themes", () => {
   ]);
 });
 
-test("SUBCATEGORY_ORDER has entries for all five categories", () => {
+test("SUBCATEGORY_ORDER has entries for all six categories", () => {
   assert.deepEqual(Object.keys(SUBCATEGORY_ORDER).sort(), [
     "civic",
+    "foundational",
     "heritage",
     "infrastructure",
     "poi",

@@ -82,6 +82,7 @@ export type LayerGroup =
  * section, so the taxonomy never has to invent a home for them.
  */
 export type LayerCategory =
+  | "foundational"
   | "heritage"
   | "prow"
   | "infrastructure"
@@ -93,6 +94,11 @@ export type LayerCategory =
  * is set; the panel renders it as the second level of the tree.
  */
 export type LayerSubcategory =
+  | "place-names"
+  | "transport-network"
+  | "environmental-baseline"
+  | "aviation-monitoring"
+  | "watch-features"
   | "designated"
   | "tholtans-ruins"
   | "mine-infrastructure"

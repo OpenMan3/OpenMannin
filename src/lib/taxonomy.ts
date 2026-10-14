@@ -13,6 +13,7 @@
 import type { LayerCategory, LayerSubcategory } from "./types";
 
 export const CATEGORY_ORDER: LayerCategory[] = [
+  "foundational",
   "heritage",
   "prow",
   "infrastructure",
@@ -21,6 +22,7 @@ export const CATEGORY_ORDER: LayerCategory[] = [
 ];
 
 export const CATEGORY_LABELS: Record<LayerCategory, string> = {
+  foundational: "Foundational context",
   heritage: "Heritage",
   prow: "Rights of way & trails",
   infrastructure: "Infrastructure",
@@ -29,6 +31,7 @@ export const CATEGORY_LABELS: Record<LayerCategory, string> = {
 };
 
 export const CATEGORY_BLURBS: Record<LayerCategory, string> = {
+  foundational: "Base geography, transport status, monitoring and major hazard context.",
   heritage: "Designated places, tholtans, mines and archaeology.",
   prow: "Footpaths, bridleways, green lanes, trails and heritage rail.",
   infrastructure: "Grid, telecoms, EV, water, ports and subsea infrastructure.",
@@ -38,6 +41,13 @@ export const CATEGORY_BLURBS: Record<LayerCategory, string> = {
 
 /** The drawers inside each theme, in the order they should be met. */
 export const SUBCATEGORY_ORDER: Record<LayerCategory, LayerSubcategory[]> = {
+  foundational: [
+    "place-names",
+    "transport-network",
+    "environmental-baseline",
+    "aviation-monitoring",
+    "watch-features",
+  ],
   heritage: ["designated", "mine-infrastructure", "tholtans-ruins", "archaeology"],
   prow: ["rights-of-way", "trails", "heritage-railways"],
   infrastructure: [
@@ -64,6 +74,11 @@ export const SUBCATEGORY_ORDER: Record<LayerCategory, LayerSubcategory[]> = {
 };
 
 export const SUBCATEGORY_LABELS: Record<LayerSubcategory, string> = {
+  "place-names": "Place names",
+  "transport-network": "Transport network",
+  "environmental-baseline": "Environmental baseline",
+  "aviation-monitoring": "Aviation & monitoring",
+  "watch-features": "Hazard and feasibility context",
   designated: "Designated places",
   "mine-infrastructure": "Mine infrastructure",
   "tholtans-ruins": "Tholtans & ruined buildings",

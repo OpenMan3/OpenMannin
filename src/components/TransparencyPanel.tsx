@@ -68,7 +68,7 @@ export function TransparencyPanel() {
   const liveLayers = LAYERS.filter((l) => l.kind === "live");
 
   return (
-    <div className="scroll-thin h-full overflow-y-auto">
+    <div className="scroll-thin h-full overflow-y-auto md:pb-16">
       <div className="border-b border-line px-3 py-2.5">
         <h2 className="text-sm font-semibold text-ink">Data sources &amp; transparency</h2>
         <p className="mt-1 text-[12px] leading-snug text-ink-3">
@@ -197,6 +197,9 @@ export function TransparencyPanel() {
 
       {/* ---- recent OSM activity ---- */}
       <CommunityFeed embedded />
+      <p className="border-t border-line px-3 py-2 text-[10px] text-ink-3">
+        OpenMannin 0.2.0
+      </p>
     </div>
   );
 }

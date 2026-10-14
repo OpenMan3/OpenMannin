@@ -233,7 +233,7 @@ export function FeatureBrowser({
 
           <ul
             ref={listRef}
-            className="scroll-thin mt-2 min-h-0 flex-1 overflow-y-auto rounded-md border border-line"
+            className="scroll-thin mt-2 min-h-0 flex-1 overflow-y-auto rounded-md border border-line md:pb-16"
           >
             {loading && <li className="p-2.5 text-[12px] text-ink-3">Loading…</li>}
             {!loading && list.length === 0 && (

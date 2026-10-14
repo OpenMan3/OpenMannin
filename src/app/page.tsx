@@ -337,8 +337,10 @@ function PageContent() {
 
       {/* ---- sidebar / drawer ---- */}
         <aside
-        className={`fixed top-4 left-4 right-4 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col rounded-3xl border border-line bg-page shadow-[0_8px_32px_rgba(0,0,0,0.18)] transition-all duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] md:rounded-none md:border-r md:border-line md:bg-page md:bottom-auto overflow-hidden ${
-          panelOpen ? "md:w-[var(--aside-w)]" : "md:w-12"
+        className={`fixed top-4 left-4 right-4 z-40 flex w-[min(21rem,88vw)] shrink-0 flex-col rounded-3xl border border-line bg-page shadow-[0_8px_32px_rgba(0,0,0,0.18)] transition-all duration-200 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none md:transition-[width] md:rounded-none md:bg-page md:bottom-auto overflow-hidden ${
+          panelOpen
+            ? "md:w-[var(--aside-w)] md:border-r md:border-line"
+            : "md:w-0 md:min-w-0 md:border-0"
         } ${mobileOpen
           ? "bottom-0 translate-x-0 pb-[calc(64px+env(safe-area-inset-bottom))]"
           : "bottom-16 -translate-x-[calc(100%+1rem)]"
@@ -370,11 +372,11 @@ function PageContent() {
           </button>
         </div>
 
-<div className="shrink-0 border-b border-line px-3 py-2">
+<div className="shrink-0 border-b border-line px-3 py-2" inert={!(panelOpen || mobileOpen)}>
                 <GlobalSearch onSelect={searchSelect} />
               </div>
 
-              <div className="min-h-0 flex-1 relative">
+              <div className="min-h-0 flex-1 relative" inert={!(panelOpen || mobileOpen)}>
                 {tab === "layers" && (
                   <div className="flex gap-2 border-b border-line px-3 py-2" role="group" aria-label="Layer display presets">
                     <button type="button" className="btn flex-1 text-xs" onClick={() => setEnabled(new Set(LAYERS.filter((l) => l.defaultOn).map((l) => l.id)))} aria-label="Show context layers">

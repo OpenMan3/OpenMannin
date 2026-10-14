@@ -196,6 +196,8 @@ body {
 .scroll-thin {
   scrollbar-width: thin;
   scrollbar-color: #c8d0d8 transparent;
+  /* Keep the last row clear of floating overlays such as the bottom tab bar. */
+  scroll-padding-bottom: 5rem;
 }
 .scroll-thin::-webkit-scrollbar {
   width: 8px;

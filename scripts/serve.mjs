@@ -11,9 +11,9 @@
  * CSP just because it moved hosts.
  *
  * WHAT IT IS NOT. No directory listing, no compression negotiation beyond
- * gzip, no range requests, no rewrites. One page, some GeoJSON and a worker
- * bundle do not need them, and every one of those features is a way to serve
- * the wrong bytes.
+ * gzip, no rewrites. HTTP byte ranges ARE supported now: PMTiles archives are
+ * read with them, and they are also the correct answer for resumable downloads
+ * of the larger GeoJSON layers.
  *
  * Usage:  node scripts/serve.mjs [rootDir]
  *         PORT=3000 HOST=0.0.0.0 node scripts/serve.mjs out
@@ -69,6 +69,7 @@ const MIME = {
   ".woff2": "font/woff2",
   ".ttf": "font/ttf",
   ".pbf": "application/x-protobuf",
+  ".pmtiles": "application/vnd.pmtiles",
   ".wasm": "application/wasm",
   ".xml": "application/xml; charset=utf-8",
   ".pdf": "application/pdf",
@@ -130,6 +131,9 @@ const server = http.createServer((req, res) => {
   // Always-on security headers, from the same table as public/_headers.
   const headers = Object.fromEntries(SECURITY_HEADERS);
   headers["Cache-Control"] = cacheControlFor(urlPath) ?? "public, max-age=0, must-revalidate";
+  // PMTiles clients read the archive by byte range; advertising this is what
+  // turns a 4 MB download into a handful of small reads.
+  headers["Accept-Ranges"] = "bytes";
 
   if (req.method !== "GET" && req.method !== "HEAD") {
     headers["Allow"] = "GET, HEAD";
@@ -180,6 +184,48 @@ const server = http.createServer((req, res) => {
     send(req, res, 304, headers, "");
     log(req, urlPath, 304, 0, started);
     return;
+  }
+
+  // HTTP byte ranges (RFC 7233). PMTiles is the only current consumer, but a
+  // correct 206 here also makes resumable downloads of the big GeoJSON layers
+  // work. Ranges are answered from the raw file, never the gzip cache.
+  const rangeHeader = req.headers.range;
+  if (status === 200 && rangeHeader) {
+    const m = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader.trim());
+    if (m && (m[1] !== "" || m[2] !== "")) {
+      let start = m[1] === "" ? null : Number(m[1]);
+      let end = m[2] === "" ? null : Number(m[2]);
+      if (start === null && end !== null) {
+        start = Math.max(0, st.size - end);
+        end = st.size - 1;
+      } else if (end === null) {
+        end = st.size - 1;
+      }
+      if (start !== null && end !== null && Number.isFinite(start) && Number.isFinite(end)) {
+        if (start >= 0 && start <= end && start < st.size) {
+          end = Math.min(end, st.size - 1);
+          const length = end - start + 1;
+          const fd = fs.openSync(abs, "r");
+          const buf = Buffer.alloc(length);
+          try {
+            fs.readSync(fd, buf, 0, length, start);
+          } finally {
+            fs.closeSync(fd);
+          }
+          headers["Content-Range"] = `bytes ${start}-${end}/${st.size}`;
+          headers["Content-Length"] = String(length);
+          delete headers.ETag;
+          send(req, res, 206, headers, buf);
+          log(req, urlPath, 206, length, started);
+          return;
+        }
+        headers["Content-Range"] = `bytes */${st.size}`;
+        delete headers["Content-Length"];
+        send(req, res, 416, headers, "");
+        log(req, urlPath, 416, 0, started);
+        return;
+      }
+    }
   }
 
   let body = fs.readFileSync(abs);

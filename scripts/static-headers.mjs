@@ -99,6 +99,10 @@ export const CACHE_RULES = [
   { pattern: "/_next/static/*", cacheControl: "public, max-age=31536000, immutable" },
   { pattern: "/health.json", cacheControl: "no-cache" },
   { pattern: "/data/*", cacheControl: "public, max-age=3600, must-revalidate" },
+  // PMTiles archives are read by HTTP range request; a stale archive only ever
+  // holds previously-correct geometry, so a modest cache with revalidation is
+  // safe and saves a lot of 206 round-trips.
+  { pattern: "/tiles/*", cacheControl: "public, max-age=3600, must-revalidate" },
   { pattern: "/*", cacheControl: "public, max-age=0, must-revalidate" },
 ];
 

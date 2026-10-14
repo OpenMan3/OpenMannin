@@ -101,8 +101,9 @@ test("cache rules match the documented table in DEPLOY.md", () => {
   assert.equal(cacheControlFor("/_next/static/chunks/abc.js"), "public, max-age=31536000, immutable");
   assert.equal(cacheControlFor("/health.json"), "no-cache");
   assert.equal(cacheControlFor("/data/roads.geojson"), "public, max-age=3600, must-revalidate");
+  assert.equal(cacheControlFor("/tiles/roads.pmtiles"), "public, max-age=3600, must-revalidate");
   assert.equal(cacheControlFor("/index.html"), "public, max-age=0, must-revalidate");
   // Longest prefix wins: a path under /_next/static/ must not fall through to
   // the catch-all just because it also starts with a slash.
-  assert.equal(CACHE_RULES.length, 4);
+  assert.equal(CACHE_RULES.length, 5);
 });

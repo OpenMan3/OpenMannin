@@ -9,11 +9,20 @@
 import type { Map as MapLibreMap } from "maplibre-gl";
 import type { LayerDef } from "@/lib/types";
 import { geometryKindsOf, loadLayer, type GeometryKind } from "@/lib/layer-data";
+import { pmtilesSource } from "@/lib/layer-source";
 
 export const layerIdFor = (id: string, suffix: string) => `om-${id}-${suffix}`;
 
 /** Every paint layer suffix a registry layer can be split into. */
 export const PAINT_SUFFIXES = ["fill", "line", "circle", "symbol"] as const;
+
+/**
+ * Vector-tile sources have no loaded FeatureCollection to inspect, so every
+ * paint layer is registered. MapLibre skips features whose geometry does not
+ * match the layer type, so a circle layer over line features is a no-op rather
+ * than a bug - the same trick the line layer already relies on for polygons.
+ */
+const ALL_KINDS: ReadonlySet<GeometryKind> = new Set(["point", "line", "polygon"]);
 
 /**
  * Per-category point styling.
@@ -196,6 +205,17 @@ export async function syncStaticLayers(
 
     // Skip if already present
     if (map.getSource(id)) continue;
+
+    // Prefer a build-time PMTiles archive when the registry points at one.
+    // The map streams only the tiles it needs; the GeoJSON `file` stays as the
+    // ingest/offline fallback and is what FeatureBrowser keeps reading.
+    const vectorSource = pmtilesSource(def);
+    if (vectorSource) {
+      map.addSource(id, vectorSource);
+      addPaintLayers(map, def, ALL_KINDS);
+      onMissing?.(def.id, false);
+      continue;
+    }
 
     try {
       const fc = await loadLayer(def.file!);

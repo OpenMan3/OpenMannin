@@ -147,6 +147,12 @@ export interface LayerDef {
   kind: LayerKind;
   /** Path under /data, for kind === "geojson" */
   file?: string;
+  /**
+   * Path under /tiles of a PMTiles archive built from `file`. When present the
+   * map streams vector tiles and keeps `file` only as the offline/ingest
+   * fallback. Built by scripts/build-tiles.mjs.
+   */
+  pmtiles?: string;
   /** ArcGIS or upstream URL, for kind === "arcgis" */
   endpoint?: string;
   /** MapLibre layer id to query on click, when it differs from `id` */

@@ -28,3 +28,8 @@
 
 ### Fixed
 - "Too far down to see" when scrolling sidebar lists past floating tab bar.
+
+## [0.3.0] - 2026-10-14
+### Added
+- Build-time vector tiles (PMTiles) for the heaviest layers (roads, footpaths, house numbers, power lines, overture places), with MapLibre protocol support and runtime fallback to GeoJSON.
+- CI verification that PMTiles are served with correct Range requests.

@@ -1,0 +1,35 @@
+{
+  "generated": "2026-10-14",
+  "layers": [
+    {
+      "id": "roads",
+      "tiles": 470,
+      "bytes": 2641137,
+      "sourceBytes": 3923681
+    },
+    {
+      "id": "footpaths",
+      "tiles": 453,
+      "bytes": 1997694,
+      "sourceBytes": 3224770
+    },
+    {
+      "id": "overture-places",
+      "tiles": 364,
+      "bytes": 2015759,
+      "sourceBytes": 2108294
+    },
+    {
+      "id": "house-numbers",
+      "tiles": 300,
+      "bytes": 969979,
+      "sourceBytes": 1996464
+    },
+    {
+      "id": "power-lines",
+      "tiles": 329,
+      "bytes": 761342,
+      "sourceBytes": 1101147
+    }
+  ]
+}

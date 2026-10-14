@@ -32,7 +32,22 @@ import {
 import { attachMapInteractions, attachWebGLHandlers, setMapLibreWorkerUrl } from "@/lib/map-interactions";
 import { LIBERTY_STYLE_URL } from "@/lib/map-style";
 import { type NavigationState } from "@/lib/navigation/host";
-import { AttributionControl, Map as MapLibreMap } from "maplibre-gl";
+import { addProtocol, AttributionControl, Map as MapLibreMap } from "maplibre-gl";
+import { Protocol as PMTilesProtocol } from "pmtiles";
+
+/**
+ * PMTiles registers a MapLibre custom protocol that reads byte ranges from a
+ * single .pmtiles archive. Registration is process-global and must happen
+ * before the first vector source is created; guard it so a Fast Refresh or a
+ * second MapView mount does not double-register.
+ */
+let pmtilesRegistered = false;
+function ensurePmtilesProtocol(): void {
+  if (pmtilesRegistered) return;
+  pmtilesRegistered = true;
+  const protocol = new PMTilesProtocol();
+  addProtocol("pmtiles", protocol.tile);
+}
 
 export interface PickedFeature {
   layer: LayerDef;
@@ -247,6 +262,7 @@ export function MapView({
 
       // Set MapLibre worker URL before creating the map
       await setMapLibreWorkerUrl();
+      ensurePmtilesProtocol();
 
       const initialStyle = createInitialStyle();
 

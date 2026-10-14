@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-globals */
-const VERSION = "openmannin-0.2.3";
+const VERSION = "openmannin-0.3.0";
 const SHELL_CACHE = VERSION + "-shell";
 const DATA_CACHE = VERSION + "-data";
 const SHELL_ASSETS = ["/", "/manifest.webmanifest", "/icon.svg", "/layer-loader-worker.mjs"];

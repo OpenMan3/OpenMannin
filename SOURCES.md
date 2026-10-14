@@ -148,7 +148,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | --- | --- | --- | --- | --- |
 | Satellite pass predictions (`satellite-passes`) | celestrak | PUBLIC-DOMAIN | C | live/blocked |
 
-## Gaps (23)
+## Gaps (24)
 
 Coverage that could not be sourced under a usable licence. Rendered in the app as a first-class panel.
 
@@ -177,3 +177,4 @@ Coverage that could not be sourced under a usable licence. Rendered in the app a
 | Coastal access points (`coastal-access`) | low | This was a government map layer (40 points) and is removed because it is not openly licensed. No official open equivalent exists, but a community substitute is now built: the 'Coastal & outdoor' layer carries OpenStreetMap slipways, viewpoints, picnic sites and car parks, and slipways are the practical access points. It is community-mapped and does not reproduce the government's 40 points. |
 | Marine habitats and fishery closures (`marine-habitats`) | medium | This was a government map layer (434 features) and is removed because it is not openly licensed. Layers of this type do exist in EMODnet (CC-BY 4.0) but no ingest has been built: the documented OGC feature types were probed on 2026-10-13 and were not reachable, so we ship no Marine Habitats layer rather than one sourced from an unverified or guessed endpoint. Any future ingest must preserve per-product attribution under CC-BY-4.0. |
 | Live AIS vessel tracking (`ais-live`) | medium | There is NO free, no-key programmatic AIS source. AISStream is free but requires an API key, caps 3 connections per account AND per originating IP, prohibits direct browser connections in its own docs, and publishes no terms document — an undocumented-licence gap we will not silently build on. MarineTraffic is sales-gated and paid; Global Fishing Watch is CC BY-NC (blocks ad-supported deployment). A browser-side WebSocket client was built and evaluated on 2026-10-07, then removed, because a client shipped without a deployer-provided key would be dead code and would still lean on an undocumented licence. |
+| Overture Maps places: non-CDL-A contributors (`overture-non-cdla`) | low | Overture Places is mixed-licence by contributor. Foursquare records carry Apache-2.0 and AllThePlaces records carry CC0-1.0, so both were excluded rather than being relabelled as CDLA-Permissive-2.0 and shipped in overture-places.geojson. |

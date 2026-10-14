@@ -4,10 +4,10 @@
  * Builds Google-Maps-style banner/dock data that is presentation only.
  */
 
-import type { NavigationState } from "./types";
-import type { ManeuverKind, NavigationStep } from "./steps";
-import { ROUTE_MODES, type RouteMode } from "./profiles";
-import { formatDistance, formatDuration } from "../units";
+import type { NavigationState } from "./types.ts";
+import type { ManeuverKind, NavigationStep } from "./steps.ts";
+import { ROUTE_MODES, type RouteMode } from "./profiles.ts";
+import { formatDistance, formatDuration } from "../units.ts";
 
 export type NavSurfaceMode = "none" | "preview" | "prompt" | "guide" | "arrived";
 

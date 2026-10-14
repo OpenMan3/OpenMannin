@@ -1249,4 +1249,14 @@ export const GAPS: Gap[] = [
     whatWeWouldNeed: "A server-side ingest fanning one licensed connection out to clients, or a properly documented open licence from the provider.",
     severity: "medium",
   },
+  {
+    id: "overture-non-cdla",
+    title: "Overture Maps places: non-CDL-A contributors",
+    wanted: "The full mixed-licence Overture place and business layer rather than only the CDLA-Permissive-2.0 subset.",
+    whyUnavailable:
+      "Overture Places is mixed-licence by contributor. Foursquare records carry Apache-2.0 and AllThePlaces records carry CC0-1.0, so both were excluded rather than being relabelled as CDLA-Permissive-2.0 and shipped in overture-places.geojson.",
+    whatWeWouldNeed:
+      "Separate licence-clean layer(s), or per-record attribution and licence handling that preserves Apache-2.0 and CC0 obligations differently from CDLA-Permissive-2.0.",
+    severity: "low",
+  },
 ];

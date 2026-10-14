@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { NavigationState, FollowMode } from "@/lib/navigation/host";
+import type { NavigationState } from "@/lib/navigation/host";
 import { bannerFor, dockFor, hasFix, type NavigationDock } from "@/lib/navigation/hud";
 import { ROUTE_MODES, type RouteMode } from "@/lib/navigation/profiles";
 import { formatDistance, formatDuration } from "@/lib/units";
@@ -38,9 +38,6 @@ interface Props {
   onEnd: () => void;
   onClear: () => void;
   onOverview: () => void;
-  onFollow: (mode: FollowMode) => void;
-  onVoice: (muted: boolean) => void;
-  onLocateToggle: () => void;
   onTopInset?: (px: number) => void;
   onBottomInset?: (px: number) => void;
   minimized: boolean;
@@ -117,6 +114,7 @@ export function NavigationOverlay(props: Props) {
                   : "border-line/50 bg-info/95 backdrop-blur",
           ].join(" ")}
           aria-live={navig ? "polite" : "off"}
+          role={navig ? "status" : undefined}
         >
           <div className="flex items-center gap-3">
             <span className="flex shrink-0 items-center justify-center rounded-xl bg-white/20 p-2">

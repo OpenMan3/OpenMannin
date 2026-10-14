@@ -463,9 +463,6 @@ function PageContent() {
             onEnd={endNav}
             onClear={clearNav}
             onOverview={overviewNav}
-            onFollow={setFollowMode}
-            onVoice={setVoiceMuted}
-            onLocateToggle={toggleLocate}
             onTopInset={setNavTopInset}
             onBottomInset={setNavBottomInset}
             minimized

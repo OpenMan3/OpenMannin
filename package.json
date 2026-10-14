@@ -31,7 +31,7 @@
     "ingest:wifi": "node --experimental-strip-types --no-warnings scripts/ingest-wifi.mjs",
     "ingest:parishes": "node --experimental-strip-types --no-warnings scripts/ingest-parishes.mjs",
     "ingest:update": "node --experimental-strip-types --no-warnings scripts/update-data.mjs --no-build",
-    "ingest:all": "npm run ingest:osminfra && npm run ingest:osm && npm run ingest:osmlayers && npm run ingest:wikidata && npm run ingest:airports && npm run ingest:cables && npm run ingest:tidestations && npm run ingest:dumpsites && npm run ingest:offshorewind && npm run ingest:ports && npm run ingest:power && npm run ingest:satellite && npm run ingest:busstops && npm run ingest:housenumbers && npm run ingest:postcodes && npm run ingest:comms-towers && npm run ingest:wifi && npm run ingest:update && npm run ingest:parishes && npm run annotate:nearest && npm run build:manifest && npm run build:search",
+    "ingest:all": "npm run ingest:osminfra && npm run ingest:osm && npm run ingest:osmlayers && npm run ingest:wikidata && npm run ingest:airports && npm run ingest:cables && npm run ingest:tidestations && npm run ingest:dumpsites && npm run ingest:offshorewind && npm run ingest:ports && npm run ingest:power && npm run ingest:satellite && npm run ingest:busstops && npm run ingest:housenumbers && npm run ingest:postcodes && npm run ingest:comms-towers && npm run ingest:overture && npm run ingest:wifi && npm run ingest:update && npm run ingest:parishes && npm run annotate:nearest && npm run build:manifest && npm run build:search",
     "ingest:osm": "node scripts/ingest-osm.mjs",
     "verify:registry": "node --experimental-strip-types --no-warnings scripts/verify-registry.mjs",
     "verify:render": "node scripts/verify-render.mjs",
@@ -46,7 +46,8 @@
     "smoke:live": "node scripts/smoke-live.mjs",
     "build:passes-worker": "node scripts/build-passes-worker.mjs",
     "build:routing-worker": "node scripts/build-routing-worker.mjs",
-    "ingest:overture": "node --experimental-strip-types --no-warnings scripts/ingest-overture-places.mjs"
+    "ingest:overture": "node --experimental-strip-types --no-warnings scripts/ingest-overture-places.mjs",
+    "smoke:navigation": "node --experimental-strip-types --no-warnings scripts/smoke-navigation.mjs"
   },
   "dependencies": {
     "maplibre-gl": "^6.14.0",

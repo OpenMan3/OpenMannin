@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 /**
  * Data sources & transparency.
  *
@@ -66,6 +68,34 @@ const LIBRARIES: { name: string; licence: string; url: string; licenceUrl: strin
 
 export function TransparencyPanel() {
   const liveLayers = LAYERS.filter((l) => l.kind === "live");
+  const [offlineState, setOfflineState] = useState<"idle" | "downloading" | "done" | "error">("idle");
+  const [offlineProgress, setOfflineProgress] = useState(0);
+
+  const downloadOfflineData = async () => {
+    setOfflineState("downloading");
+    setOfflineProgress(0);
+    try {
+      const manifest = await (await fetch("/data/manifest.json")).json();
+      const files = new Set<string>();
+      for (const def of Object.values(manifest?.layers ?? {})) {
+        if (def && typeof def === "object" && "file" in def && typeof (def as { file?: unknown }).file === "string") {
+          files.add((def as { file: string }).file);
+        }
+      }
+      const list = [...files];
+      let done = 0;
+      await Promise.all(
+        list.map(async (file) => {
+          await fetch(`/data/${file}`, { cache: "reload" });
+          done += 1;
+          setOfflineProgress(Math.round((done / list.length) * 100));
+        }),
+      );
+      setOfflineState("done");
+    } catch {
+      setOfflineState("error");
+    }
+  };
 
   return (
     <div className="scroll-thin h-full overflow-y-auto md:pb-16">
@@ -76,6 +106,28 @@ export function TransparencyPanel() {
           hand. Nothing here is presented as open that is not.
         </p>
       </div>
+
+      <section className="border-b border-line-soft px-3 py-2.5">
+        <h3 className="label mb-2">Offline data</h3>
+        <p className="mb-2 text-[12px] leading-snug text-ink-3">
+          Cache all map data bundles locally for offline use.
+        </p>
+        <button
+          type="button"
+          onClick={() => void downloadOfflineData()}
+          disabled={offlineState === "downloading"}
+          className="btn w-full text-xs"
+        >
+          {offlineState === "downloading"
+            ? `Downloading… ${offlineProgress}%`
+            : offlineState === "done"
+              ? "Offline data ready"
+              : "Download offline data"}
+        </button>
+        {offlineState === "error" && (
+          <p className="mt-2 text-[11px] text-danger">Download failed. Try again.</p>
+        )}
+      </section>
 
       {/* ---- live feeds ---- */}
       <section className="border-b border-line-soft px-3 py-2.5">
@@ -198,7 +250,7 @@ export function TransparencyPanel() {
       {/* ---- recent OSM activity ---- */}
       <CommunityFeed embedded />
       <p className="border-t border-line px-3 py-2 text-[10px] text-ink-3">
-        OpenMannin 0.2.1
+        OpenMannin 0.2.2
       </p>
     </div>
   );

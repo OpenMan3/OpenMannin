@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-globals */
-const VERSION = "openmannin-0.3.2";
+const VERSION = "openmannin-0.3.3";
 const SHELL_CACHE = VERSION + "-shell";
 const DATA_CACHE = VERSION + "-data";
 const TILES_CACHE = VERSION + "-tiles";

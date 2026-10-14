@@ -30,6 +30,12 @@
       "tiles": 329,
       "bytes": 761342,
       "sourceBytes": 1101147
+    },
+    {
+      "id": "buildings",
+      "tiles": 426,
+      "bytes": 2054017,
+      "sourceBytes": 15850226
     }
   ]
 }

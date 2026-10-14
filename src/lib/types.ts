@@ -97,6 +97,7 @@ export type LayerSubcategory =
   | "place-names"
   | "transport-network"
   | "environmental-baseline"
+  | "buildings"
   | "aviation-monitoring"
   | "watch-features"
   | "designated"

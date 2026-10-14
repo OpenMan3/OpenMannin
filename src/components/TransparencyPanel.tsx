@@ -371,7 +371,7 @@ export function TransparencyPanel() {
       {/* ---- recent OSM activity ---- */}
       <CommunityFeed embedded />
       <p className="border-t border-line px-3 py-2 text-[10px] text-ink-3">
-        OpenMannin 0.3.2
+        OpenMannin 0.3.3
       </p>
     </div>
   );

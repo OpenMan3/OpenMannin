@@ -24,7 +24,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATA = path.join(ROOT, "public", "data");
 const OUT = path.join(ROOT, "public", "tiles");
 
-const DEFAULT_LAYERS = ["roads", "footpaths", "overture-places", "house-numbers", "power-lines"];
+const DEFAULT_LAYERS = ["roads", "footpaths", "overture-places", "house-numbers", "power-lines", "buildings"];
 const layersArg = process.env.TILE_LAYERS;
 const LAYERS_TO_TILE = layersArg ? layersArg.split(",").map((s) => s.trim()).filter(Boolean) : DEFAULT_LAYERS;
 
@@ -32,6 +32,11 @@ const MAX_ZOOM = Number(process.env.TILE_MAX_ZOOM ?? 14);
 const ZOOM_OVERRIDES = {
   roads: 16,
   footpaths: 16,
+};
+// Buildings only make sense once the viewer is zoomed in; tiling them from z8
+// would ship a thicket of low-zoom tiles the map never asks for.
+const MIN_ZOOM_OVERRIDES = {
+  buildings: 12,
 };
 const MIN_ZOOM_OVERRIDE = process.env.TILE_MIN_ZOOM ? Number(process.env.TILE_MIN_ZOOM) : null;
 
@@ -62,7 +67,7 @@ for (const id of LAYERS_TO_TILE) {
 
   const geojson = JSON.parse(fs.readFileSync(file, "utf8"));
   const [minLon, minLat, maxLon, maxLat] = info.bbox ?? [-4.9, 54.0, -4.2, 54.45];
-  const minZoom = MIN_ZOOM_OVERRIDE ?? Math.max(0, Math.min(12, info.minzoom ?? 8));
+  const minZoom = MIN_ZOOM_OVERRIDE ?? MIN_ZOOM_OVERRIDES[id] ?? Math.max(0, Math.min(12, info.minzoom ?? 8));
 
   const layerMaxZoom = ZOOM_OVERRIDES[id] ?? MAX_ZOOM;
   const index = new geojsonvt(geojson, {

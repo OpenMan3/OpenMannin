@@ -1032,6 +1032,30 @@ export const LAYERS: LayerDef[] = [
     sourceId: "wikidata",
     featureCount: 12,
   },
+  {
+    id: "buildings",
+    label: "Building footprints",
+    group: "geography",
+    category: "foundational",
+    subcategory: "buildings",
+    kind: "geojson",
+    file: "buildings.geojson",
+    pmtiles: "tiles/buildings.pmtiles",
+    color: "#c9c2b6",
+    defaultOn: false,
+    minZoom: 14,
+    description:
+      "Building footprints across the island from the Overture Maps buildings theme: OpenStreetMap outlines supplemented by Microsoft ML roofprints derived from aerial imagery. Streamed as vector tiles, with building class, subtype and modelled height where present.",
+    caveats: [
+      "ODbL: attribution AND share-alike. Data (c) OpenStreetMap contributors and the Overture Maps contributors, ODbL.",
+      "Mixed provenance. OpenStreetMap is the primary and preferred source; the remainder is Microsoft ML roofprints inferred from imagery, which are indicative rather than surveyed.",
+      "Modelled heights (where present) are approximate and must not be used for aviation, solar, or structural purposes.",
+      "Geometry is simplified to about 2 m for shipping; do not use this layer for land registry, planning or anything requiring cadastral accuracy.",
+    ],
+    confidence: "C",
+    sourceId: "overtureBuildings",
+    featureCount: 46106,
+  },
 ];
 
 /**

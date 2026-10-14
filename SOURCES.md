@@ -24,7 +24,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | No published licence | no | yes | No terms of use, robots.txt or licence found. Absence of a licence is not a grant. Do not republish without written permission. |
 | Licence not established | no | yes | Verify before use. |
 
-## Source register (21)
+## Source register (22)
 
 | Source | Publisher | Licence | Last checked |
 | --- | --- | --- | --- |
@@ -49,6 +49,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | [AWS Open Data — Terrain Tiles (Mapzen/Joerd)](https://registry.opendata.aws/terrain-tiles/) | Mapzen (Linux Foundation) / AWS Open Data | COPERNICUS | 2026-10-11 |
 | [OpenMannin compilation](https://github.com/) | OpenMannin | OGL-IoM | 2026-10-04 |
 | [Overture Maps — Places](https://docs.overturemaps.org/) | Overture Maps Foundation / release contributors | CDLA-PERMISSIVE-2.0 | 2026-10-14 |
+| [Overture Maps — Buildings](https://docs.overturemaps.org/) | Overture Maps Foundation / release contributors | ODbL | 2026-10-14 |
 
 ## Layers by source
 
@@ -59,6 +60,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Place names (`toponyms`) | osmIOM | ODbL | B | 1253 |
 | Heritage-designated places (`heritage`) | wikidata | CC0-1.0 | C | 319 |
 | Parish boundaries (`parish-boundaries`) | osmIOM | ODbL | C | 23 |
+| Building footprints (`buildings`) | overtureBuildings | ODbL | C | 46106 |
 
 ### trails
 
@@ -116,12 +118,13 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Layer | Source | Licence | Grade | Features |
 | --- | --- | --- | --- | --- |
 | Monuments & archaeology (`archaeology`) | osmIOM | ODbL | C | 140 |
-| Places & businesses (`overture-places`) | overturePlaces | CDLA-PERMISSIVE-2.0 | C | 3488 |
+| Places & businesses (`overture-places`) | overturePlaces | CDLA-PERMISSIVE-2.0 | C | 3483 |
 | Mine shafts, adits & mines (`mine-infrastructure`) | osmIOM | ODbL | C | 19 |
 | Tholtans & ruined buildings (`tholtans-ruins`) | osmIOM | ODbL | C | 848 |
 | Essential utilities & services (`essential-utilities`) | osmIOM | ODbL | C | 187 |
 | Food & drink (`food-drink`) | osmIOM | ODbL | C | 308 |
 | Coastal & outdoor (`coastal-outdoor`) | osmIOM | ODbL | C | 1067 |
+| Wikidata memorials & monuments (`wikidata-memorials`) | wikidata | CC0-1.0 | C | 12 |
 
 ### environment
 

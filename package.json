@@ -1,6 +1,6 @@
 {
   "name": "openmannin",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "description": "OpenMannin \u2014 Open Source Intelligence Reconnaissance & Infrastructure System for the Isle of Man",
   "type": "module",
@@ -54,7 +54,8 @@
     "verify:sidebar": "node scripts/verify-sidebar.mjs",
     "verify:offline": "node scripts/verify-offline.mjs",
     "build:tiles": "node scripts/build-tiles.mjs",
-    "verify:tiles": "node scripts/verify-tiles.mjs"
+    "verify:tiles": "node scripts/verify-tiles.mjs",
+    "ingest:buildings": "node --experimental-strip-types --no-warnings scripts/ingest-buildings.mjs"
   },
   "dependencies": {
     "geojson-vt": "^5.0.4",

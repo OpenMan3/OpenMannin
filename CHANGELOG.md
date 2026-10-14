@@ -1,8 +1,13 @@
+# Changelog
+
+## [0.3.3] - 2026-10-14
+### Added
+- Building footprints layer: 46,106 Overture Maps buildings across the island (OpenStreetMap outlines plus Microsoft ML roofprints), streamed as PMTiles with a GeoJSON fallback. ODbL, including share-alike.
+- A buildings-specific Overture licence gate that fails on any unknown contributor/licence pair.
+
 ## [0.3.2] - 2026-10-14
 ### Changed
 - Higher detail PMTiles for roads and footpaths (zoom raised to 16).
-
-# Changelog
 
 ## [0.3.1] - 2026-10-14
 ### Fixed

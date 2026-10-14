@@ -223,4 +223,15 @@ export const SOURCES: Record<string, Source> = {
     notes:
       "Global places release; the OpenMannin ingest reads only records whose contributor is mapped to an unambiguously open licence. Initial layer is CDLA-Permissive-2.0 contributors only. Apache 2.0 (Foursquare) and CC0 (AllThePlaces) records are excluded until separate licence-clean layers exist. Overture is ingested from the pinned release in scripts/lib/overture-release.mjs; its .geojson release property is the source of truth.",
   },
+
+  overtureBuildings: {
+    id: "overtureBuildings",
+    name: "Overture Maps — Buildings",
+    publisher: "Overture Maps Foundation / release contributors",
+    url: "https://docs.overturemaps.org/",
+    licence: "ODbL",
+    lastChecked: "2026-10-14",
+    notes:
+      "Global buildings release. Over the Isle of Man the theme is entirely ODbL-1.0: OpenStreetMap is the primary source and Microsoft ML Buildings fills the remainder. Because ODbL carries attribution AND share-alike, the layer is ODbL, not CDLA. The ingest enforces a buildings-specific licence map and fails on any unknown contributor/licence pair. Pinned release lives in scripts/lib/overture-release.mjs.",
+  },
 };

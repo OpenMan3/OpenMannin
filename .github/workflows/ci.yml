@@ -56,3 +56,4 @@ jobs:
           node scripts/verify-render.mjs
           node scripts/verify-basemap.mjs
           node scripts/smoke-navigation.mjs http://localhost:3111/
+          PORT=3111 node scripts/verify-sidebar.mjs

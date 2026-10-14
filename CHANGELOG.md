@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.1] - 2026-10-14
+### Fixed
+- PMTiles-backed layers (roads, footpaths, house numbers, power lines, overture places) now work offline: the service worker caches full archives and answers HTTP Range requests by slicing them, offline downloads include the archives, and the map falls back to cached GeoJSON when offline.
+- The offline readiness check now accounts for cached tile archives, not just GeoJSON bundles.
+
+## [0.3.0] - 2026-10-14
+### Added
+- Build-time vector tiles (PMTiles) for the heaviest layers (roads, footpaths, house numbers, power lines, overture places), with MapLibre protocol support and runtime fallback to GeoJSON.
+- CI verification that PMTiles are served with correct Range requests.
+
 ## [0.2.3] - 2026-10-14
 ### Added
 - Offline download controls with progress bar, cache size display, online/offline status and clear-cache action.
@@ -28,8 +38,3 @@
 
 ### Fixed
 - "Too far down to see" when scrolling sidebar lists past floating tab bar.
-
-## [0.3.0] - 2026-10-14
-### Added
-- Build-time vector tiles (PMTiles) for the heaviest layers (roads, footpaths, house numbers, power lines, overture places), with MapLibre protocol support and runtime fallback to GeoJSON.
-- CI verification that PMTiles are served with correct Range requests.

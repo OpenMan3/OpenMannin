@@ -101,21 +101,38 @@ export function TransparencyPanel() {
     try {
       if (!("caches" in window)) return;
       const manifest = await (await fetch("/data/manifest.json")).json();
+      const tileUrls = new Set<string>();
       const files = new Set<string>();
       for (const def of Object.values(manifest?.layers ?? {})) {
-        if (def && typeof def === "object" && "file" in def && typeof (def as { file?: unknown }).file === "string") {
-          files.add((def as { file: string }).file);
+        if (def && typeof def === "object") {
+          const d = def as { file?: unknown; pmtiles?: unknown };
+          if (typeof d.pmtiles === "string") {
+            tileUrls.add(new URL(d.pmtiles, window.location.origin).toString());
+          }
+          if (typeof d.file === "string") {
+            files.add(d.file);
+          }
         }
       }
       const keys = await caches.keys();
       const dataCacheKey = keys.find((k) => k.includes("-data"));
-      if (!dataCacheKey) return;
-      const cache = await caches.open(dataCacheKey);
+      const tilesCacheKey = keys.find((k) => k.includes("-tiles"));
+      if (!dataCacheKey && !tilesCacheKey) return;
+      const dataCache = dataCacheKey ? await caches.open(dataCacheKey) : null;
+      const tilesCache = tilesCacheKey ? await caches.open(tilesCacheKey) : null;
       let ready = true;
       for (const file of files) {
-        if (!(await cache.match(`/data/${file}`))) {
+        if (!dataCache || !(await dataCache.match(`/data/${file}`))) {
           ready = false;
           break;
+        }
+      }
+      if (ready && tileUrls.size > 0) {
+        for (const u of tileUrls) {
+          if (!tilesCache || !(await tilesCache.match(u))) {
+            ready = false;
+            break;
+          }
         }
       }
       setOfflineState(ready ? "done" : "idle");
@@ -133,7 +150,7 @@ export function TransparencyPanel() {
     try {
       if ("caches" in window) {
         const keys = await caches.keys();
-        await Promise.all(keys.filter((k) => k.includes("-data")).map((k) => caches.delete(k)));
+        await Promise.all(keys.filter((k) => k.includes("-data") || k.includes("-tiles")).map((k) => caches.delete(k)));
       }
       setOfflineState("idle");
       setOfflineProgress(0);
@@ -148,17 +165,24 @@ export function TransparencyPanel() {
     setOfflineProgress(0);
     try {
       const manifest = await (await fetch("/data/manifest.json")).json();
+      const tileUrls = new Set<string>();
       const files = new Set<string>();
       for (const def of Object.values(manifest?.layers ?? {})) {
-        if (def && typeof def === "object" && "file" in def && typeof (def as { file?: unknown }).file === "string") {
-          files.add((def as { file: string }).file);
+        if (def && typeof def === "object") {
+          const d = def as { file?: unknown; pmtiles?: unknown };
+          if (typeof d.pmtiles === "string") {
+            tileUrls.add(new URL(d.pmtiles, window.location.origin).toString());
+          }
+          if (typeof d.file === "string") {
+            files.add(d.file);
+          }
         }
       }
-      const list = [...files];
+      const list = [...files, ...tileUrls];
       let done = 0;
       await Promise.all(
-        list.map(async (file) => {
-          await fetch(`/data/${file}`, { cache: "reload" });
+        list.map(async (entry) => {
+          await fetch(entry, { cache: "reload" });
           done += 1;
           setOfflineProgress(Math.round((done / list.length) * 100));
         }),
@@ -347,7 +371,7 @@ export function TransparencyPanel() {
       {/* ---- recent OSM activity ---- */}
       <CommunityFeed embedded />
       <p className="border-t border-line px-3 py-2 text-[10px] text-ink-3">
-        OpenMannin 0.3.0
+        OpenMannin 0.3.1
       </p>
     </div>
   );

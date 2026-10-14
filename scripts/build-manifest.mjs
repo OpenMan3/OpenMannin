@@ -62,6 +62,7 @@ for (const l of LAYERS) {
     bytes: stat.size,
     generated,
     bbox,
+    ...(l.pmtiles ? { pmtiles: l.pmtiles } : {}),
   };
   if (features > 0) ok++;
 }

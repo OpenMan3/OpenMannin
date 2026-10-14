@@ -63,6 +63,7 @@ try {
 
   if (!offlineState.hasSidebar) fails.push("sidebar missing after offline reload");
   if (!offlineState.hasMap && !offlineState.bodyText.includes("OpenMannin")) fails.push("page did not render offline");
+  // PMTiles-backed layers fall back to cached GeoJSON if offline; presence of map/canvas is sufficient.
 
   console.log("\nOpenMannin offline check");
   console.log(`  service worker     ${offlineState.controlled ? "controlling" : "not yet controlling"}`);

@@ -41,7 +41,8 @@
         54.045986,
         -4.31037,
         54.417388
-      ]
+      ],
+      "pmtiles": "tiles/roads.pmtiles"
     },
     "bridges": {
       "file": "bridges.geojson",
@@ -80,7 +81,8 @@
         54.047459,
         -4.311602,
         54.418138
-      ]
+      ],
+      "pmtiles": "tiles/footpaths.pmtiles"
     },
     "schools-health": {
       "file": "schools-health.geojson",
@@ -171,7 +173,8 @@
         54.055007,
         -4.322362,
         54.397863
-      ]
+      ],
+      "pmtiles": "tiles/house-numbers.pmtiles"
     },
     "railways": {
       "file": "railways.geojson",
@@ -366,7 +369,8 @@
         54.0662,
         -4.325853,
         54.414187
-      ]
+      ],
+      "pmtiles": "tiles/power-lines.pmtiles"
     },
     "water-works": {
       "file": "water-works.geojson",
@@ -431,7 +435,8 @@
         54.05056,
         -4.31089,
         54.41588
-      ]
+      ],
+      "pmtiles": "tiles/overture-places.pmtiles"
     },
     "airport": {
       "file": "airports.geojson",

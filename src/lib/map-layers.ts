@@ -210,11 +210,18 @@ export async function syncStaticLayers(
     // The map streams only the tiles it needs; the GeoJSON `file` stays as the
     // ingest/offline fallback and is what FeatureBrowser keeps reading.
     const vectorSource = pmtilesSource(def);
-    if (vectorSource) {
-      map.addSource(id, vectorSource);
-      addPaintLayers(map, def, ALL_KINDS);
-      onMissing?.(def.id, false);
-      continue;
+    // Offline, tile archives may not be cached, so take the cached GeoJSON
+    // path instead; the tiles are streamed only while the map is online.
+    const preferGeojson = typeof navigator !== "undefined" && navigator.onLine === false;
+    if (vectorSource && !preferGeojson) {
+      try {
+        map.addSource(id, vectorSource);
+        addPaintLayers(map, def, ALL_KINDS);
+        onMissing?.(def.id, false);
+        continue;
+      } catch (e) {
+        console.warn(`[sync] ${def.id} pmtiles failed; falling back to geojson`, (e as Error).message);
+      }
     }
 
     try {

@@ -26,7 +26,7 @@ try {
     domains: ["Runtime", "Page", "Network"],
     windowSize: "1280,900",
   });
-  const { evaluate, navigate, onMessage } = browser;
+  const { evaluate, navigate, onMessage, send, sessionId } = browser;
 
   onMessage((msg) => {
     if (msg.method === "Network.requestWillBeSent") {
@@ -63,10 +63,33 @@ try {
   if (tileRequests.length === 0) fails.push("no /tiles/*.pmtiles requests observed");
   if (rangeResponses.length === 0) fails.push("no HTTP 206 range responses for pmtiles");
 
+  // Offline: a full GET populates the service worker's tiles cache, then the
+  // same archive must answer a Range request from cache with no network.
+  const controlled = await evaluate("!!navigator.serviceWorker && !!navigator.serviceWorker.controller");
+  await evaluate(`fetch("/tiles/roads.pmtiles", { cache: "reload" }).then((r) => r.status)`);
+  await sleep(4000);
+
+  await send("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 }, sessionId);
+  const offlineRange = await evaluate(`(async () => {
+    try {
+      const r = await fetch("/tiles/roads.pmtiles", { headers: { Range: "bytes=0-99" } });
+      const buf = await r.arrayBuffer();
+      return { status: r.status, contentRange: r.headers.get("content-range"), length: buf.byteLength };
+    } catch (e) {
+      return { error: String(e) };
+    }
+  })()`);
+  await send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 }, sessionId);
+
+  if (!controlled) fails.push("service worker not controlling the page");
+  if (!offlineRange || offlineRange.status !== 206) fails.push(`offline range did not return 206: ${JSON.stringify(offlineRange)}`);
+  if (offlineRange && offlineRange.length !== 100) fails.push(`offline range length was ${offlineRange?.length}, expected 100`);
+
   console.log("\nOpenMannin PMTiles check");
   console.log(`  pmtiles requests   ${tileRequests.length}`);
   console.log(`  range (206)        ${rangeResponses.length}`);
   if (rangeResponses[0]) console.log(`  first range        ${rangeResponses[0].contentRange}`);
+  console.log(`  offline range      ${offlineRange?.status ?? "?"} (${offlineRange?.contentRange ?? "no content-range"})`);
   console.log(fails.length ? `\nFAIL:\n  ${fails.join("\n  ")}` : "\nOK");
   process.exitCode = fails.length ? 1 : 0;
 } catch (e) {

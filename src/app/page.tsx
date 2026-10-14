@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { GAPS, LAYERS } from "@/lib/layers";
-import { MapView, type PickedFeature } from "@/components/MapView";
+import type { PickedFeature } from "@/components/MapView";
+import dynamic from "next/dynamic";
+
+const MapView = dynamic(() => import("@/components/MapView").then((m) => m.MapView), {
+  ssr: false,
+  loading: () => <div className="h-full w-full bg-page" aria-hidden="true" />,
+});
 import { LayerPanel } from "@/components/LayerPanel";
 import { LayerDetailDrawer } from "@/components/LayerDetailDrawer";
 import { FeaturePopup } from "@/components/FeaturePopup";

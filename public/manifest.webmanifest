@@ -1,0 +1,19 @@
+{
+  "name": "OpenMannin",
+  "short_name": "OpenMannin",
+  "description": "Open-source intelligence map of the Isle of Man",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f6f9",
+  "theme_color": "#1a73e8",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

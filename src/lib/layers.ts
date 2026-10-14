@@ -786,7 +786,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "overturePlaces",
-    featureCount: 3488,
+    featureCount: 3487,
   },
   {
     id: "airport",

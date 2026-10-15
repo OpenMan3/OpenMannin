@@ -158,6 +158,35 @@ function humanise(value: string): string {
  * outranks the way crossing it, and a named seamark type outranks the generic
  * `kind` field other layers also use.
  */
+
+/** Buildings carry many derived values that are not an identity (no name) but
+ *  make a better row label than a blank or the literal "(unnamed)". */
+function buildingDescriptor(props: Record<string, unknown>): string | null {
+  const number = firstString(props, ["housenumber", "addr:housenumber"]);
+  const name = firstString(props, ["housename", "addr:housename"]);
+  const street = firstString(props, ["street", "addr:street", "substreet", "addr:substreet", "addr:place", "place"]);
+  const place = firstString(props, ["nearestPlace"]);
+  const kindish = firstString(props, ["purpose", "buildingClass", "subtype", "building", "amenity", "shop", "office", "tourism", "religion", "historic"]);
+  const safeKindish = kindish && !PLACEHOLDERS.has(kindish.toLowerCase()) ? kindish : null;
+  if (name && street) return `${name}, ${street}`.trim();
+  if (number && street) return `${number} ${street}`.trim();
+  if (safeKindish && street) return `${humaniseSafe(safeKindish)} \u00b7 ${street}`;
+  if (name) return name;
+  if (number && place) return `${number} near ${place}`.trim();
+  if (safeKindish && place) return `${humaniseSafe(safeKindish)} \u00b7 ${place}`;
+  if (safeKindish) return humaniseSafe(safeKindish);
+  if (street) return street;
+  if (place) return `Footprint near ${place}`;
+  const osm = typeof props.osmId === "string" ? props.osmId.trim() : "";
+  if (osm) return `Feature ${osm}`;
+  return null;
+}
+
+/** humanise but keep hyphens/already readable names. */
+function humaniseSafe(value: string): string {
+  return value.includes(" ") ? value : humanise(value);
+}
+
 export function featureKind(props: Record<string, unknown> | null | undefined): string | null {
   if (!props) return null;
 
@@ -252,6 +281,10 @@ export function resolveFeatureLabel(props: Record<string, unknown> | null | unde
   // owner, not the feature's name.
   const holder = firstString(props, ["holder", "asName"]);
   if (holder) return holder;
+
+  const isBuilding = props.buildingClass !== undefined || typeof props.osmId === "string" || props.enrichedBy === "osm-overpass" || props.sourceDataset === "Microsoft ML Buildings" || (typeof props.sourceDataset === "string" && /buildings/i.test(props.sourceDataset));
+  const descriptor = isBuilding ? buildingDescriptor(props) : null;
+  if (descriptor && !PLACEHOLDERS.has(descriptor.toLowerCase()) && descriptor !== "(unnamed)") return descriptor;
 
   const kind = featureKind(props);
   if (kind) {

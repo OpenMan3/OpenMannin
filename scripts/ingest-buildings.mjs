@@ -241,8 +241,12 @@ async function run() {
     if (!props.purpose) {
       if (typeof props.buildingClass === "string" && props.buildingClass) props.purpose = String(props.buildingClass).toLowerCase();
       else if (typeof props.subtype === "string" && props.subtype) props.purpose = String(props.subtype).toLowerCase();
-      else props.purpose = "building";
+      else props.purpose = null;
     }
+    // A deliberate gap here: some roofprints only exist in the aerial layer and
+    // carry no OSM name or kind. They are kept on the map but deliberately do
+    // not receive a generic "Building" identity; feature-label derives context
+    // from the osmId. scripts/enrich-buildings-names.mjs may add real names.
     // named buildings: prefer purpose from kind tags but leave (already set if tags)
     features.push({
       type: "Feature",

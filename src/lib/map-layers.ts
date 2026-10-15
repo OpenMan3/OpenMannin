@@ -10,17 +10,16 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import type { LayerDef } from "@/lib/types";
 import { geometryKindsOf, loadLayer, type GeometryKind } from "@/lib/layer-data";
 import { pmtilesSource } from "@/lib/layer-source";
+import { GEOMETRY_FILTER, PAINT_SUFFIXES } from "@/lib/geometry-filter";
+
+export { PAINT_SUFFIXES };
 
 export const layerIdFor = (id: string, suffix: string) => `om-${id}-${suffix}`;
 
-/** Every paint layer suffix a registry layer can be split into. */
-export const PAINT_SUFFIXES = ["fill", "line", "circle", "symbol"] as const;
-
 /**
  * Vector-tile sources have no loaded FeatureCollection to inspect, so every
- * paint layer is registered. MapLibre skips features whose geometry does not
- * match the layer type, so a circle layer over line features is a no-op rather
- * than a bug - the same trick the line layer already relies on for polygons.
+ * paint layer is registered; the per-suffix GEOMETRY_FILTER keeps each one to
+ * the geometry it can draw (see geometry-filter.ts).
  */
 const ALL_KINDS: ReadonlySet<GeometryKind> = new Set(["point", "line", "polygon"]);
 
@@ -92,6 +91,7 @@ export function addPaintLayers(
       type: "fill",
       source: id,
       minzoom,
+      filter: GEOMETRY_FILTER.fill,
       ...sourceLayer,
       paint: { "fill-color": def.color, "fill-opacity": visual.fill },
     });
@@ -108,6 +108,7 @@ export function addPaintLayers(
       type: "line",
       source: id,
       minzoom,
+      filter: GEOMETRY_FILTER.line,
       ...sourceLayer,
       paint: { "line-color": lineColor, "line-width": visual.line, "line-opacity": 0.85 },
     });
@@ -120,6 +121,7 @@ export function addPaintLayers(
       type: "circle",
       source: id,
       minzoom,
+      filter: GEOMETRY_FILTER.circle,
       ...sourceLayer,
       paint: {
         "circle-radius": ps.radius,
@@ -141,6 +143,7 @@ export function addPaintLayers(
       type: "symbol",
       source: id,
       minzoom: symbolZoom,
+      filter: GEOMETRY_FILTER.symbol,
       ...sourceLayer,
       layout: {
         "text-field": ["coalesce", ["get", "name"], ["get", "purpose"], ["get", "subtype"], ["get", "buildingClass"], ""],

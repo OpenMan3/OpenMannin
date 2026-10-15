@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.11] - 2026-10-15
+### Fixed
+- Linear layers rendered as dots and boxes. Every PMTiles-backed layer registered all four paint layers (fill, line, circle, symbol) because the vector path calls `addPaintLayers` with every geometry kind (there is no loaded FeatureCollection to inspect). The old comment claimed MapLibre "skips features whose geometry does not match the layer type", but a circle layer happily draws every line vertex as a dot and a fill layer closes the path into a polygon, so roads, footpaths and power-lines showed a trail of dots with filled triangles at each turn. Each paint layer now carries a `geometry-type` filter restricting it to the geometry it can draw, held in the new dependency-free `src/lib/geometry-filter.ts` and applied in `src/lib/map-layers.ts`: fill accepts polygons, circle accepts points, symbol accepts points and polygons, and the single line layer accepts lines and polygon outlines. A hidden-layers probe went from 41,479 changed pixels to 0, and rendered-feature counts match the geometry (roads: 54 line, 0 others; power-lines: 1 line + 2 point towers). Five tests in `scripts/lib/geometry-filter.test.mjs` pin the guards, including that the circle and fill guards reject line strings.
+
+### Changed
+- Extracted `PAINT_SUFFIXES` and the new `GEOMETRY_FILTER` into `src/lib/geometry-filter.ts` so the guards are unit-testable without importing the browser-only `map-layers.ts`. `map-layers.ts` re-exports `PAINT_SUFFIXES` unchanged.
+
 ## [0.3.10] - 2026-10-15
 ### Changed
 - Address-only buildings are now labelled with their street, not just the house number: an OpenStreetMap footprint with house number 51 on Cronk Drean reads "51 Cronk Drean" in the popup, the Browse list and global search rather than a bare "51", and likewise "3 Hutchinson Square". The rule is in the shared `resolveFeatureLabel` resolver (`src/lib/feature-label.ts`), so the popup, the browse list and the search index keep agreeing: it fires only for buildings, only when the resolved identity is the house number itself, and only when a street is present. Buildings with a name or house name keep that name, a number with no street stays a bare number, and the separate house-numbers layer is left as-is. About 5,100 unnamed footprints gain the fuller label. `public/data/search-index.json` was rebuilt; four resolver tests were added.

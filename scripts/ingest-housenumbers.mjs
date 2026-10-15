@@ -56,6 +56,8 @@ out center body;`,
   );
 
   const features = [];
+  const seen = new Map();
+  let deduped = 0;
   for (const el of body.elements ?? []) {
     const t = el.tags ?? {};
     const housenumber = t["addr:housenumber"] ?? null;
@@ -65,29 +67,49 @@ out center body;`,
     const lat = el.lat ?? el.center?.lat;
     if (lon === undefined || lat === undefined) continue;
 
-    features.push({
+    const props = compact({
+      label: labelFor(t),
+      housenumber,
+      housename,
+      street: t["addr:street"] ?? null,
+      place: t["addr:place"] ?? null,
+      postcode: t["addr:postcode"] ?? null,
+      suburb: t["addr:suburb"] ?? t["addr:city"] ?? null,
+      unit: t["addr:unit"] ?? t["addr:flats"] ?? null,
+      kind: housenumber ? "number" : "name",
+      source: "osm",
+    });
+    const feature = {
       type: "Feature",
       id: `${el.type}/${el.id}`,
       geometry: roundCoords({ type: "Point", coordinates: [lon, lat] }, 6),
-      properties: compact({
-        label: labelFor(t),
-        housenumber,
-        housename,
-        street: t["addr:street"] ?? null,
-        place: t["addr:place"] ?? null,
-        postcode: t["addr:postcode"] ?? null,
-        suburb: t["addr:suburb"] ?? t["addr:city"] ?? null,
-        unit: t["addr:unit"] ?? t["addr:flats"] ?? null,
-        kind: housenumber ? "number" : "name",
-        source: "osm",
-      }),
-    });
+      properties: props,
+    };
+
+    // Deduplicate OSM nodes/ways that map the same address at the same
+    // position (a building outline and its address node, for example).
+    // Key ignores housename so a numbered node and a named way for the same
+    // building collapse into one record; the richer record (with housename)
+    // wins.
+    const key = `${housenumber ?? ""}|${t["addr:street"] ?? ""}|${Number(lon).toFixed(5)}|${Number(lat).toFixed(5)}`;
+    const existing = seen.get(key);
+    if (existing) {
+      deduped++;
+      if (!existing.properties.housename && props.housename) {
+        const idx = features.indexOf(existing);
+        features[idx] = feature;
+        seen.set(key, feature);
+      }
+      continue;
+    }
+    seen.set(key, feature);
+    features.push(feature);
   }
 
   const numbered = features.filter((f) => f.properties.housenumber).length;
   const named = features.filter((f) => !f.properties.housenumber && f.properties.housename).length;
   const withPostcode = features.filter((f) => f.properties.postcode).length;
-  console.log(`  address points: ${features.length} (${numbered} numbered, ${named} named-only)`);
+  console.log(`  address points: ${features.length} (${numbered} numbered, ${named} named-only), ${deduped} duplicates dropped`);
   console.log(`  with postcode:  ${withPostcode}`);
 
   const fc = {

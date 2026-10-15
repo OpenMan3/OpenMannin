@@ -308,7 +308,7 @@ export const LAYERS: LayerDef[] = [
     defaultOn: false,
     minZoom: 14,
     description:
-      "8,287 address points from OpenStreetMap: 6,851 with addr:housenumber (numbered street addresses) and 1,436 named rural/heritage properties mapped with addr:housename instead of a number. Each point is a building, entrance or standalone address node.",
+      "8,281 address points from OpenStreetMap: 6,845 with addr:housenumber (numbered street addresses) and 1,436 named rural/heritage properties mapped with addr:housename instead of a number. Each point is a building, entrance or standalone address node.",
     caveats: [
       "Coverage depends on OSM mapping activity. Rural and newly-built areas may be incomplete.",
       "addr:interpolation ways are not expanded — intermediate house numbers are not invented.",
@@ -316,7 +316,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 8287,
+    featureCount: 8281,
   },
   {
     id: "railways",

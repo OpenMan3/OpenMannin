@@ -5,8 +5,9 @@
  * WHAT IT IS
  * ----------
  * One bbox-driven OSM harvester for the subcategory layers that were missing
- * from the map (grid lines, water supply, archaeology), plus a rebuild of the
- * manifest, search index and registry check. Every query is scoped to the Isle
+ * from the map (grid lines, water supply), plus a rebuild of the manifest,
+ * search index and registry check. The archaeology and heritage layers now live
+ * in scripts/ingest-overpass-heritage.mjs. Every query is scoped to the Isle
  * of Man bounding box and every file is stamped with provenance resolved from
  * the SAME registers the UI renders, so a data file explains its own source and
  * licence without the app.
@@ -116,25 +117,6 @@ out center;`,
       operator: "operator",
       capacity: "capacity",
       height: "height",
-      ref: "ref",
-    },
-    area: true,
-  },
-  {
-    out: "archaeology.geojson",
-    label: "monuments & archaeology",
-    query: `[out:json][timeout:180];
-(
-  node["historic"~"^(archaeological_site|wayside_cross|boundary_stone|city_gate|castle|fort|monastery|tomb|dolmen|stone_circle|standing_stone|round_tower|earthwork)$"](${BBOX});
-  way["historic"~"^(archaeological_site|castle|fort|monastery|earthwork)$"](${BBOX});
-);
-out center;`,
-    keep: {
-      name: "name",
-      historic: "historic",
-      siteType: "site_type",
-      megalithType: "megalith_type",
-      heritage: "heritage",
       ref: "ref",
     },
     area: true,

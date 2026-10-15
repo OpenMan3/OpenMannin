@@ -11,8 +11,8 @@
  * It resolves in three tiers:
  *   1. an explicit identity the ingest wrote (name, label, code, ref, ...);
  *   2. a kind derived from the feature's own tags (Footway, Stream, 30 mph
- *      limit, Lighthouse, ...), optionally qualified with the nearest named
- *      place when the feature is genuinely anonymous;
+ *      limit, Lighthouse, Mine adit, ...), optionally qualified with the
+ *      nearest named place when the feature is genuinely anonymous;
  *   3. the OSM id, so an anonymous feature is still traceable.
  *
  * A placeholder such as the literal "(unnamed)" an old seamark ingest wrote
@@ -203,6 +203,13 @@ export function featureKind(props: Record<string, unknown> | null | undefined): 
 
   if (typeof props.kind === "string" && props.kind.trim()) {
     return humanise(props.kind.trim());
+  }
+
+  // The heritage ingests write a ready-made human `type` ("Mine adit",
+  // "Ruins", "Castle"). It is already cased, so use it verbatim rather than
+  // running it back through humanise().
+  if (typeof props.type === "string" && props.type.trim()) {
+    return props.type.trim();
   }
 
   return null;

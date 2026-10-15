@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.7] - 2026-10-15
+### Added
+- A unified OSM heritage ingest (`scripts/ingest-overpass-heritage.mjs`) that queries mines, quarries, kilns, spoil heaps, water wheels, monuments, keeills and ruins in ONE combined Overpass pass and assigns each element to exactly one of the three heritage layers by tag priority. The layers are therefore disjoint by construction, which is what `verify-registry.mjs` asserts.
+- Expanded heritage coverage: mine & industrial heritage 19 to 30 features (quarries, lime kilns, spoil heaps, water wheels and ways), monuments & archaeology 140 to 281 (monuments and `nwr` ways/relations added), tholtans & ruined buildings 848 to 860.
+- Standardised heritage properties (`name`, `type`, `description`, `lat`, `lon` plus layer-specific OSM tags), and a `type` fallback in `featureKind` so an anonymous ruin reads "Ruins" rather than "Feature node/123".
+- Mine shafts and adits now carry the same per-feature `safety` warning the mines layer has always warned about.
+- Browser viewport windowing (`src/lib/virtual-list.ts` + tests): the Browse list renders only the visible rows plus overscan and pads top and bottom so the scrollbar stays honest.
+
+### Changed
+- The Browse panel's hardcoded 250-row cap and "filter to narrow" note are gone. All 860 ruins are reachable by scrolling, and the counters read the full list instead of stopping at 250.
+- `fetch-osm-layers.ts` no longer builds `mine_infrastructure.geojson` or `tholtans_ruins.geojson`; `update-data.mjs` no longer builds `archaeology.geojson`. Both now point at the new script.
+- `npm run ingest:heritage` is added and wired into `ingest:all`.
+- The mine layer is labelled "Mines & industrial heritage", with a description and caveats covering the wider tag set.
+- The mines gap now points at the widened layer rather than the old mine-specific one.
+
+### Fixed
+- `verify-registry.mjs`'s heritage duplicate check only covered tholtans vs archaeology; it now also enforces mines vs archaeology and mines vs tholtans.
+- `OVERLAP_LIMITS` was declared but never used, so 17 documented tolerance pairs were silently unchecked. They are now enforced, with the two that had drifted far past their hand-set values (house-numbers vs postcodes, house-numbers vs wifi) re-baselined so the ceiling is real rather than decorative.
+
+### Data
+- `ingest:all` ends with `annotate:nearest`, and the layers added since it last ran (buildings, marine habitats, bridges, railways, roads, traffic signals) had never been annotated, so their anonymous features read "Feature way/123". Those layers, plus the new heritage ones, now carry `nearestPlace` and render "Bridge near Ronaldsway" and similar.
+
 ## [0.3.6] - 2026-10-14
 ### Added
 - Drawer focus trap and aria-live improvements for offline status and download progress.

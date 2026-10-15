@@ -4,25 +4,26 @@
  *
  * WHY THIS FILE EXISTS
  * --------------------
- * There is no open, machine-readable dataset for the Isle of Man's mine
- * workings, tholtans (ruinously abandoned buildings), everyday utility POIs,
- * food and drink, or coastal/outdoor access points. The island's own map
- * services are Crown copyright and excluded from the OGL, so OpenMannin builds
- * these layers from OpenStreetMap under the ODbL instead.
+ * There is no open, machine-readable dataset for the Isle of Man's everyday
+ * utility POIs, food and drink, or coastal/outdoor access points. The island's
+ * own map services are Crown copyright and excluded from the OGL, so OpenMannin
+ * builds these layers from OpenStreetMap under the ODbL instead.
  *
- * Five layers, one Overpass pass each, all reduced to points (a POI needs an
+ * Three layers, one Overpass pass each, all reduced to points (a POI needs an
  * anchor, not a footprint):
  *
- *   mine_infrastructure.geojson   man_made=mineshaft|adit, historic=mine|mine_disused
- *   tholtans_ruins.geojson        historic=ruins, building=ruins, abandoned:building=*, disused=yes
  *   essential_utilities.geojson   amenity=fuel|atm|bank|toilets, emergency=defibrillator
  *   food_drink.geojson            amenity=restaurant|cafe|pub|bar
  *   coastal_outdoor.geojson       leisure=slipway, tourism=viewpoint|picnic_site, amenity=parking
  *
+ * The heritage layers this script used to build — mine_infrastructure and
+ * tholtans_ruins — are now owned by scripts/ingest-overpass-heritage.mjs, which
+ * queries mines, quarries, monuments and ruins together so the three heritage
+ * layers stay disjoint.
+ *
  * Every output file carries the provenance block resolved from the same
  * registers the UI renders, so the file explains its own source and licence
- * without the app. Mine shafts and adits additionally get a per-feature
- * `safety` warning, because a point on a map is an invitation to stand on it.
+ * without the app.
  *
  * Run with:
  *   node --experimental-strip-types --no-warnings scripts/fetch-osm-layers.ts
@@ -58,78 +59,9 @@ type Dataset = {
   keep: Record<string, string>;
   /** Derive the human sub-type used for the feature label. */
   classify: (t: Tags) => string;
-  /** Optional per-feature safety warning (mine shafts and adits). */
-  safety?: (t: Tags) => string | undefined;
 };
 
-const SHAFT_SAFETY =
-  "DANGER — mine shaft. Do NOT enter: workings can be unstable, flooded or hold bad air (low oxygen, methane, carbon dioxide), and the ground around a capped shaft can collapse. Keep clear.";
-const ADIT_SAFETY =
-  "DANGER — mine adit. Do NOT enter: bad air, roof collapse and flooding are real hazards in any underground working. Keep clear of the entrance.";
-
 const DATASETS: Dataset[] = [
-  {
-    out: "mine_infrastructure.geojson",
-    label: "mine infrastructure",
-    query: `[out:json][timeout:180];
-(
-  nwr["man_made"="mineshaft"](${BBOX});
-  nwr["man_made"="adit"](${BBOX});
-  nwr["historic"="mine"](${BBOX});
-  nwr["historic"="mine_disused"](${BBOX});
-);
-out center;`,
-    keep: {
-      name: "name",
-      manMade: "man_made",
-      historic: "historic",
-      resource: "resource",
-      depth: "depth",
-      operator: "operator",
-      access: "access",
-      disused: "disused",
-      ruins: "ruins",
-    },
-    classify: (t) => {
-      if (t["man_made"] === "mineshaft") return "Mine shaft";
-      if (t["man_made"] === "adit") return "Mine adit";
-      if (t["historic"] === "mine_disused") return "Disused mine";
-      if (t["historic"] === "mine") return "Mine";
-      return "Mine feature";
-    },
-    safety: (t) => {
-      if (t["man_made"] === "mineshaft") return SHAFT_SAFETY;
-      if (t["man_made"] === "adit") return ADIT_SAFETY;
-      return undefined;
-    },
-  },
-  {
-    out: "tholtans_ruins.geojson",
-    label: "tholtans & ruins",
-    query: `[out:json][timeout:180];
-(
-  nwr["historic"="ruins"](${BBOX});
-  nwr["building"="ruins"](${BBOX});
-  nwr["abandoned:building"](${BBOX});
-  nwr["disused"="yes"](${BBOX});
-);
-out center;`,
-    keep: {
-      name: "name",
-      historic: "historic",
-      building: "building",
-      abandoned: "abandoned:building",
-      disused: "disused",
-      ruins: "ruins",
-      place: "place",
-    },
-    classify: (t) => {
-      if (t["historic"] === "ruins" || t["building"] === "ruins" || t["ruins"]) return "Ruins";
-      if (t["abandoned:building"]) return "Abandoned building";
-      if (t["disused"] === "yes") return "Disused feature";
-      return "Derelict feature";
-    },
-  },
   {
     out: "essential_utilities.geojson",
     label: "essential utilities",
@@ -236,10 +168,7 @@ function toPointFeature(el: OverpassElement, ds: Dataset) {
     const v = t[src];
     if (v !== undefined && v !== "") props[dest] = v;
   }
-  const safety = ds.safety?.(t);
-  if (safety) props.safety = safety;
   if (t.wikidata) props.wikidata = t.wikidata;
-
   const osm = `${el.type}/${el.id}`;
   props.osm = osm;
 

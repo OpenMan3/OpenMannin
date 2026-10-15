@@ -16,14 +16,21 @@
  * upstream is contacted. The data is the same GeoJSON the map already caches.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LayerDef } from "@/lib/types";
 import { layersWithFiles } from "@/lib/layer-data";
 import { indexFeatures, type BrowseEntry } from "@/lib/feature-index";
 import { formatValue, humanise, HIDDEN_KEYS } from "@/lib/feature-format";
+import { windowRange } from "@/lib/virtual-list";
 
-/** Rows rendered before the count-overflow note; the list is searchable. */
-const MAX_LIST_ROWS = 250;
+/**
+ * Fixed height of every list row, in pixels (see the row <li> below). The
+ * windowing maths needs one known height, so rows are a single truncated line
+ * rather than free-flowing text.
+ */
+const ROW_HEIGHT = 30;
+/** Rows rendered above and below the viewport, to hide fast scrolling. */
+const OVERSCAN = 8;
 /** Attribute rows shown in the detail card before an overflow note. */
 const MAX_DETAIL_ROWS = 14;
 
@@ -69,7 +76,8 @@ export function FeatureBrowser({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLUListElement | null>(null);
-  const rowRefs = useRef<Map<number, HTMLLIElement>>(new Map());
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewport, setViewport] = useState(0);
 
   const def = withFiles.find((l) => l.id === layerId) ?? null;
 
@@ -81,6 +89,17 @@ export function FeatureBrowser({
   }, [entries, query]);
 
   const selected = list.length > 0 ? list[Math.min(pos, list.length - 1)] : null;
+
+  // Window the list to the visible rows (plus overscan) so a layer of 860
+  // ruins mounts ~20 nodes, not 860, and the filter box stays responsive.
+  const range = windowRange({
+    total: list.length,
+    rowHeight: ROW_HEIGHT,
+    scrollTop,
+    viewportHeight: viewport,
+    overscan: OVERSCAN,
+  });
+  const visibleRows = list.slice(range.start, range.end);
 
   // Load layer data when layerId changes (runs on mount and when tab is reopened).
   useEffect(() => {
@@ -108,6 +127,25 @@ export function FeatureBrowser({
     };
   }, [layerId, withFiles]);
 
+  // Measure the list viewport so the window knows how many rows fit. Re-runs
+  // when the panel (and so the <ul>) mounts or unmounts.
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const measure = () => setViewport(el.clientHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [def]);
+
+  // A new filter or layer means a different list: start it from the top so the
+  // window does not open onto blank space.
+  const resetScroll = useCallback(() => {
+    setScrollTop(0);
+    if (listRef.current) listRef.current.scrollTop = 0;
+  }, []);
+
   const chooseLayer = (id: string) => {
     onLayerChange(id);
     onPosChange(0);
@@ -115,7 +153,7 @@ export function FeatureBrowser({
     setError(null);
     setEntries(null);
     setTotal(null);
-    rowRefs.current.clear();
+    resetScroll();
     if (!id) return;
     const layer = withFiles.find((l) => l.id === id);
     if (!layer) return;
@@ -125,29 +163,39 @@ export function FeatureBrowser({
     // Loading is handled by the effect above.
   };
 
+  // Scroll a list position into view. Works whether or not the row is
+  // currently mounted, which it may not be: the window only renders the
+  // visible slice, so the active row has to be scrolled to by pixel offset.
+  const reveal = (index: number) => {
+    const el = listRef.current;
+    if (!el) return;
+    const top = index * ROW_HEIGHT;
+    const bottom = top + ROW_HEIGHT;
+    if (top < el.scrollTop) el.scrollTop = top;
+    else if (bottom > el.scrollTop + el.clientHeight) el.scrollTop = bottom - el.clientHeight;
+  };
+
   const goTo = (e: BrowseEntry | null) => {
     if (!e) return;
     onLocate(e.lon, e.lat);
     window.dispatchEvent(
       new CustomEvent("openmannin:highlight-feature", { detail: { geometry: e.geometry } }),
     );
-    // Keep the active row visible while stepping through a long list.
-    requestAnimationFrame(() => {
-      const row = rowRefs.current.get(e.index);
-      row?.scrollIntoView({ block: "nearest" });
-    });
   };
 
   const step = (delta: number) => {
     if (list.length === 0) return;
     const next = (pos + delta + list.length) % list.length;
     onPosChange(next);
+    reveal(next);
     goTo(list[next]);
   };
 
   const selectRow = (e: BrowseEntry) => {
     const idx = list.findIndex((x) => x.index === e.index);
-    onPosChange(idx < 0 ? 0 : idx);
+    const next = idx < 0 ? 0 : idx;
+    onPosChange(next);
+    reveal(next);
     goTo(e);
   };
 
@@ -193,6 +241,7 @@ export function FeatureBrowser({
               onChange={(e) => {
                 onQueryChange(e.target.value);
                 onPosChange(0);
+                resetScroll();
               }}
               placeholder="Filter by name, street, ref…"
               aria-label="Filter features"
@@ -233,6 +282,7 @@ export function FeatureBrowser({
 
           <ul
             ref={listRef}
+            onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
             className="scroll-thin mt-2 min-h-0 flex-1 overflow-y-auto rounded-md border border-line md:pb-16"
           >
             {loading && <li className="p-2.5 text-[12px] text-ink-3">Loading…</li>}
@@ -245,12 +295,13 @@ export function FeatureBrowser({
                     : "Nothing to show."}
               </li>
             )}
-            {list.slice(0, MAX_LIST_ROWS).map((e) => (
-              <li key={e.index} ref={(el) => { if (el) rowRefs.current.set(e.index, el); }}>
+            {!loading && range.topPad > 0 && <li aria-hidden style={{ height: range.topPad }} />}
+            {visibleRows.map((e) => (
+              <li key={e.index} style={{ height: ROW_HEIGHT }}>
                 <button
                   type="button"
                   onClick={() => selectRow(e)}
-                  className={`w-full truncate px-2.5 py-1.5 text-left text-[12px] ${
+                  className={`block h-full w-full truncate px-2.5 text-left text-[12px] leading-[30px] ${
                     selected?.index === e.index
                       ? "bg-raised text-accent"
                       : "text-ink hover:bg-raised/50"
@@ -261,11 +312,8 @@ export function FeatureBrowser({
                 </button>
               </li>
             ))}
-            {!loading && query.trim() === "" && total !== null && total > MAX_LIST_ROWS && (
-              <li className="px-2.5 py-1.5 text-[11px] text-ink-3">
-                Showing {MAX_LIST_ROWS.toLocaleString()} of {total.toLocaleString()} — filter to
-                narrow.
-              </li>
+            {!loading && range.bottomPad > 0 && (
+              <li aria-hidden style={{ height: range.bottomPad }} />
             )}
           </ul>
 

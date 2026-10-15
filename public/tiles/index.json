@@ -4,8 +4,8 @@
     {
       "id": "roads",
       "tiles": 4938,
-      "bytes": 4728805,
-      "sourceBytes": 3923681
+      "bytes": 5453395,
+      "sourceBytes": 4338260
     },
     {
       "id": "footpaths",
@@ -34,14 +34,14 @@
     {
       "id": "buildings",
       "tiles": 426,
-      "bytes": 2054017,
-      "sourceBytes": 15850226
+      "bytes": 2775525,
+      "sourceBytes": 18417016
     },
     {
       "id": "marine-habitats",
       "tiles": 125,
-      "bytes": 28864,
-      "sourceBytes": 4100
+      "bytes": 34654,
+      "sourceBytes": 4514
     }
   ]
 }

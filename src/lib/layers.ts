@@ -723,16 +723,17 @@ export const LAYERS: LayerDef[] = [
     defaultOn: false,
     minZoom: 13,
     description:
-      "The island's recorded archaeological monuments from OpenStreetMap: archaeological sites, keeills and wayside crosses, boundary stones, standing stones, stone circles, dolmens, castles, forts, earthworks and monastic remains (historic=*). Where the Wikidata heritage layer records statutory designation, this layer records the physical monument itself.",
+      "The island's recorded archaeological monuments from OpenStreetMap: archaeological sites, monuments, keeills and wayside crosses, boundary stones, standing stones, stone circles, dolmens, castles, forts, earthworks, round towers and monastic remains (historic=*). Where the Wikidata heritage layer records statutory designation, this layer records the physical monument itself.",
     caveats: [
       "OSM community mapping, not the Manx National Heritage Historic Environment Record, which is the authoritative inventory and is not published as open data.",
       "historic=* is used inconsistently, so a mapped feature may be a monument, a marker or an area centroid; read the attributes before setting out.",
+      "A handful of landmarks are also mapped as tourist attractions and so appear in the tourism layer too — the same place seen as a monument and as a visitor site, not a duplicate record.",
       "*** MANY MONUMENTS STAND ON PRIVATE LAND OR PROTECTED GROUND. *** A mapped feature is a location, not a right of access. Do not trespass, and do not disturb a scheduled monument — damaging one is a criminal offence.",
       "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 140,
+    featureCount: 281,
   },
 
   // ==========================================================================
@@ -893,7 +894,7 @@ export const LAYERS: LayerDef[] = [
   // ==========================================================================
   {
     id: "mine-infrastructure",
-    label: "Mine shafts, adits & mines",
+    label: "Mines & industrial heritage",
     group: "poi",
     category: "heritage",
     subcategory: "mine-infrastructure",
@@ -903,16 +904,16 @@ export const LAYERS: LayerDef[] = [
     defaultOn: false,
     minZoom: 13,
     description:
-      "The surface evidence of the Isle of Man's metal-mining heritage, from OpenStreetMap: mine shafts (man_made=mineshaft), adits (man_made=adit), and mines (historic=mine / historic=mine_disused). This is the lead, copper, zinc and silver country of Laxey, Foxdale and Snaefell, plus the many smaller workings — records no official open dataset publishes.",
+      "The surface evidence of the Isle of Man's industrial heritage, from OpenStreetMap: mine shafts (man_made=mineshaft), adits (man_made=adit) and mines (historic=mine / historic=mine_disused), plus the quarrying and processing remains that shared the same ground — quarries (historic=quarry), lime kilns (historic=lime_kiln / man_made=kiln), spoil heaps (man_made=spoil_heap) and water wheels (man_made=water_wheel). This is the lead, copper, zinc and silver country of Laxey, Foxdale and Snaefell, plus the many smaller workings — records no official open dataset publishes.",
     caveats: [
       "*** SAFETY — DO NOT ENTER. *** Mine shafts and adits are lethal hazards. Underground workings can be unstable, flooded, or hold bad air (low oxygen, methane, carbon dioxide). Ground around a capped or infilled shaft can collapse without warning. Treat every feature here as a hazard to avoid, not a place to visit.",
-      "Positions are community mapping, not a survey. A point may mark a shaft, an adit mouth, a spoil heap, an engine house or an area centroid — read the attributes before going anywhere near it.",
-      "No official mining register is published as open data; Manx National Heritage holds the archaeological record. See the 'Abandoned mines' gap.",
+      "Positions are community mapping, not a survey. A point may mark a shaft, an adit mouth, a quarry face, a kiln, a spoil heap or an area centroid — read the attributes before going anywhere near it.",
+      "No official mining or industrial-archaeology register is published as open data; Manx National Heritage holds the archaeological record. See the 'Abandoned mines' gap.",
       "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 19,
+    featureCount: 30,
   },
   {
     id: "tholtans-ruins",
@@ -926,7 +927,7 @@ export const LAYERS: LayerDef[] = [
     defaultOn: false,
     minZoom: 14,
     description:
-      "Manx tholtans — abandoned and ruinous structures — from OpenStreetMap: historic=ruins, building=ruins, abandoned:building=* and disused=yes. Farmsteads, cottages, mills and industrial remains scattered across the island.",
+      "Manx tholtans — abandoned and ruinous structures — from OpenStreetMap: historic=ruins, building=ruins, ruins=yes, abandoned:building=* and disused=yes. Farmsteads, cottages, mills and derelict structures scattered across the island. Derelict mines and quarries are held in the mines & industrial heritage layer instead, so a working's remains are not counted twice.",
     caveats: [
       "STRUCTURALLY UNSAFE. A ruin is a ruin: walls and roofs may be collapsing and floors and cellars open. Do not enter.",
       "MANY THOLTANS STAND ON PRIVATE LAND. A mapped feature is a location, not a public right of access. Do not trespass.",
@@ -936,7 +937,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 848,
+    featureCount: 860,
   },
   {
     id: "essential-utilities",
@@ -1120,7 +1121,7 @@ export const GAPS: Gap[] = [
     whyUnavailable:
       "No official mining layer is published. Searches of the government's 564 open items for 'mine', 'mining', 'mineral', 'spoil' and 'shaft' return zero results. Manx National Heritage holds the authoritative archaeological record but its HER API returns 404 on every conventional path and it operates an Access and Charging Policy, so some reuse may be chargeable.",
     whatWeWouldNeed:
-      "The Manx National Heritage HER under licence, which would add spoil heaps, processing plants and survey-grade positions. The OSM fallback is now built and shipped as the 'Mine shafts, adits & mines' layer — partial and community-mapped, graded C — so this gap remains only for the authoritative record. Contact iomher@mnh.im.",
+      "The Manx National Heritage HER under licence, which would add processing plants, survey-grade positions and the full documentary record. The OSM fallback is now built and shipped as the 'Mines & industrial heritage' layer — partial and community-mapped, graded C — so this gap remains only for the authoritative record. Contact iomher@mnh.im.",
     contact: "iomher@mnh.im",
     severity: "high",
   },

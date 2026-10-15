@@ -82,7 +82,7 @@ export const SUBCATEGORY_LABELS: Record<LayerSubcategory, string> = {
   "aviation-monitoring": "Aviation & monitoring",
   "watch-features": "Hazard and feasibility context",
   designated: "Designated places",
-  "mine-infrastructure": "Mine infrastructure",
+  "mine-infrastructure": "Mines & industrial heritage",
   "tholtans-ruins": "Tholtans & ruined buildings",
   archaeology: "Monuments & archaeology",
   "rights-of-way": "Public rights of way",

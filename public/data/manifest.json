@@ -34,7 +34,7 @@
       "file": "roads.geojson",
       "present": true,
       "features": 12020,
-      "bytes": 3923681,
+      "bytes": 4338260,
       "generated": "2026-10-12T01:48:56.478Z",
       "bbox": [
         -4.828746,
@@ -48,7 +48,7 @@
       "file": "bridges.geojson",
       "present": true,
       "features": 558,
-      "bytes": 135379,
+      "bytes": 155095,
       "generated": "2026-10-12T01:49:44.836Z",
       "bbox": [
         -4.819093,
@@ -61,7 +61,7 @@
       "file": "emergency.geojson",
       "present": true,
       "features": 13,
-      "bytes": 3725,
+      "bytes": 3726,
       "generated": "2026-10-12T01:35:43.679Z",
       "bbox": [
         -4.69565,
@@ -101,7 +101,7 @@
       "file": "tourism.geojson",
       "present": true,
       "features": 298,
-      "bytes": 73367,
+      "bytes": 73368,
       "generated": "2026-10-12T01:36:04.428Z",
       "bbox": [
         -4.824416,
@@ -180,7 +180,7 @@
       "file": "railways.geojson",
       "present": true,
       "features": 284,
-      "bytes": 116639,
+      "bytes": 118529,
       "generated": "2026-10-12T01:49:24.126Z",
       "bbox": [
         -4.758286,
@@ -206,7 +206,7 @@
       "file": "traffic-signals.geojson",
       "present": true,
       "features": 155,
-      "bytes": 35456,
+      "bytes": 44828,
       "generated": "2026-10-12T01:49:48.548Z",
       "bbox": [
         -4.763987,
@@ -284,7 +284,7 @@
       "file": "seamarks.geojson",
       "present": true,
       "features": 102,
-      "bytes": 30503,
+      "bytes": 30504,
       "generated": "2026-10-12T01:38:04.746Z",
       "bbox": [
         -5.12208,
@@ -388,11 +388,11 @@
     "archaeology": {
       "file": "archaeology.geojson",
       "present": true,
-      "features": 140,
-      "bytes": 35411,
-      "generated": "2026-10-11T22:45:53.718Z",
+      "features": 281,
+      "bytes": 86807,
+      "generated": "2026-10-14T23:47:31.932Z",
       "bbox": [
-        -4.767725,
+        -4.787708,
         54.054868,
         -4.312858,
         54.393157
@@ -428,7 +428,7 @@
       "file": "marine-habitats.geojson",
       "present": true,
       "features": 8,
-      "bytes": 4100,
+      "bytes": 4514,
       "generated": "2026-10-14T23:15:42.548Z",
       "bbox": [
         -4.799,
@@ -481,12 +481,12 @@
     "mine-infrastructure": {
       "file": "mine_infrastructure.geojson",
       "present": true,
-      "features": 19,
-      "bytes": 8910,
-      "generated": "2026-10-12T01:38:05.918Z",
+      "features": 30,
+      "bytes": 13501,
+      "generated": "2026-10-14T23:47:31.930Z",
       "bbox": [
-        -4.725134,
-        54.099495,
+        -4.825266,
+        54.05354,
         -4.310141,
         54.307578
       ]
@@ -494,9 +494,9 @@
     "tholtans-ruins": {
       "file": "tholtans_ruins.geojson",
       "present": true,
-      "features": 848,
-      "bytes": 215082,
-      "generated": "2026-10-12T01:38:24.381Z",
+      "features": 860,
+      "bytes": 271883,
+      "generated": "2026-10-14T23:47:31.934Z",
       "bbox": [
         -4.826405,
         54.049585,
@@ -560,7 +560,7 @@
       "file": "buildings.geojson",
       "present": true,
       "features": 46106,
-      "bytes": 15850226,
+      "bytes": 18417016,
       "generated": "2026-10-14T22:47:53.343Z",
       "bbox": [
         -4.83761,

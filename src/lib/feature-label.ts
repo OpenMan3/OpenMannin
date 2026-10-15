@@ -159,6 +159,45 @@ function humanise(value: string): string {
  * `kind` field other layers also use.
  */
 
+
+const BUILDING_CLASS_LABELS: Record<string, string> = {
+  house: "House",
+  semidetached_house: "Semi-detached house",
+  detached: "Detached house",
+  detached_house: "Detached house",
+  terrace: "Terraced house",
+  terraced: "Terraced house",
+  semidetached: "Semi-detached house",
+  apartments: "Apartment building",
+  bungalow: "Bungalow",
+  office: "Office",
+  shop: "Shop",
+  retail: "Retail",
+  pub: "Pub",
+  cafe: "Cafe",
+  restaurant: "Restaurant",
+  hotel: "Hotel",
+  school: "School",
+  hospital: "Hospital",
+  church: "Church",
+  chapel: "Chapel",
+  warehouse: "Warehouse",
+  industrial: "Industrial building",
+  parking: "Car park",
+  garage: "Garage",
+  farm: "Farm building",
+  farm_auxiliary: "Farm building",
+  ruins: "Ruined building",
+  ruins_of: "Ruined building",
+  storage_tank: "Storage tank",
+  shelter: "Shelter",
+};
+
+function buildingLabel(value: string): string {
+  const key = value.trim().toLowerCase();
+  return BUILDING_CLASS_LABELS[key] ?? humanise(value.trim());
+}
+
 /** Buildings carry many derived values that are not an identity (no name) but
  *  make a better row label than a blank or the literal "(unnamed)". */
 function buildingDescriptor(props: Record<string, unknown>): string | null {
@@ -170,21 +209,16 @@ function buildingDescriptor(props: Record<string, unknown>): string | null {
   const safeKindish = kindish && !PLACEHOLDERS.has(kindish.toLowerCase()) ? kindish : null;
   if (name && street) return `${name}, ${street}`.trim();
   if (number && street) return `${number} ${street}`.trim();
-  if (safeKindish && street) return `${humaniseSafe(safeKindish)} \u00b7 ${street}`;
+  if (safeKindish && street) return `${buildingLabel(safeKindish)} \u00b7 ${street}`;
   if (name) return name;
   if (number && place) return `${number} near ${place}`.trim();
-  if (safeKindish && place) return `${humaniseSafe(safeKindish)} \u00b7 ${place}`;
-  if (safeKindish) return humaniseSafe(safeKindish);
+  if (safeKindish && place) return `${buildingLabel(safeKindish)} \u00b7 ${place}`;
+  if (safeKindish) return buildingLabel(safeKindish);
   if (street) return street;
   if (place) return `Footprint near ${place}`;
   const osm = typeof props.osmId === "string" ? props.osmId.trim() : "";
   if (osm) return `Feature ${osm}`;
   return null;
-}
-
-/** humanise but keep hyphens/already readable names. */
-function humaniseSafe(value: string): string {
-  return value.includes(" ") ? value : humanise(value);
 }
 
 export function featureKind(props: Record<string, unknown> | null | undefined): string | null {
@@ -237,9 +271,9 @@ export function featureKind(props: Record<string, unknown> | null | undefined): 
   }
 
   // Buildings may arrive with class/subtype/purpose tags instead of a name.
-  if (typeof props.purpose === "string" && props.purpose.trim()) return humanise(props.purpose.trim());
-  if (typeof props.buildingClass === "string" && props.buildingClass.trim()) return humanise(props.buildingClass.trim());
-  if (typeof props.subtype === "string" && props.subtype.trim()) return humanise(props.subtype.trim());
+  if (typeof props.purpose === "string" && props.purpose.trim()) return buildingLabel(props.purpose.trim());
+  if (typeof props.buildingClass === "string" && props.buildingClass.trim()) return buildingLabel(props.buildingClass.trim());
+  if (typeof props.subtype === "string" && props.subtype.trim()) return buildingLabel(props.subtype.trim());
 
   // The heritage ingests write a ready-made human `type` ("Mine adit",
   // "Ruins", "Castle"). It is already cased, so use it verbatim rather than

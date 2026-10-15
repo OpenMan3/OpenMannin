@@ -241,7 +241,7 @@ async function run() {
     if (!props.purpose) {
       if (typeof props.buildingClass === "string" && props.buildingClass) props.purpose = String(props.buildingClass).toLowerCase();
       else if (typeof props.subtype === "string" && props.subtype) props.purpose = String(props.subtype).toLowerCase();
-      else props.purpose = null;
+      else props.purpose = "building";
     }
     // named buildings: prefer purpose from kind tags but leave (already set if tags)
     features.push({

@@ -14,6 +14,36 @@ import { SOURCES } from "../src/lib/sources.ts";
 const OUT = "public/data/overture-places.geojson";
 const BBOX = { minLon: -4.85, maxLon: -4.30, minLat: 54.02, maxLat: 54.45 };
 
+/**
+ * Overture records known to be geographically inaccurate for the Isle of Man,
+ * keyed by record id with the reason they are dropped.
+ *
+ * The licence gate (scripts/lib/overture-licence.mjs) only guarantees the data
+ * is openly licensed, not that it is correctly located. This is the accuracy
+ * backstop: records here are verifiably misplaced and must not ship, even when
+ * their licence is clean.
+ *
+ * be1ee95b-c28b-47ca-a838-a2b466155845: "Dhoon Glen, Isle of Man" (meta, park,
+ *   confidence 0.81) sits at -4.4695, 54.18147 — on Seafield Crescent in Onchan.
+ *   The real Dhoon Glen is near Laxey at approx -4.368, 54.252 (see the park
+ *   record 92401552-4fd3-4071-b0bf-ed2414fe73fa, and Dhoon Glen Halt/Car Park).
+ *   10.2 km off. Meta reverse-geocoded the name to the wrong settlement. Drop it.
+ */
+export const OVERTURE_ACCURACY_EXCLUSIONS: Record<string, string> = {
+  "be1ee95b-c28b-47ca-a838-a2b466155845":
+    "misplaced: Dhoon Glen is near Laxey (~54.252, -4.368), not Seafield Crescent, Onchan (~54.181, -4.470)",
+  "0ed6bd0d-a370-460f-8539-881938775518":
+    "misplaced: Port Erin is on the south coast (~54.086, -4.757), not ~54.152, -4.493",
+  "830f97fd-12a9-481c-b838-9ce05b6e187f":
+    "misplaced: Port Erin is on the south coast (~54.086, -4.757), not ~54.159, -4.485",
+  "29c96f61-8ec0-4e95-851d-c9b0ff44af22":
+    "misplaced: Ballig is near ~54.247, -4.597, not ~54.210, -4.630",
+  "41d1a410-4286-4ad5-9df4-ae53b0e14e0e":
+    "misplaced: Ballig Farm is near ~54.208, -4.631, not ~54.365, -4.478",
+  "971921e4-1da1-430c-b6df-2eed8f282a72":
+    "misplaced: Glen Mona is near Laxey (~54.272, -4.376), not ~54.161, -4.474",
+};
+
 const { DuckDBInstance } = await import("@duckdb/node-api");
 
 async function main() {
@@ -73,6 +103,11 @@ async function main() {
   for (const { row, geometry } of featureRecords) {
     const decision = classifyOvertureRecord(row.sourceDataset, row.sourceLicense);
     if (decision.action !== "keep") continue;
+    const reason = OVERTURE_ACCURACY_EXCLUSIONS[row.id];
+    if (reason) {
+      console.warn(`  skip ${row.id} (accuracy): ${reason}`);
+      continue;
+    }
     if (!row.sourceDataset || row.sourceDataset.trim() === "") {
       throw new Error(`record ${row.id} carries CDLA-Permissive-2.0 with no source dataset`);
     }

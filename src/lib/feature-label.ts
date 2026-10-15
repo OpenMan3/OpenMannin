@@ -215,13 +215,17 @@ function buildingDescriptor(props: Record<string, unknown>): string | null {
   const name = firstString(props, ["housename", "addr:housename"]);
   const street = firstString(props, ["street", "addr:street", "substreet", "addr:substreet", "addr:place", "place"]);
   const place = firstString(props, ["nearestPlace"]);
+  const road = firstString(props, ["nearestRoad"]);
   const kindish = firstString(props, ["purpose", "buildingClass", "subtype", "building", "amenity", "shop", "office", "tourism", "religion", "historic"]);
   const safeKindish = kindish && !PLACEHOLDERS.has(kindish.toLowerCase()) ? kindish : null;
   if (name && street) return `${name}, ${street}`.trim();
   if (number && street) return `${number} ${street}`.trim();
+  if (number && road) return `${number} ${road}`.trim();
   if (safeKindish && street) return `${buildingLabel(safeKindish)} \u00b7 ${street}`;
   if (name) return name;
   if (number && place) return `${number} near ${place}`.trim();
+  if (safeKindish && road) return `${buildingLabel(safeKindish)} on ${road}`.trim();
+  if (road) return `Building on ${road}`.trim();
   if (safeKindish && place) return `${buildingLabel(safeKindish)} \u00b7 ${place}`;
   if (safeKindish) return buildingLabel(safeKindish);
   if (street) return street;
@@ -241,7 +245,7 @@ function buildingAddressLabel(props: Record<string, unknown>, identity: string):
   if (!isBuildingProps(props)) return null;
   const number = firstString(props, ["housenumber", "addr:housenumber"]);
   if (!number || number !== identity) return null;
-  const street = firstString(props, ["street", "addr:street", "substreet", "addr:substreet", "addr:place", "place"]);
+  const street = firstString(props, ["street", "addr:street", "substreet", "addr:substreet", "addr:place", "place", "nearestRoad"]);
   if (!street) return null;
   return `${number} ${street}`.trim();
 }

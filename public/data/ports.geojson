@@ -1,1 +1,3693 @@
-{"type":"FeatureCollection","name":"ports","properties":{"generated":"2026-10-12T01:40:47.132Z","source":"https://www.openstreetmap.org/","sourceVerified":"2026-10-12","licence":"ODbL","statutoryPorts":["Douglas","Ramsey","Peel","Castletown","Port Erin","Port St Mary","Laxey","Port Cornaa","Groudle"],"caveats":["All eight listed ports and every pier are TIDAL. The north-east approaches see about 8 m of range, so vessels above roughly 7 m are constrained. Harbour geometry is OSM-derived and carries no published depth survey.","These are mapped harbour AREAS and landing structures, not berth allocations. There is no authoritative, machine-readable berth or pontoon dataset for the Isle of Man, so nothing here indicates who may occupy a given pontoon.","Several piers are tagged `Isle of Man Government 1:25000 map (2007)` as their source. The outlines are therefore at best 2007 vintage and should not be treated as surveyed to modern accuracy.","Douglas Harbour and Peel Harbour exist in OSM as overlapping mapped areas. Both are retained; see the overlap note in each feature's properties.","Statutory port status is asserted from the Harbours Act list, not derived from the geometry. A harbour named here that is not on that list is still a harbour - it simply is not a statutory port.","Two of the nine statutory ports (Port Cornaa, Groudle) have NO mapped harbour geometry in any source consulted. They appear as grade-C points with geometryPresent=false. Their positions are settlement centroids, not harbour boundaries, and no basin outline should be inferred from them.","Douglas Inner Harbour Marina and Peel Marina are marinas WITHIN Douglas and Peel, not ports in their own right. They are flagged subsidiaryOfStatutoryPort and are not counted in the statutory total.","Marine limits, dredged channels and any licensing conditions are NOT represented. Port operations and activity must be checked against the Isle of Man Harbours Act and current notices to mariners."],"licenceId":"ODbL","sourceId":"osmHarbours","licenceUrl":"https://opendatacommons.org/licenses/odbl/"},"features":[{"type":"Feature","id":"port/battery-pier-pier","geometry":{"type":"Polygon","coordinates":[[[-4.468035,54.14528],[-4.467997,54.145255],[-4.467892,54.145179],[-4.467832,54.145205],[-4.467754,54.14524],[-4.46649,54.145797],[-4.466077,54.146335],[-4.46601,54.146416],[-4.466014,54.146456],[-4.466145,54.146484],[-4.466154,54.146474],[-4.466235,54.146513],[-4.466298,54.146411],[-4.466274,54.146367],[-4.466618,54.145937],[-4.46677,54.145866],[-4.466898,54.145807],[-4.46725,54.145644],[-4.468035,54.14528]]]},"properties":{"name":"Battery Pier","kind":"pier","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":null,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/144844700","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/brewery-wharf-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.653301,54.075806],[-4.65327,54.075809],[-4.653236,54.075813],[-4.653268,54.075908],[-4.65271,54.076036],[-4.652712,54.075937],[-4.652651,54.075643],[-4.652649,54.075632],[-4.652125,54.075686],[-4.652711,54.075066],[-4.652721,54.075047],[-4.652726,54.075015],[-4.652723,54.075006],[-4.652706,54.074962],[-4.652693,54.074935],[-4.652688,54.074925],[-4.652683,54.074915],[-4.652749,54.074907],[-4.652815,54.074899],[-4.652852,54.074998],[-4.652874,54.075058],[-4.652971,54.075046],[-4.652949,54.074985],[-4.653031,54.074974],[-4.653301,54.075806]]]},"properties":{"name":"Brewery Wharf","kind":"harbour-area","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":true,"mooring":true,"osmSource":"Isle of Man Government aerial imagery (2001)","osmApproximate":null,"overlapNote":null,"osmId":"way/60241059","coordGrade":"B","coordSource":"OpenStreetMap; upstream source tagged in OSM as: Isle of Man Government aerial imagery (2001)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/carey-s-harbour-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.803445,54.061293],[-4.803351,54.06134],[-4.803249,54.061299],[-4.803029,54.061101],[-4.803097,54.061094],[-4.80312,54.061091],[-4.803175,54.061185],[-4.803266,54.06119],[-4.803445,54.061293]]]},"properties":{"name":"Carey's Harbour","kind":"harbour-area","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":true,"mooring":false,"osmSource":"Isle of Man Government 1:25000 map (2007)","osmApproximate":null,"overlapNote":null,"osmId":"way/913999747","coordGrade":"C","coordSource":"OpenStreetMap; upstream source tagged in OSM as: Isle of Man Government 1:25000 map (2007)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/castletown-harbour-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.651624,54.073973],[-4.651663,54.07395],[-4.65187,54.074011],[-4.652395,54.074185],[-4.652494,54.074098],[-4.65251,54.074104],[-4.652526,54.074109],[-4.652807,54.074201],[-4.653068,54.074286],[-4.653172,54.07435],[-4.653289,54.074433],[-4.653437,54.074577],[-4.653446,54.074586],[-4.653461,54.0746],[-4.653448,54.074663],[-4.653427,54.074751],[-4.653252,54.074848],[-4.653135,54.074861],[-4.653,54.074877],[-4.652913,54.074888],[-4.652907,54.074869],[-4.652871,54.074874],[-4.652809,54.074882],[-4.652815,54.074899],[-4.652749,54.074907],[-4.652683,54.074915],[-4.652533,54.074771],[-4.652533,54.07475],[-4.652463,54.074696],[-4.652252,54.074531],[-4.652024,54.074373],[-4.651449,54.074071],[-4.651465,54.074062],[-4.651493,54.074047],[-4.651509,54.074038],[-4.651624,54.073973]]]},"properties":{"name":"Castletown Harbour","kind":"harbour-area","statutoryPort":true,"subsidiaryOfStatutoryPort":null,"locode":"IMCTN","unlocode":null,"tidal":true,"mooring":true,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/60230830","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/douglas-harbour-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.471498,54.147949],[-4.471481,54.147977],[-4.469983,54.147682],[-4.469868,54.147684],[-4.467853,54.147287],[-4.46774,54.147475],[-4.466235,54.146513],[-4.466298,54.146411],[-4.466274,54.146367],[-4.466618,54.145937],[-4.46677,54.145866],[-4.466898,54.145807],[-4.46725,54.145644],[-4.468035,54.14528],[-4.468547,54.145045],[-4.46863,54.145007],[-4.469222,54.144739],[-4.469369,54.144712],[-4.469519,54.144709],[-4.469656,54.144727],[-4.469913,54.144799],[-4.470414,54.144937],[-4.47107,54.145127],[-4.471838,54.145342],[-4.472186,54.14544],[-4.472479,54.145536],[-4.47268,54.145634],[-4.472945,54.145798],[-4.472724,54.145898],[-4.472283,54.146099],[-4.472154,54.146092],[-4.472025,54.146151],[-4.471365,54.146049],[-4.471366,54.14603],[-4.471273,54.146017],[-4.471245,54.146077],[-4.4723,54.146238],[-4.473071,54.145858],[-4.473327,54.145955],[-4.473998,54.146131],[-4.474167,54.146088],[-4.474584,54.146186],[-4.475156,54.146318],[-4.475321,54.146339],[-4.475725,54.1464],[-4.475928,54.14644],[-4.47607,54.146504],[-4.476172,54.146555],[-4.476276,54.146629],[-4.476547,54.146753],[-4.476505,54.146824],[-4.476958,54.146941],[-4.477155,54.146989],[-4.477061,54.14713],[-4.476989,54.147238],[-4.476789,54.147189],[-4.476724,54.147191],[-4.476663,54.147191],[-4.476587,54.147189],[-4.475654,54.147055],[-4.475569,54.147093],[-4.475476,54.147112],[-4.475266,54.147103],[-4.474926,54.147052],[-4.473466,54.146833],[-4.471066,54.146469],[-4.470981,54.146662],[-4.471061,54.146674],[-4.471174,54.146691],[-4.471261,54.146704],[-4.471229,54.146777],[-4.471483,54.146815],[-4.471489,54.146803],[-4.471515,54.146743],[-4.471623,54.146759],[-4.471775,54.146782],[-4.471871,54.146797],[-4.471978,54.146813],[-4.472166,54.146841],[-4.47225,54.146854],[-4.472343,54.146868],[-4.473381,54.147026],[-4.473244,54.1473],[-4.472983,54.148059],[-4.472858,54.148107],[-4.472743,54.148152],[-4.472729,54.148181],[-4.472593,54.148174],[-4.472504,54.148151],[-4.472509,54.148132],[-4.472167,54.148068],[-4.472129,54.148081],[-4.471853,54.148032],[-4.471865,54.148013],[-4.471621,54.147966],[-4.471498,54.147949]]]},"properties":{"name":"Douglas Harbour","kind":"harbour-area","statutoryPort":true,"subsidiaryOfStatutoryPort":null,"locode":"IMDGS","unlocode":null,"tidal":true,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":"This overlaps another mapped harbour area of the same name in OSM. Both are retained rather than merged, because merging would assert a boundary nobody has published.","osmId":"way/186702872","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/douglas-inner-harbour-marina-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.476952,54.147554],[-4.477053,54.14726],[-4.476989,54.147238],[-4.477061,54.14713],[-4.477155,54.146989],[-4.478028,54.147208],[-4.478315,54.147275],[-4.478669,54.147303],[-4.47924,54.147296],[-4.479637,54.147264],[-4.480239,54.147159],[-4.480349,54.147189],[-4.480464,54.147228],[-4.480485,54.147268],[-4.480505,54.147299],[-4.480957,54.147243],[-4.482073,54.147101],[-4.48245,54.147064],[-4.483437,54.147035],[-4.48378,54.14703],[-4.483783,54.147067],[-4.483786,54.147106],[-4.483796,54.147213],[-4.483811,54.147393],[-4.483818,54.147514],[-4.483186,54.147606],[-4.482868,54.147652],[-4.482065,54.147672],[-4.481588,54.147593],[-4.4811,54.147512],[-4.48087,54.147466],[-4.480522,54.147529],[-4.480528,54.147546],[-4.479585,54.147677],[-4.478758,54.147728],[-4.477961,54.147651],[-4.476952,54.147554]]]},"properties":{"name":"Douglas Inner Harbour Marina","kind":"harbour-area","statutoryPort":false,"subsidiaryOfStatutoryPort":"Douglas","locode":null,"unlocode":null,"tidal":true,"mooring":false,"osmSource":null,"osmApproximate":"approximate outline only","overlapNote":null,"osmId":"way/38054024","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/fort-anne-pier-pier","geometry":{"type":"Polygon","coordinates":[[[-4.473071,54.145858],[-4.4723,54.146238],[-4.471245,54.146077],[-4.471273,54.146017],[-4.471366,54.14603],[-4.471365,54.146049],[-4.472025,54.146151],[-4.472154,54.146092],[-4.472283,54.146099],[-4.472724,54.145898],[-4.472945,54.145798],[-4.473071,54.145858]]]},"properties":{"name":"Fort Anne Pier","kind":"pier","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":null,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/186156405","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/government-linkspan-pier","geometry":{"type":"Polygon","coordinates":[[[-4.472741,54.14722],[-4.472776,54.147138],[-4.472807,54.147058],[-4.473017,54.147101],[-4.473105,54.147147],[-4.473927,54.147269],[-4.473905,54.147315],[-4.473894,54.14734],[-4.473068,54.147211],[-4.473052,54.147243],[-4.473461,54.147305],[-4.473453,54.147329],[-4.472741,54.14722]]]},"properties":{"name":"Government Linkspan","kind":"pier","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":null,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/186421746","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/grants-harbour-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.801769,54.060146],[-4.801682,54.060127],[-4.801727,54.05996],[-4.801719,54.059889],[-4.801777,54.059889],[-4.80179,54.060079],[-4.801769,54.060146]]]},"properties":{"name":"Grants Harbour","kind":"harbour-area","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":true,"mooring":false,"osmSource":"Isle of Man Government 1:25000 map (2007)","osmApproximate":null,"overlapNote":null,"osmId":"way/913999746","coordGrade":"C","coordSource":"OpenStreetMap; upstream source tagged in OSM as: Isle of Man Government 1:25000 map (2007)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/groudle-unmapped","geometry":{"type":"Point","coordinates":[-4.430826,54.177933]},"properties":{"name":"Groudle","kind":"landing-point","statutoryPort":true,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":true,"mooring":false,"geometryPresent":false,"isCableLanding":false,"unmappedNote":"No harbour area is mapped in OSM. Groudle is a small landing serving Groudle Glen and the nature reserve, not a harbour with a mapped basin.","osmSource":null,"osmApproximate":"No harbour geometry exists in OSM for this port.","overlapNote":null,"osmId":null,"coordGrade":"C","coordSource":"Nominatim (OSM) centroid for Groudle, A11, Onchan, Middle, IM3 2JY, Isle of Man. This is the named landing place, NOT a harbour boundary - no harbour polygon exists in any source consulted.","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/king-edward-viii-pier-pier","geometry":{"type":"Polygon","coordinates":[[[-4.473381,54.147026],[-4.473419,54.14694],[-4.473466,54.146833],[-4.471066,54.146469],[-4.470981,54.146662],[-4.471061,54.146674],[-4.471174,54.146691],[-4.471261,54.146704],[-4.471229,54.146777],[-4.471483,54.146815],[-4.471489,54.146803],[-4.471515,54.146743],[-4.471623,54.146759],[-4.471775,54.146782],[-4.471871,54.146797],[-4.471978,54.146813],[-4.472166,54.146841],[-4.47225,54.146854],[-4.472343,54.146868],[-4.473381,54.147026]]]},"properties":{"name":"King Edward VIII Pier","kind":"pier","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":null,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/144844702","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/laxey-harbour-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.388437,54.224927],[-4.388339,54.224899],[-4.388146,54.224862],[-4.388405,54.224811],[-4.388824,54.22466],[-4.388806,54.224673],[-4.388797,54.224696],[-4.388814,54.22472],[-4.388875,54.224753],[-4.389332,54.225049],[-4.389644,54.225319],[-4.389831,54.225578],[-4.389848,54.225571],[-4.389886,54.225617],[-4.389873,54.225628],[-4.389975,54.225764],[-4.389996,54.225777],[-4.390024,54.225777],[-4.390045,54.225764],[-4.390042,54.225748],[-4.389958,54.225639],[-4.389962,54.225626],[-4.390196,54.225526],[-4.390891,54.225904],[-4.390646,54.226208],[-4.390463,54.226156],[-4.390449,54.226173],[-4.390388,54.226254],[-4.390527,54.226309],[-4.390727,54.226367],[-4.390731,54.2264],[-4.390734,54.226432],[-4.390546,54.22644],[-4.390235,54.226377],[-4.390111,54.226325],[-4.389995,54.226166],[-4.389769,54.226053],[-4.389434,54.225863],[-4.38926,54.225652],[-4.389219,54.2255],[-4.389037,54.225347],[-4.388771,54.225207],[-4.388466,54.225067],[-4.388385,54.224992],[-4.388437,54.224927]]]},"properties":{"name":"Laxey Harbour","kind":"harbour-area","statutoryPort":true,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":true,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/60490759","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/north-pier-pier","geometry":{"type":"LineString","coordinates":[[-4.38044,54.324114],[-4.380317,54.32407],[-4.38019,54.324025],[-4.380143,54.324008],[-4.379977,54.32395],[-4.379872,54.323891],[-4.379647,54.323819],[-4.379597,54.323816],[-4.379402,54.323801],[-4.378524,54.324001],[-4.377419,54.324174],[-4.376395,54.32427],[-4.37572,54.324313],[-4.375033,54.324329]]},"properties":{"name":"North Pier","kind":"pier","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":null,"mooring":false,"osmSource":"Isle of Man Government 1:25000 map (2007)","osmApproximate":null,"overlapNote":null,"osmId":"way/40701740","coordGrade":"C","coordSource":"OpenStreetMap; upstream source tagged in OSM as: Isle of Man Government 1:25000 map (2007)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/oil-jetty-pier","geometry":{"type":"Polygon","coordinates":[[[-4.467354,54.145712],[-4.467219,54.145783],[-4.46701,54.145887],[-4.466898,54.145807],[-4.46725,54.145644],[-4.467354,54.145712]]]},"properties":{"name":"Oil Jetty","kind":"pier","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":null,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/186695735","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/peel-harbour-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.697132,54.226304],[-4.697209,54.225692],[-4.697403,54.225699],[-4.69754,54.224842],[-4.697765,54.224867],[-4.697941,54.224889],[-4.698181,54.224918],[-4.698241,54.225004],[-4.69828,54.225054],[-4.698244,54.225073],[-4.698285,54.225154],[-4.698323,54.225153],[-4.698343,54.225243],[-4.698383,54.22524],[-4.698479,54.225545],[-4.698489,54.225631],[-4.69845,54.225677],[-4.698391,54.225708],[-4.698282,54.22573],[-4.698108,54.225786],[-4.697945,54.225857],[-4.697845,54.225906],[-4.697836,54.225939],[-4.697709,54.226077],[-4.697616,54.226188],[-4.697488,54.226312],[-4.697451,54.226348],[-4.697132,54.226304]]]},"properties":{"name":"Peel Harbour","kind":"harbour-area","statutoryPort":true,"subsidiaryOfStatutoryPort":null,"locode":"IMPEL","unlocode":null,"tidal":true,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":"This overlaps another mapped harbour area of the same name in OSM. Both are retained rather than merged, because merging would assert a boundary nobody has published.","osmId":"way/913999745","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/peel-inner-harbour-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.700151,54.22083],[-4.69947,54.222045],[-4.698888,54.223227],[-4.698378,54.224269],[-4.698253,54.224641],[-4.698177,54.22485],[-4.697969,54.224824],[-4.697941,54.224889],[-4.697765,54.224867],[-4.697791,54.224803],[-4.697565,54.224777],[-4.697573,54.224686],[-4.69765,54.224229],[-4.697703,54.223883],[-4.697676,54.223386],[-4.69766,54.223094],[-4.69764,54.222305],[-4.698414,54.221676],[-4.698661,54.221488],[-4.698696,54.221495],[-4.698729,54.221501],[-4.69922,54.221588],[-4.699408,54.221622],[-4.699894,54.220759],[-4.700019,54.220793],[-4.700151,54.22083]]]},"properties":{"name":"Peel Inner Harbour","kind":"harbour-area","statutoryPort":false,"subsidiaryOfStatutoryPort":"Peel","locode":null,"unlocode":null,"tidal":true,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/25989587","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/peel-marina-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.699408,54.221622],[-4.698487,54.22352],[-4.697676,54.223386],[-4.69766,54.223094],[-4.69764,54.222305],[-4.698414,54.221676],[-4.698661,54.221488],[-4.698729,54.221501],[-4.69922,54.221588],[-4.699408,54.221622]]]},"properties":{"name":"Peel Marina","kind":"harbour-area","statutoryPort":false,"subsidiaryOfStatutoryPort":"Peel","locode":null,"unlocode":null,"tidal":true,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/1208760998","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/port-cornaa-unmapped","geometry":{"type":"Point","coordinates":[-4.344501,54.262429]},"properties":{"name":"Port Cornaa","kind":"landing-point","statutoryPort":true,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":true,"mooring":false,"geometryPresent":false,"isCableLanding":true,"unmappedNote":"No harbour area is mapped in OSM. Port Cornaa is a landing, and is the shore end of live subsea cables rather than a general-purpose harbour.","osmSource":null,"osmApproximate":"No harbour geometry exists in OSM for this port.","overlapNote":null,"osmId":null,"coordGrade":"C","coordSource":"Nominatim (OSM) centroid for Port Cornaa, Isle of Man. This is the named landing place, NOT a harbour boundary - no harbour polygon exists in any source consulted.","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/port-erin-harbour-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.764196,54.085329],[-4.76377,54.085143],[-4.763467,54.084822],[-4.763499,54.084493],[-4.763669,54.084366],[-4.763879,54.084365],[-4.764066,54.084566],[-4.763657,54.084704],[-4.763713,54.084756],[-4.763767,54.084756],[-4.763884,54.084754],[-4.764217,54.084811],[-4.764243,54.084815],[-4.764235,54.084831],[-4.764303,54.084841],[-4.764381,54.084838],[-4.764505,54.084859],[-4.764516,54.084901],[-4.764623,54.084926],[-4.764285,54.085248],[-4.764196,54.085329]]]},"properties":{"name":"Port Erin Harbour","kind":"harbour-area","statutoryPort":true,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":true,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/913999744","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/port-st-mary-harbour-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.736737,54.073505],[-4.735796,54.073704],[-4.735765,54.073025],[-4.736027,54.07268],[-4.736358,54.072238],[-4.736663,54.071842],[-4.736946,54.071821],[-4.737079,54.071836],[-4.737271,54.071875],[-4.737324,54.071997],[-4.737465,54.072108],[-4.737815,54.072229],[-4.73757,54.072543],[-4.737273,54.072921],[-4.737498,54.072854],[-4.737626,54.072975],[-4.737682,54.07308],[-4.737691,54.07317],[-4.737649,54.073195],[-4.737582,54.073234],[-4.737473,54.073284],[-4.737421,54.073318],[-4.7373,54.073355],[-4.737275,54.073343],[-4.737196,54.07325],[-4.737169,54.073257],[-4.737204,54.073304],[-4.737187,54.073322],[-4.736859,54.073437],[-4.736737,54.073505]]]},"properties":{"name":"Port St Mary Harbour","kind":"harbour-area","statutoryPort":true,"subsidiaryOfStatutoryPort":null,"locode":"IMPSM","unlocode":null,"tidal":true,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/913999743","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/princess-alexandra-pier-pier","geometry":{"type":"Polygon","coordinates":[[[-4.464412,54.147454],[-4.464218,54.147511],[-4.463981,54.147496],[-4.463838,54.14745],[-4.463774,54.147378],[-4.463748,54.147291],[-4.463764,54.14721],[-4.463831,54.14715],[-4.463966,54.147093],[-4.46533,54.1462],[-4.466034,54.145395],[-4.466316,54.144981],[-4.466531,54.144852],[-4.466663,54.144753],[-4.466723,54.144648],[-4.46689,54.144552],[-4.467156,54.144514],[-4.467236,54.144564],[-4.467329,54.144601],[-4.467434,54.144653],[-4.467017,54.14489],[-4.466285,54.145746],[-4.465832,54.146274],[-4.4645,54.147195],[-4.464577,54.147241],[-4.464567,54.147338],[-4.464412,54.147454]]]},"properties":{"name":"Princess Alexandra Pier","kind":"pier","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":null,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/144844705","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/queen-s-pier-pier","geometry":{"type":"Polygon","coordinates":[[[-4.374981,54.318492],[-4.374923,54.318506],[-4.374456,54.318614],[-4.374436,54.318603],[-4.37442,54.318594],[-4.37362,54.318783],[-4.373584,54.318814],[-4.3735,54.318834],[-4.373412,54.318822],[-4.372122,54.319117],[-4.372097,54.31915],[-4.371999,54.319174],[-4.371939,54.319161],[-4.371272,54.319312],[-4.370639,54.319454],[-4.370609,54.319492],[-4.370428,54.31953],[-4.370354,54.319519],[-4.369065,54.319808],[-4.369032,54.319847],[-4.368936,54.319869],[-4.368877,54.319857],[-4.367579,54.320145],[-4.367538,54.320184],[-4.367442,54.320205],[-4.367387,54.320191],[-4.366092,54.320485],[-4.366071,54.320536],[-4.365537,54.320653],[-4.365457,54.320526],[-4.365989,54.320408],[-4.366066,54.32043],[-4.367356,54.320141],[-4.36739,54.320105],[-4.367481,54.320084],[-4.367542,54.320093],[-4.368841,54.319801],[-4.368872,54.319767],[-4.36896,54.319745],[-4.369027,54.319757],[-4.370326,54.319465],[-4.370358,54.319431],[-4.370545,54.319389],[-4.370611,54.3194],[-4.371232,54.31926],[-4.37191,54.319107],[-4.371936,54.319075],[-4.372034,54.319052],[-4.372097,54.319066],[-4.373395,54.318771],[-4.373426,54.31874],[-4.373513,54.318717],[-4.373587,54.318725],[-4.374706,54.318463],[-4.374732,54.318435],[-4.374839,54.318414],[-4.374897,54.318401],[-4.374937,54.318445],[-4.374981,54.318492]]]},"properties":{"name":"Queen's Pier","kind":"pier","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":null,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/667635405","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/ramsey-harbour-harbour-area","geometry":{"type":"Polygon","coordinates":[[[-4.38337,54.326017],[-4.383164,54.326025],[-4.382992,54.325797],[-4.38267,54.325249],[-4.382461,54.324789],[-4.382295,54.324492],[-4.381995,54.324017],[-4.381898,54.323845],[-4.381844,54.323798],[-4.38184,54.323765],[-4.381838,54.323747],[-4.381834,54.323713],[-4.381855,54.323566],[-4.381807,54.323278],[-4.381839,54.323122],[-4.382064,54.322928],[-4.382043,54.322822],[-4.382027,54.322772],[-4.381877,54.322702],[-4.381574,54.322562],[-4.381551,54.322552],[-4.381512,54.322534],[-4.381404,54.32254],[-4.381217,54.322525],[-4.38119,54.322774],[-4.381293,54.323024],[-4.381316,54.323314],[-4.381437,54.323334],[-4.381426,54.323412],[-4.381379,54.323681],[-4.38137,54.32371],[-4.381332,54.323746],[-4.381268,54.3238],[-4.381195,54.323844],[-4.381108,54.323882],[-4.38101,54.323917],[-4.380945,54.323934],[-4.380911,54.323943],[-4.380858,54.323947],[-4.38081,54.323947],[-4.380741,54.323934],[-4.380701,54.323914],[-4.380675,54.32389],[-4.380668,54.323867],[-4.380674,54.323846],[-4.380691,54.323826],[-4.380725,54.323813],[-4.380775,54.323808],[-4.380783,54.323822],[-4.380845,54.323811],[-4.38082,54.323699],[-4.380793,54.3237],[-4.379584,54.323748],[-4.379431,54.323754],[-4.378712,54.323917],[-4.378495,54.323968],[-4.378166,54.323634],[-4.378778,54.32354],[-4.379233,54.323465],[-4.379444,54.3234],[-4.379557,54.323348],[-4.379622,54.323319],[-4.379745,54.323243],[-4.379791,54.323196],[-4.37981,54.323107],[-4.379846,54.322105],[-4.379866,54.32207],[-4.379932,54.322026],[-4.380001,54.322001],[-4.38033,54.321995],[-4.38121,54.321986],[-4.382265,54.322434],[-4.382383,54.322497],[-4.382772,54.322661],[-4.383757,54.322822],[-4.383986,54.322863],[-4.384829,54.32301],[-4.385597,54.32315],[-4.386529,54.323476],[-4.386814,54.323575],[-4.386924,54.323626],[-4.387711,54.324048],[-4.387925,54.324163],[-4.38794,54.324171],[-4.388017,54.324323],[-4.388021,54.32433],[-4.38807,54.324456],[-4.388092,54.324565],[-4.388075,54.32467],[-4.387645,54.324717],[-4.387654,54.324665],[-4.386916,54.324553],[-4.386606,54.324506],[-4.38635,54.324307],[-4.386303,54.324239],[-4.386194,54.324205],[-4.386085,54.323995],[-4.386045,54.324],[-4.385969,54.324009],[-4.385991,54.324064],[-4.385511,54.323719],[-4.38465,54.323513],[-4.384202,54.323539],[-4.383554,54.323282],[-4.383473,54.323313],[-4.383401,54.323316],[-4.383269,54.323349],[-4.383137,54.323382],[-4.382407,54.323663],[-4.38245,54.323901],[-4.382579,54.324126],[-4.383705,54.324746],[-4.383641,54.324846],[-4.383888,54.325221],[-4.384135,54.325446],[-4.384339,54.32554],[-4.384571,54.325713],[-4.384494,54.325733],[-4.384366,54.325789],[-4.38362,54.325985],[-4.38337,54.326017]]]},"properties":{"name":"Ramsey Harbour","kind":"harbour-area","statutoryPort":true,"subsidiaryOfStatutoryPort":null,"locode":"IMRAM","unlocode":null,"tidal":true,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/99341577","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/red-pier-pier","geometry":{"type":"Polygon","coordinates":[[[-4.474926,54.147052],[-4.473466,54.146833],[-4.473419,54.14694],[-4.474872,54.147165],[-4.474926,54.147052]]]},"properties":{"name":"Red Pier","kind":"pier","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":null,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/186703107","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/south-pier-pier","geometry":{"type":"LineString","coordinates":[[-4.378723,54.323337],[-4.378457,54.32351],[-4.378118,54.323613],[-4.377692,54.323686],[-4.375016,54.323673],[-4.37501,54.323816]]},"properties":{"name":"South Pier","kind":"pier","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":null,"mooring":false,"osmSource":"Isle of Man Government 1:25000 map (2007)","osmApproximate":null,"overlapNote":null,"osmId":"way/40701741","coordGrade":"C","coordSource":"OpenStreetMap; upstream source tagged in OSM as: Isle of Man Government 1:25000 map (2007)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/steam-packet-linkspan-pier","geometry":{"type":"Polygon","coordinates":[[[-4.471533,54.147875],[-4.471563,54.147821],[-4.471628,54.147834],[-4.471648,54.147796],[-4.471961,54.147857],[-4.471939,54.147908],[-4.472742,54.148065],[-4.472983,54.148059],[-4.472743,54.148152],[-4.471897,54.147992],[-4.471892,54.14801],[-4.471497,54.147939],[-4.471533,54.147875]]]},"properties":{"name":"Steam Packet Linkspan","kind":"pier","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":null,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/150641647","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}},{"type":"Feature","id":"port/victoria-pier-pier","geometry":{"type":"Polygon","coordinates":[[[-4.472391,54.148453],[-4.472716,54.14819],[-4.472729,54.148181],[-4.472593,54.148174],[-4.472504,54.148151],[-4.472509,54.148132],[-4.472167,54.148068],[-4.472129,54.148081],[-4.471853,54.148032],[-4.471865,54.148013],[-4.471621,54.147966],[-4.471498,54.147949],[-4.471481,54.147977],[-4.469983,54.147682],[-4.469868,54.147684],[-4.467853,54.147287],[-4.46774,54.147475],[-4.471446,54.1482],[-4.471547,54.14822],[-4.471719,54.148266],[-4.471863,54.148305],[-4.472027,54.148348],[-4.472223,54.148399],[-4.47231,54.148422],[-4.472391,54.148453]]]},"properties":{"name":"Victoria Pier","kind":"pier","statutoryPort":false,"subsidiaryOfStatutoryPort":null,"locode":null,"unlocode":null,"tidal":null,"mooring":false,"osmSource":null,"osmApproximate":null,"overlapNote":null,"osmId":"way/144844699","coordGrade":"B","coordSource":"OpenStreetMap (ODbL)","source":"https://www.openstreetmap.org/","licence":"ODbL","sourceVerified":"2026-10-12"}}]}
+{
+  "type": "FeatureCollection",
+  "name": "ports",
+  "properties": {
+    "generated": "2026-10-15T01:39:48.136Z",
+    "source": "https://www.openstreetmap.org/",
+    "sourceVerified": "2026-10-15",
+    "licence": "ODbL",
+    "statutoryPorts": [
+      "Douglas",
+      "Ramsey",
+      "Peel",
+      "Castletown",
+      "Port Erin",
+      "Port St Mary",
+      "Laxey",
+      "Port Cornaa",
+      "Groudle"
+    ],
+    "caveats": [
+      "All eight listed ports and every pier are TIDAL. The north-east approaches see about 8 m of range, so vessels above roughly 7 m are constrained. Harbour geometry is OSM-derived and carries no published depth survey.",
+      "These are mapped harbour AREAS and landing structures, not berth allocations. There is no authoritative, machine-readable berth or pontoon dataset for the Isle of Man, so nothing here indicates who may occupy a given pontoon.",
+      "Several piers are tagged `Isle of Man Government 1:25000 map (2007)` as their source. The outlines are therefore at best 2007 vintage and should not be treated as surveyed to modern accuracy.",
+      "Douglas Harbour and Peel Harbour exist in OSM as overlapping mapped areas. Both are retained; see the overlap note in each feature's properties.",
+      "Statutory port status is asserted from the Harbours Act list, not derived from the geometry. A harbour named here that is not on that list is still a harbour - it simply is not a statutory port.",
+      "Two of the nine statutory ports (Port Cornaa, Groudle) have NO mapped harbour geometry in any source consulted. They appear as grade-C points with geometryPresent=false. Their positions are settlement centroids, not harbour boundaries, and no basin outline should be inferred from them.",
+      "Douglas Inner Harbour Marina and Peel Marina are marinas WITHIN Douglas and Peel, not ports in their own right. They are flagged subsidiaryOfStatutoryPort and are not counted in the statutory total.",
+      "Marine limits, dredged channels and any licensing conditions are NOT represented. Port operations and activity must be checked against the Isle of Man Harbours Act and current notices to mariners."
+    ],
+    "licenceId": "ODbL",
+    "sourceId": "osmHarbours",
+    "sourceUrl": "https://wiki.openstreetmap.org/wiki/Tag:seamark%3Dharbour",
+    "licenceUrl": "https://opendatacommons.org/licenses/odbl/"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "port/battery-pier-pier",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.468035,
+              54.14528
+            ],
+            [
+              -4.467997,
+              54.145255
+            ],
+            [
+              -4.467892,
+              54.145179
+            ],
+            [
+              -4.467832,
+              54.145205
+            ],
+            [
+              -4.467754,
+              54.14524
+            ],
+            [
+              -4.46649,
+              54.145797
+            ],
+            [
+              -4.466077,
+              54.146335
+            ],
+            [
+              -4.46601,
+              54.146416
+            ],
+            [
+              -4.466014,
+              54.146456
+            ],
+            [
+              -4.466145,
+              54.146484
+            ],
+            [
+              -4.466154,
+              54.146474
+            ],
+            [
+              -4.466235,
+              54.146513
+            ],
+            [
+              -4.466298,
+              54.146411
+            ],
+            [
+              -4.466274,
+              54.146367
+            ],
+            [
+              -4.466618,
+              54.145937
+            ],
+            [
+              -4.46677,
+              54.145866
+            ],
+            [
+              -4.466898,
+              54.145807
+            ],
+            [
+              -4.46725,
+              54.145644
+            ],
+            [
+              -4.468035,
+              54.14528
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Battery Pier",
+        "kind": "pier",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": null,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/144844700",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/brewery-wharf-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.653301,
+              54.075806
+            ],
+            [
+              -4.65327,
+              54.075809
+            ],
+            [
+              -4.653236,
+              54.075813
+            ],
+            [
+              -4.653268,
+              54.075908
+            ],
+            [
+              -4.65271,
+              54.076036
+            ],
+            [
+              -4.652712,
+              54.075937
+            ],
+            [
+              -4.652651,
+              54.075643
+            ],
+            [
+              -4.652649,
+              54.075632
+            ],
+            [
+              -4.652125,
+              54.075686
+            ],
+            [
+              -4.652711,
+              54.075066
+            ],
+            [
+              -4.652721,
+              54.075047
+            ],
+            [
+              -4.652726,
+              54.075015
+            ],
+            [
+              -4.652723,
+              54.075006
+            ],
+            [
+              -4.652706,
+              54.074962
+            ],
+            [
+              -4.652693,
+              54.074935
+            ],
+            [
+              -4.652688,
+              54.074925
+            ],
+            [
+              -4.652683,
+              54.074915
+            ],
+            [
+              -4.652749,
+              54.074907
+            ],
+            [
+              -4.652815,
+              54.074899
+            ],
+            [
+              -4.652852,
+              54.074998
+            ],
+            [
+              -4.652874,
+              54.075058
+            ],
+            [
+              -4.652971,
+              54.075046
+            ],
+            [
+              -4.652949,
+              54.074985
+            ],
+            [
+              -4.653031,
+              54.074974
+            ],
+            [
+              -4.653301,
+              54.075806
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Brewery Wharf",
+        "kind": "harbour-area",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": true,
+        "mooring": true,
+        "osmSource": "Isle of Man Government aerial imagery (2001)",
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/60241059",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap; upstream source tagged in OSM as: Isle of Man Government aerial imagery (2001)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/carey-s-harbour-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.803445,
+              54.061293
+            ],
+            [
+              -4.803351,
+              54.06134
+            ],
+            [
+              -4.803249,
+              54.061299
+            ],
+            [
+              -4.803029,
+              54.061101
+            ],
+            [
+              -4.803097,
+              54.061094
+            ],
+            [
+              -4.80312,
+              54.061091
+            ],
+            [
+              -4.803175,
+              54.061185
+            ],
+            [
+              -4.803266,
+              54.06119
+            ],
+            [
+              -4.803445,
+              54.061293
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Carey's Harbour",
+        "kind": "harbour-area",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "osmSource": "Isle of Man Government 1:25000 map (2007)",
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/913999747",
+        "coordGrade": "C",
+        "coordSource": "OpenStreetMap; upstream source tagged in OSM as: Isle of Man Government 1:25000 map (2007)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/castletown-harbour-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.651624,
+              54.073973
+            ],
+            [
+              -4.651663,
+              54.07395
+            ],
+            [
+              -4.65187,
+              54.074011
+            ],
+            [
+              -4.652395,
+              54.074185
+            ],
+            [
+              -4.652494,
+              54.074098
+            ],
+            [
+              -4.65251,
+              54.074104
+            ],
+            [
+              -4.652526,
+              54.074109
+            ],
+            [
+              -4.652807,
+              54.074201
+            ],
+            [
+              -4.653068,
+              54.074286
+            ],
+            [
+              -4.653172,
+              54.07435
+            ],
+            [
+              -4.653289,
+              54.074433
+            ],
+            [
+              -4.653437,
+              54.074577
+            ],
+            [
+              -4.653446,
+              54.074586
+            ],
+            [
+              -4.653461,
+              54.0746
+            ],
+            [
+              -4.653448,
+              54.074663
+            ],
+            [
+              -4.653427,
+              54.074751
+            ],
+            [
+              -4.653252,
+              54.074848
+            ],
+            [
+              -4.653135,
+              54.074861
+            ],
+            [
+              -4.653,
+              54.074877
+            ],
+            [
+              -4.652913,
+              54.074888
+            ],
+            [
+              -4.652907,
+              54.074869
+            ],
+            [
+              -4.652871,
+              54.074874
+            ],
+            [
+              -4.652809,
+              54.074882
+            ],
+            [
+              -4.652815,
+              54.074899
+            ],
+            [
+              -4.652749,
+              54.074907
+            ],
+            [
+              -4.652683,
+              54.074915
+            ],
+            [
+              -4.652533,
+              54.074771
+            ],
+            [
+              -4.652533,
+              54.07475
+            ],
+            [
+              -4.652463,
+              54.074696
+            ],
+            [
+              -4.652252,
+              54.074531
+            ],
+            [
+              -4.652024,
+              54.074373
+            ],
+            [
+              -4.651449,
+              54.074071
+            ],
+            [
+              -4.651465,
+              54.074062
+            ],
+            [
+              -4.651493,
+              54.074047
+            ],
+            [
+              -4.651509,
+              54.074038
+            ],
+            [
+              -4.651624,
+              54.073973
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Castletown Harbour",
+        "kind": "harbour-area",
+        "statutoryPort": true,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": "IMCTN",
+        "unlocode": null,
+        "tidal": true,
+        "mooring": true,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/60230830",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/douglas-harbour-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.471498,
+              54.147949
+            ],
+            [
+              -4.471481,
+              54.147977
+            ],
+            [
+              -4.469983,
+              54.147682
+            ],
+            [
+              -4.469868,
+              54.147684
+            ],
+            [
+              -4.467853,
+              54.147287
+            ],
+            [
+              -4.46774,
+              54.147475
+            ],
+            [
+              -4.466235,
+              54.146513
+            ],
+            [
+              -4.466298,
+              54.146411
+            ],
+            [
+              -4.466274,
+              54.146367
+            ],
+            [
+              -4.466618,
+              54.145937
+            ],
+            [
+              -4.46677,
+              54.145866
+            ],
+            [
+              -4.466898,
+              54.145807
+            ],
+            [
+              -4.46725,
+              54.145644
+            ],
+            [
+              -4.468035,
+              54.14528
+            ],
+            [
+              -4.468547,
+              54.145045
+            ],
+            [
+              -4.46863,
+              54.145007
+            ],
+            [
+              -4.469222,
+              54.144739
+            ],
+            [
+              -4.469369,
+              54.144712
+            ],
+            [
+              -4.469519,
+              54.144709
+            ],
+            [
+              -4.469656,
+              54.144727
+            ],
+            [
+              -4.469913,
+              54.144799
+            ],
+            [
+              -4.470414,
+              54.144937
+            ],
+            [
+              -4.47107,
+              54.145127
+            ],
+            [
+              -4.471838,
+              54.145342
+            ],
+            [
+              -4.472186,
+              54.14544
+            ],
+            [
+              -4.472479,
+              54.145536
+            ],
+            [
+              -4.47268,
+              54.145634
+            ],
+            [
+              -4.472945,
+              54.145798
+            ],
+            [
+              -4.472724,
+              54.145898
+            ],
+            [
+              -4.472283,
+              54.146099
+            ],
+            [
+              -4.472154,
+              54.146092
+            ],
+            [
+              -4.472025,
+              54.146151
+            ],
+            [
+              -4.471365,
+              54.146049
+            ],
+            [
+              -4.471366,
+              54.14603
+            ],
+            [
+              -4.471273,
+              54.146017
+            ],
+            [
+              -4.471245,
+              54.146077
+            ],
+            [
+              -4.4723,
+              54.146238
+            ],
+            [
+              -4.473071,
+              54.145858
+            ],
+            [
+              -4.473327,
+              54.145955
+            ],
+            [
+              -4.473998,
+              54.146131
+            ],
+            [
+              -4.474167,
+              54.146088
+            ],
+            [
+              -4.474584,
+              54.146186
+            ],
+            [
+              -4.475156,
+              54.146318
+            ],
+            [
+              -4.475321,
+              54.146339
+            ],
+            [
+              -4.475725,
+              54.1464
+            ],
+            [
+              -4.475928,
+              54.14644
+            ],
+            [
+              -4.47607,
+              54.146504
+            ],
+            [
+              -4.476172,
+              54.146555
+            ],
+            [
+              -4.476276,
+              54.146629
+            ],
+            [
+              -4.476547,
+              54.146753
+            ],
+            [
+              -4.476505,
+              54.146824
+            ],
+            [
+              -4.476958,
+              54.146941
+            ],
+            [
+              -4.477155,
+              54.146989
+            ],
+            [
+              -4.477061,
+              54.14713
+            ],
+            [
+              -4.476989,
+              54.147238
+            ],
+            [
+              -4.476789,
+              54.147189
+            ],
+            [
+              -4.476724,
+              54.147191
+            ],
+            [
+              -4.476663,
+              54.147191
+            ],
+            [
+              -4.476587,
+              54.147189
+            ],
+            [
+              -4.475654,
+              54.147055
+            ],
+            [
+              -4.475569,
+              54.147093
+            ],
+            [
+              -4.475476,
+              54.147112
+            ],
+            [
+              -4.475266,
+              54.147103
+            ],
+            [
+              -4.474926,
+              54.147052
+            ],
+            [
+              -4.473466,
+              54.146833
+            ],
+            [
+              -4.471066,
+              54.146469
+            ],
+            [
+              -4.470981,
+              54.146662
+            ],
+            [
+              -4.471061,
+              54.146674
+            ],
+            [
+              -4.471174,
+              54.146691
+            ],
+            [
+              -4.471261,
+              54.146704
+            ],
+            [
+              -4.471229,
+              54.146777
+            ],
+            [
+              -4.471483,
+              54.146815
+            ],
+            [
+              -4.471489,
+              54.146803
+            ],
+            [
+              -4.471515,
+              54.146743
+            ],
+            [
+              -4.471623,
+              54.146759
+            ],
+            [
+              -4.471775,
+              54.146782
+            ],
+            [
+              -4.471871,
+              54.146797
+            ],
+            [
+              -4.471978,
+              54.146813
+            ],
+            [
+              -4.472166,
+              54.146841
+            ],
+            [
+              -4.47225,
+              54.146854
+            ],
+            [
+              -4.472343,
+              54.146868
+            ],
+            [
+              -4.473381,
+              54.147026
+            ],
+            [
+              -4.473244,
+              54.1473
+            ],
+            [
+              -4.472983,
+              54.148059
+            ],
+            [
+              -4.472858,
+              54.148107
+            ],
+            [
+              -4.472743,
+              54.148152
+            ],
+            [
+              -4.472729,
+              54.148181
+            ],
+            [
+              -4.472593,
+              54.148174
+            ],
+            [
+              -4.472504,
+              54.148151
+            ],
+            [
+              -4.472509,
+              54.148132
+            ],
+            [
+              -4.472167,
+              54.148068
+            ],
+            [
+              -4.472129,
+              54.148081
+            ],
+            [
+              -4.471853,
+              54.148032
+            ],
+            [
+              -4.471865,
+              54.148013
+            ],
+            [
+              -4.471621,
+              54.147966
+            ],
+            [
+              -4.471498,
+              54.147949
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Douglas Harbour",
+        "kind": "harbour-area",
+        "statutoryPort": true,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": "IMDGS",
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": "This overlaps another mapped harbour area of the same name in OSM. Both are retained rather than merged, because merging would assert a boundary nobody has published.",
+        "osmId": "way/186702872",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/douglas-inner-harbour-marina-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.476952,
+              54.147554
+            ],
+            [
+              -4.477053,
+              54.14726
+            ],
+            [
+              -4.476989,
+              54.147238
+            ],
+            [
+              -4.477061,
+              54.14713
+            ],
+            [
+              -4.477155,
+              54.146989
+            ],
+            [
+              -4.478028,
+              54.147208
+            ],
+            [
+              -4.478315,
+              54.147275
+            ],
+            [
+              -4.478669,
+              54.147303
+            ],
+            [
+              -4.47924,
+              54.147296
+            ],
+            [
+              -4.479637,
+              54.147264
+            ],
+            [
+              -4.480239,
+              54.147159
+            ],
+            [
+              -4.480349,
+              54.147189
+            ],
+            [
+              -4.480464,
+              54.147228
+            ],
+            [
+              -4.480485,
+              54.147268
+            ],
+            [
+              -4.480505,
+              54.147299
+            ],
+            [
+              -4.480957,
+              54.147243
+            ],
+            [
+              -4.482073,
+              54.147101
+            ],
+            [
+              -4.48245,
+              54.147064
+            ],
+            [
+              -4.483437,
+              54.147035
+            ],
+            [
+              -4.48378,
+              54.14703
+            ],
+            [
+              -4.483783,
+              54.147067
+            ],
+            [
+              -4.483786,
+              54.147106
+            ],
+            [
+              -4.483796,
+              54.147213
+            ],
+            [
+              -4.483811,
+              54.147393
+            ],
+            [
+              -4.483818,
+              54.147514
+            ],
+            [
+              -4.483186,
+              54.147606
+            ],
+            [
+              -4.482868,
+              54.147652
+            ],
+            [
+              -4.482065,
+              54.147672
+            ],
+            [
+              -4.481588,
+              54.147593
+            ],
+            [
+              -4.4811,
+              54.147512
+            ],
+            [
+              -4.48087,
+              54.147466
+            ],
+            [
+              -4.480522,
+              54.147529
+            ],
+            [
+              -4.480528,
+              54.147546
+            ],
+            [
+              -4.479585,
+              54.147677
+            ],
+            [
+              -4.478758,
+              54.147728
+            ],
+            [
+              -4.477961,
+              54.147651
+            ],
+            [
+              -4.476952,
+              54.147554
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Douglas Inner Harbour Marina",
+        "kind": "harbour-area",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": "Douglas",
+        "locode": null,
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": "approximate outline only",
+        "overlapNote": null,
+        "osmId": "way/38054024",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/fort-anne-pier-pier",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.473071,
+              54.145858
+            ],
+            [
+              -4.4723,
+              54.146238
+            ],
+            [
+              -4.471245,
+              54.146077
+            ],
+            [
+              -4.471273,
+              54.146017
+            ],
+            [
+              -4.471366,
+              54.14603
+            ],
+            [
+              -4.471365,
+              54.146049
+            ],
+            [
+              -4.472025,
+              54.146151
+            ],
+            [
+              -4.472154,
+              54.146092
+            ],
+            [
+              -4.472283,
+              54.146099
+            ],
+            [
+              -4.472724,
+              54.145898
+            ],
+            [
+              -4.472945,
+              54.145798
+            ],
+            [
+              -4.473071,
+              54.145858
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Fort Anne Pier",
+        "kind": "pier",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": null,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/186156405",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/government-linkspan-pier",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.472741,
+              54.14722
+            ],
+            [
+              -4.472776,
+              54.147138
+            ],
+            [
+              -4.472807,
+              54.147058
+            ],
+            [
+              -4.473017,
+              54.147101
+            ],
+            [
+              -4.473105,
+              54.147147
+            ],
+            [
+              -4.473927,
+              54.147269
+            ],
+            [
+              -4.473905,
+              54.147315
+            ],
+            [
+              -4.473894,
+              54.14734
+            ],
+            [
+              -4.473068,
+              54.147211
+            ],
+            [
+              -4.473052,
+              54.147243
+            ],
+            [
+              -4.473461,
+              54.147305
+            ],
+            [
+              -4.473453,
+              54.147329
+            ],
+            [
+              -4.472741,
+              54.14722
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Government Linkspan",
+        "kind": "pier",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": null,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/186421746",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/grants-harbour-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.801769,
+              54.060146
+            ],
+            [
+              -4.801682,
+              54.060127
+            ],
+            [
+              -4.801727,
+              54.05996
+            ],
+            [
+              -4.801719,
+              54.059889
+            ],
+            [
+              -4.801777,
+              54.059889
+            ],
+            [
+              -4.80179,
+              54.060079
+            ],
+            [
+              -4.801769,
+              54.060146
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Grants Harbour",
+        "kind": "harbour-area",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "osmSource": "Isle of Man Government 1:25000 map (2007)",
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/913999746",
+        "coordGrade": "C",
+        "coordSource": "OpenStreetMap; upstream source tagged in OSM as: Isle of Man Government 1:25000 map (2007)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/groudle-unmapped",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.430826,
+          54.177933
+        ]
+      },
+      "properties": {
+        "name": "Groudle",
+        "kind": "landing-point",
+        "statutoryPort": true,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "geometryPresent": false,
+        "isCableLanding": false,
+        "unmappedNote": "No harbour area is mapped in OSM. Groudle is a small landing serving Groudle Glen and the nature reserve, not a harbour with a mapped basin.",
+        "osmSource": null,
+        "osmApproximate": "No harbour geometry exists in OSM for this port.",
+        "overlapNote": null,
+        "osmId": null,
+        "coordGrade": "C",
+        "coordSource": "Nominatim (OSM) centroid for Groudle, A11, Onchan, Middle, IM3 2JY, Isle of Man. This is the named landing place, NOT a harbour boundary - no harbour polygon exists in any source consulted.",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/king-edward-viii-pier-pier",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.473381,
+              54.147026
+            ],
+            [
+              -4.473419,
+              54.14694
+            ],
+            [
+              -4.473466,
+              54.146833
+            ],
+            [
+              -4.471066,
+              54.146469
+            ],
+            [
+              -4.470981,
+              54.146662
+            ],
+            [
+              -4.471061,
+              54.146674
+            ],
+            [
+              -4.471174,
+              54.146691
+            ],
+            [
+              -4.471261,
+              54.146704
+            ],
+            [
+              -4.471229,
+              54.146777
+            ],
+            [
+              -4.471483,
+              54.146815
+            ],
+            [
+              -4.471489,
+              54.146803
+            ],
+            [
+              -4.471515,
+              54.146743
+            ],
+            [
+              -4.471623,
+              54.146759
+            ],
+            [
+              -4.471775,
+              54.146782
+            ],
+            [
+              -4.471871,
+              54.146797
+            ],
+            [
+              -4.471978,
+              54.146813
+            ],
+            [
+              -4.472166,
+              54.146841
+            ],
+            [
+              -4.47225,
+              54.146854
+            ],
+            [
+              -4.472343,
+              54.146868
+            ],
+            [
+              -4.473381,
+              54.147026
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "King Edward VIII Pier",
+        "kind": "pier",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": null,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/144844702",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/laxey-harbour-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.388437,
+              54.224927
+            ],
+            [
+              -4.388339,
+              54.224899
+            ],
+            [
+              -4.388146,
+              54.224862
+            ],
+            [
+              -4.388405,
+              54.224811
+            ],
+            [
+              -4.388824,
+              54.22466
+            ],
+            [
+              -4.388806,
+              54.224673
+            ],
+            [
+              -4.388797,
+              54.224696
+            ],
+            [
+              -4.388814,
+              54.22472
+            ],
+            [
+              -4.388875,
+              54.224753
+            ],
+            [
+              -4.389332,
+              54.225049
+            ],
+            [
+              -4.389644,
+              54.225319
+            ],
+            [
+              -4.389831,
+              54.225578
+            ],
+            [
+              -4.389848,
+              54.225571
+            ],
+            [
+              -4.389886,
+              54.225617
+            ],
+            [
+              -4.389873,
+              54.225628
+            ],
+            [
+              -4.389975,
+              54.225764
+            ],
+            [
+              -4.389996,
+              54.225777
+            ],
+            [
+              -4.390024,
+              54.225777
+            ],
+            [
+              -4.390045,
+              54.225764
+            ],
+            [
+              -4.390042,
+              54.225748
+            ],
+            [
+              -4.389958,
+              54.225639
+            ],
+            [
+              -4.389962,
+              54.225626
+            ],
+            [
+              -4.390196,
+              54.225526
+            ],
+            [
+              -4.390891,
+              54.225904
+            ],
+            [
+              -4.390646,
+              54.226208
+            ],
+            [
+              -4.390463,
+              54.226156
+            ],
+            [
+              -4.390449,
+              54.226173
+            ],
+            [
+              -4.390388,
+              54.226254
+            ],
+            [
+              -4.390527,
+              54.226309
+            ],
+            [
+              -4.390727,
+              54.226367
+            ],
+            [
+              -4.390731,
+              54.2264
+            ],
+            [
+              -4.390734,
+              54.226432
+            ],
+            [
+              -4.390546,
+              54.22644
+            ],
+            [
+              -4.390235,
+              54.226377
+            ],
+            [
+              -4.390111,
+              54.226325
+            ],
+            [
+              -4.389995,
+              54.226166
+            ],
+            [
+              -4.389769,
+              54.226053
+            ],
+            [
+              -4.389434,
+              54.225863
+            ],
+            [
+              -4.38926,
+              54.225652
+            ],
+            [
+              -4.389219,
+              54.2255
+            ],
+            [
+              -4.389037,
+              54.225347
+            ],
+            [
+              -4.388771,
+              54.225207
+            ],
+            [
+              -4.388466,
+              54.225067
+            ],
+            [
+              -4.388385,
+              54.224992
+            ],
+            [
+              -4.388437,
+              54.224927
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Laxey Harbour",
+        "kind": "harbour-area",
+        "statutoryPort": true,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/60490759",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/north-pier-pier",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -4.38044,
+            54.324114
+          ],
+          [
+            -4.380317,
+            54.32407
+          ],
+          [
+            -4.38019,
+            54.324025
+          ],
+          [
+            -4.380143,
+            54.324008
+          ],
+          [
+            -4.379977,
+            54.32395
+          ],
+          [
+            -4.379872,
+            54.323891
+          ],
+          [
+            -4.379647,
+            54.323819
+          ],
+          [
+            -4.379597,
+            54.323816
+          ],
+          [
+            -4.379402,
+            54.323801
+          ],
+          [
+            -4.378524,
+            54.324001
+          ],
+          [
+            -4.377419,
+            54.324174
+          ],
+          [
+            -4.376395,
+            54.32427
+          ],
+          [
+            -4.37572,
+            54.324313
+          ],
+          [
+            -4.375033,
+            54.324329
+          ]
+        ]
+      },
+      "properties": {
+        "name": "North Pier",
+        "kind": "pier",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": null,
+        "mooring": false,
+        "osmSource": "Isle of Man Government 1:25000 map (2007)",
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/40701740",
+        "coordGrade": "C",
+        "coordSource": "OpenStreetMap; upstream source tagged in OSM as: Isle of Man Government 1:25000 map (2007)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/oil-jetty-pier",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.467354,
+              54.145712
+            ],
+            [
+              -4.467219,
+              54.145783
+            ],
+            [
+              -4.46701,
+              54.145887
+            ],
+            [
+              -4.466898,
+              54.145807
+            ],
+            [
+              -4.46725,
+              54.145644
+            ],
+            [
+              -4.467354,
+              54.145712
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Oil Jetty",
+        "kind": "pier",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": null,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/186695735",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/peel-harbour-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.697132,
+              54.226304
+            ],
+            [
+              -4.697209,
+              54.225692
+            ],
+            [
+              -4.697403,
+              54.225699
+            ],
+            [
+              -4.69754,
+              54.224842
+            ],
+            [
+              -4.697765,
+              54.224867
+            ],
+            [
+              -4.697941,
+              54.224889
+            ],
+            [
+              -4.698181,
+              54.224918
+            ],
+            [
+              -4.698241,
+              54.225004
+            ],
+            [
+              -4.69828,
+              54.225054
+            ],
+            [
+              -4.698244,
+              54.225073
+            ],
+            [
+              -4.698285,
+              54.225154
+            ],
+            [
+              -4.698323,
+              54.225153
+            ],
+            [
+              -4.698343,
+              54.225243
+            ],
+            [
+              -4.698383,
+              54.22524
+            ],
+            [
+              -4.698479,
+              54.225545
+            ],
+            [
+              -4.698489,
+              54.225631
+            ],
+            [
+              -4.69845,
+              54.225677
+            ],
+            [
+              -4.698391,
+              54.225708
+            ],
+            [
+              -4.698282,
+              54.22573
+            ],
+            [
+              -4.698108,
+              54.225786
+            ],
+            [
+              -4.697945,
+              54.225857
+            ],
+            [
+              -4.697845,
+              54.225906
+            ],
+            [
+              -4.697836,
+              54.225939
+            ],
+            [
+              -4.697709,
+              54.226077
+            ],
+            [
+              -4.697616,
+              54.226188
+            ],
+            [
+              -4.697488,
+              54.226312
+            ],
+            [
+              -4.697451,
+              54.226348
+            ],
+            [
+              -4.697132,
+              54.226304
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Peel Harbour",
+        "kind": "harbour-area",
+        "statutoryPort": true,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": "IMPEL",
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": "This overlaps another mapped harbour area of the same name in OSM. Both are retained rather than merged, because merging would assert a boundary nobody has published.",
+        "osmId": "way/913999745",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/peel-inner-harbour-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.700151,
+              54.22083
+            ],
+            [
+              -4.69947,
+              54.222045
+            ],
+            [
+              -4.698888,
+              54.223227
+            ],
+            [
+              -4.698378,
+              54.224269
+            ],
+            [
+              -4.698253,
+              54.224641
+            ],
+            [
+              -4.698177,
+              54.22485
+            ],
+            [
+              -4.697969,
+              54.224824
+            ],
+            [
+              -4.697941,
+              54.224889
+            ],
+            [
+              -4.697765,
+              54.224867
+            ],
+            [
+              -4.697791,
+              54.224803
+            ],
+            [
+              -4.697565,
+              54.224777
+            ],
+            [
+              -4.697573,
+              54.224686
+            ],
+            [
+              -4.69765,
+              54.224229
+            ],
+            [
+              -4.697703,
+              54.223883
+            ],
+            [
+              -4.697676,
+              54.223386
+            ],
+            [
+              -4.69766,
+              54.223094
+            ],
+            [
+              -4.69764,
+              54.222305
+            ],
+            [
+              -4.698414,
+              54.221676
+            ],
+            [
+              -4.698661,
+              54.221488
+            ],
+            [
+              -4.698696,
+              54.221495
+            ],
+            [
+              -4.698729,
+              54.221501
+            ],
+            [
+              -4.69922,
+              54.221588
+            ],
+            [
+              -4.699408,
+              54.221622
+            ],
+            [
+              -4.699894,
+              54.220759
+            ],
+            [
+              -4.700019,
+              54.220793
+            ],
+            [
+              -4.700151,
+              54.22083
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Peel Inner Harbour",
+        "kind": "harbour-area",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": "Peel",
+        "locode": null,
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/25989587",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/peel-marina-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.699408,
+              54.221622
+            ],
+            [
+              -4.698487,
+              54.22352
+            ],
+            [
+              -4.697676,
+              54.223386
+            ],
+            [
+              -4.69766,
+              54.223094
+            ],
+            [
+              -4.69764,
+              54.222305
+            ],
+            [
+              -4.698414,
+              54.221676
+            ],
+            [
+              -4.698661,
+              54.221488
+            ],
+            [
+              -4.698729,
+              54.221501
+            ],
+            [
+              -4.69922,
+              54.221588
+            ],
+            [
+              -4.699408,
+              54.221622
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Peel Marina",
+        "kind": "harbour-area",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": "Peel",
+        "locode": null,
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/1208760998",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/port-cornaa-unmapped",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.344501,
+          54.262429
+        ]
+      },
+      "properties": {
+        "name": "Port Cornaa",
+        "kind": "landing-point",
+        "statutoryPort": true,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "geometryPresent": false,
+        "isCableLanding": true,
+        "unmappedNote": "No harbour area is mapped in OSM. Port Cornaa is a landing, and is the shore end of live subsea cables rather than a general-purpose harbour.",
+        "osmSource": null,
+        "osmApproximate": "No harbour geometry exists in OSM for this port.",
+        "overlapNote": null,
+        "osmId": null,
+        "coordGrade": "C",
+        "coordSource": "Nominatim (OSM) centroid for Port Cornaa, Isle of Man. This is the named landing place, NOT a harbour boundary - no harbour polygon exists in any source consulted.",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/port-erin-harbour-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.764196,
+              54.085329
+            ],
+            [
+              -4.76377,
+              54.085143
+            ],
+            [
+              -4.763467,
+              54.084822
+            ],
+            [
+              -4.763499,
+              54.084493
+            ],
+            [
+              -4.763669,
+              54.084366
+            ],
+            [
+              -4.763879,
+              54.084365
+            ],
+            [
+              -4.764066,
+              54.084566
+            ],
+            [
+              -4.763657,
+              54.084704
+            ],
+            [
+              -4.763713,
+              54.084756
+            ],
+            [
+              -4.763767,
+              54.084756
+            ],
+            [
+              -4.763884,
+              54.084754
+            ],
+            [
+              -4.764217,
+              54.084811
+            ],
+            [
+              -4.764243,
+              54.084815
+            ],
+            [
+              -4.764235,
+              54.084831
+            ],
+            [
+              -4.764303,
+              54.084841
+            ],
+            [
+              -4.764381,
+              54.084838
+            ],
+            [
+              -4.764505,
+              54.084859
+            ],
+            [
+              -4.764516,
+              54.084901
+            ],
+            [
+              -4.764623,
+              54.084926
+            ],
+            [
+              -4.764285,
+              54.085248
+            ],
+            [
+              -4.764196,
+              54.085329
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Port Erin Harbour",
+        "kind": "harbour-area",
+        "statutoryPort": true,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/913999744",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/port-st-mary-harbour-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.736737,
+              54.073505
+            ],
+            [
+              -4.735796,
+              54.073704
+            ],
+            [
+              -4.735765,
+              54.073025
+            ],
+            [
+              -4.736027,
+              54.07268
+            ],
+            [
+              -4.736358,
+              54.072238
+            ],
+            [
+              -4.736663,
+              54.071842
+            ],
+            [
+              -4.736946,
+              54.071821
+            ],
+            [
+              -4.737079,
+              54.071836
+            ],
+            [
+              -4.737271,
+              54.071875
+            ],
+            [
+              -4.737324,
+              54.071997
+            ],
+            [
+              -4.737465,
+              54.072108
+            ],
+            [
+              -4.737815,
+              54.072229
+            ],
+            [
+              -4.73757,
+              54.072543
+            ],
+            [
+              -4.737273,
+              54.072921
+            ],
+            [
+              -4.737498,
+              54.072854
+            ],
+            [
+              -4.737626,
+              54.072975
+            ],
+            [
+              -4.737682,
+              54.07308
+            ],
+            [
+              -4.737691,
+              54.07317
+            ],
+            [
+              -4.737649,
+              54.073195
+            ],
+            [
+              -4.737582,
+              54.073234
+            ],
+            [
+              -4.737473,
+              54.073284
+            ],
+            [
+              -4.737421,
+              54.073318
+            ],
+            [
+              -4.7373,
+              54.073355
+            ],
+            [
+              -4.737275,
+              54.073343
+            ],
+            [
+              -4.737196,
+              54.07325
+            ],
+            [
+              -4.737169,
+              54.073257
+            ],
+            [
+              -4.737204,
+              54.073304
+            ],
+            [
+              -4.737187,
+              54.073322
+            ],
+            [
+              -4.736859,
+              54.073437
+            ],
+            [
+              -4.736737,
+              54.073505
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Port St Mary Harbour",
+        "kind": "harbour-area",
+        "statutoryPort": true,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": "IMPSM",
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/913999743",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/princess-alexandra-pier-pier",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.464412,
+              54.147454
+            ],
+            [
+              -4.464218,
+              54.147511
+            ],
+            [
+              -4.463981,
+              54.147496
+            ],
+            [
+              -4.463838,
+              54.14745
+            ],
+            [
+              -4.463774,
+              54.147378
+            ],
+            [
+              -4.463748,
+              54.147291
+            ],
+            [
+              -4.463764,
+              54.14721
+            ],
+            [
+              -4.463831,
+              54.14715
+            ],
+            [
+              -4.463966,
+              54.147093
+            ],
+            [
+              -4.46533,
+              54.1462
+            ],
+            [
+              -4.466034,
+              54.145395
+            ],
+            [
+              -4.466316,
+              54.144981
+            ],
+            [
+              -4.466531,
+              54.144852
+            ],
+            [
+              -4.466663,
+              54.144753
+            ],
+            [
+              -4.466723,
+              54.144648
+            ],
+            [
+              -4.46689,
+              54.144552
+            ],
+            [
+              -4.467156,
+              54.144514
+            ],
+            [
+              -4.467236,
+              54.144564
+            ],
+            [
+              -4.467329,
+              54.144601
+            ],
+            [
+              -4.467434,
+              54.144653
+            ],
+            [
+              -4.467017,
+              54.14489
+            ],
+            [
+              -4.466285,
+              54.145746
+            ],
+            [
+              -4.465832,
+              54.146274
+            ],
+            [
+              -4.4645,
+              54.147195
+            ],
+            [
+              -4.464577,
+              54.147241
+            ],
+            [
+              -4.464567,
+              54.147338
+            ],
+            [
+              -4.464412,
+              54.147454
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Princess Alexandra Pier",
+        "kind": "pier",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": null,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/144844705",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/queen-s-pier-pier",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.374981,
+              54.318492
+            ],
+            [
+              -4.374923,
+              54.318506
+            ],
+            [
+              -4.374456,
+              54.318614
+            ],
+            [
+              -4.374436,
+              54.318603
+            ],
+            [
+              -4.37442,
+              54.318594
+            ],
+            [
+              -4.37362,
+              54.318783
+            ],
+            [
+              -4.373584,
+              54.318814
+            ],
+            [
+              -4.3735,
+              54.318834
+            ],
+            [
+              -4.373412,
+              54.318822
+            ],
+            [
+              -4.372122,
+              54.319117
+            ],
+            [
+              -4.372097,
+              54.31915
+            ],
+            [
+              -4.371999,
+              54.319174
+            ],
+            [
+              -4.371939,
+              54.319161
+            ],
+            [
+              -4.371272,
+              54.319312
+            ],
+            [
+              -4.370639,
+              54.319454
+            ],
+            [
+              -4.370609,
+              54.319492
+            ],
+            [
+              -4.370428,
+              54.31953
+            ],
+            [
+              -4.370354,
+              54.319519
+            ],
+            [
+              -4.369065,
+              54.319808
+            ],
+            [
+              -4.369032,
+              54.319847
+            ],
+            [
+              -4.368936,
+              54.319869
+            ],
+            [
+              -4.368877,
+              54.319857
+            ],
+            [
+              -4.367579,
+              54.320145
+            ],
+            [
+              -4.367538,
+              54.320184
+            ],
+            [
+              -4.367442,
+              54.320205
+            ],
+            [
+              -4.367387,
+              54.320191
+            ],
+            [
+              -4.366092,
+              54.320485
+            ],
+            [
+              -4.366071,
+              54.320536
+            ],
+            [
+              -4.365537,
+              54.320653
+            ],
+            [
+              -4.365457,
+              54.320526
+            ],
+            [
+              -4.365989,
+              54.320408
+            ],
+            [
+              -4.366066,
+              54.32043
+            ],
+            [
+              -4.367356,
+              54.320141
+            ],
+            [
+              -4.36739,
+              54.320105
+            ],
+            [
+              -4.367481,
+              54.320084
+            ],
+            [
+              -4.367542,
+              54.320093
+            ],
+            [
+              -4.368841,
+              54.319801
+            ],
+            [
+              -4.368872,
+              54.319767
+            ],
+            [
+              -4.36896,
+              54.319745
+            ],
+            [
+              -4.369027,
+              54.319757
+            ],
+            [
+              -4.370326,
+              54.319465
+            ],
+            [
+              -4.370358,
+              54.319431
+            ],
+            [
+              -4.370545,
+              54.319389
+            ],
+            [
+              -4.370611,
+              54.3194
+            ],
+            [
+              -4.371232,
+              54.31926
+            ],
+            [
+              -4.37191,
+              54.319107
+            ],
+            [
+              -4.371936,
+              54.319075
+            ],
+            [
+              -4.372034,
+              54.319052
+            ],
+            [
+              -4.372097,
+              54.319066
+            ],
+            [
+              -4.373395,
+              54.318771
+            ],
+            [
+              -4.373426,
+              54.31874
+            ],
+            [
+              -4.373513,
+              54.318717
+            ],
+            [
+              -4.373587,
+              54.318725
+            ],
+            [
+              -4.374706,
+              54.318463
+            ],
+            [
+              -4.374732,
+              54.318435
+            ],
+            [
+              -4.374839,
+              54.318414
+            ],
+            [
+              -4.374897,
+              54.318401
+            ],
+            [
+              -4.374937,
+              54.318445
+            ],
+            [
+              -4.374981,
+              54.318492
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Queen's Pier",
+        "kind": "pier",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": null,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/667635405",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/ramsey-harbour-harbour-area",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.38337,
+              54.326017
+            ],
+            [
+              -4.383164,
+              54.326025
+            ],
+            [
+              -4.382992,
+              54.325797
+            ],
+            [
+              -4.38267,
+              54.325249
+            ],
+            [
+              -4.382461,
+              54.324789
+            ],
+            [
+              -4.382295,
+              54.324492
+            ],
+            [
+              -4.381995,
+              54.324017
+            ],
+            [
+              -4.381898,
+              54.323845
+            ],
+            [
+              -4.381844,
+              54.323798
+            ],
+            [
+              -4.38184,
+              54.323765
+            ],
+            [
+              -4.381838,
+              54.323747
+            ],
+            [
+              -4.381834,
+              54.323713
+            ],
+            [
+              -4.381855,
+              54.323566
+            ],
+            [
+              -4.381807,
+              54.323278
+            ],
+            [
+              -4.381839,
+              54.323122
+            ],
+            [
+              -4.382064,
+              54.322928
+            ],
+            [
+              -4.382043,
+              54.322822
+            ],
+            [
+              -4.382027,
+              54.322772
+            ],
+            [
+              -4.381877,
+              54.322702
+            ],
+            [
+              -4.381574,
+              54.322562
+            ],
+            [
+              -4.381551,
+              54.322552
+            ],
+            [
+              -4.381512,
+              54.322534
+            ],
+            [
+              -4.381404,
+              54.32254
+            ],
+            [
+              -4.381217,
+              54.322525
+            ],
+            [
+              -4.38119,
+              54.322774
+            ],
+            [
+              -4.381293,
+              54.323024
+            ],
+            [
+              -4.381316,
+              54.323314
+            ],
+            [
+              -4.381437,
+              54.323334
+            ],
+            [
+              -4.381426,
+              54.323412
+            ],
+            [
+              -4.381379,
+              54.323681
+            ],
+            [
+              -4.38137,
+              54.32371
+            ],
+            [
+              -4.381332,
+              54.323746
+            ],
+            [
+              -4.381268,
+              54.3238
+            ],
+            [
+              -4.381195,
+              54.323844
+            ],
+            [
+              -4.381108,
+              54.323882
+            ],
+            [
+              -4.38101,
+              54.323917
+            ],
+            [
+              -4.380945,
+              54.323934
+            ],
+            [
+              -4.380911,
+              54.323943
+            ],
+            [
+              -4.380858,
+              54.323947
+            ],
+            [
+              -4.38081,
+              54.323947
+            ],
+            [
+              -4.380741,
+              54.323934
+            ],
+            [
+              -4.380701,
+              54.323914
+            ],
+            [
+              -4.380675,
+              54.32389
+            ],
+            [
+              -4.380668,
+              54.323867
+            ],
+            [
+              -4.380674,
+              54.323846
+            ],
+            [
+              -4.380691,
+              54.323826
+            ],
+            [
+              -4.380725,
+              54.323813
+            ],
+            [
+              -4.380775,
+              54.323808
+            ],
+            [
+              -4.380783,
+              54.323822
+            ],
+            [
+              -4.380845,
+              54.323811
+            ],
+            [
+              -4.38082,
+              54.323699
+            ],
+            [
+              -4.380793,
+              54.3237
+            ],
+            [
+              -4.379584,
+              54.323748
+            ],
+            [
+              -4.379431,
+              54.323754
+            ],
+            [
+              -4.378712,
+              54.323917
+            ],
+            [
+              -4.378495,
+              54.323968
+            ],
+            [
+              -4.378166,
+              54.323634
+            ],
+            [
+              -4.378778,
+              54.32354
+            ],
+            [
+              -4.379233,
+              54.323465
+            ],
+            [
+              -4.379444,
+              54.3234
+            ],
+            [
+              -4.379557,
+              54.323348
+            ],
+            [
+              -4.379622,
+              54.323319
+            ],
+            [
+              -4.379745,
+              54.323243
+            ],
+            [
+              -4.379791,
+              54.323196
+            ],
+            [
+              -4.37981,
+              54.323107
+            ],
+            [
+              -4.379828,
+              54.32214
+            ],
+            [
+              -4.379824,
+              54.322114
+            ],
+            [
+              -4.379843,
+              54.322078
+            ],
+            [
+              -4.37992,
+              54.322038
+            ],
+            [
+              -4.37998,
+              54.322023
+            ],
+            [
+              -4.380048,
+              54.322015
+            ],
+            [
+              -4.38121,
+              54.321986
+            ],
+            [
+              -4.382265,
+              54.322434
+            ],
+            [
+              -4.382383,
+              54.322497
+            ],
+            [
+              -4.382772,
+              54.322661
+            ],
+            [
+              -4.383758,
+              54.322833
+            ],
+            [
+              -4.384566,
+              54.322977
+            ],
+            [
+              -4.384829,
+              54.323021
+            ],
+            [
+              -4.385618,
+              54.32316
+            ],
+            [
+              -4.386529,
+              54.323476
+            ],
+            [
+              -4.386814,
+              54.323575
+            ],
+            [
+              -4.386924,
+              54.323626
+            ],
+            [
+              -4.387711,
+              54.324048
+            ],
+            [
+              -4.387925,
+              54.324163
+            ],
+            [
+              -4.38794,
+              54.324171
+            ],
+            [
+              -4.388017,
+              54.324323
+            ],
+            [
+              -4.388021,
+              54.32433
+            ],
+            [
+              -4.38807,
+              54.324456
+            ],
+            [
+              -4.388092,
+              54.324565
+            ],
+            [
+              -4.388075,
+              54.32467
+            ],
+            [
+              -4.387645,
+              54.324717
+            ],
+            [
+              -4.387654,
+              54.324665
+            ],
+            [
+              -4.386916,
+              54.324553
+            ],
+            [
+              -4.386606,
+              54.324506
+            ],
+            [
+              -4.38635,
+              54.324307
+            ],
+            [
+              -4.386303,
+              54.324239
+            ],
+            [
+              -4.386194,
+              54.324205
+            ],
+            [
+              -4.386085,
+              54.323995
+            ],
+            [
+              -4.386045,
+              54.324
+            ],
+            [
+              -4.385969,
+              54.324009
+            ],
+            [
+              -4.385991,
+              54.324064
+            ],
+            [
+              -4.385511,
+              54.323719
+            ],
+            [
+              -4.38465,
+              54.323513
+            ],
+            [
+              -4.384202,
+              54.323539
+            ],
+            [
+              -4.383554,
+              54.323282
+            ],
+            [
+              -4.383473,
+              54.323313
+            ],
+            [
+              -4.383401,
+              54.323316
+            ],
+            [
+              -4.383269,
+              54.323349
+            ],
+            [
+              -4.383137,
+              54.323382
+            ],
+            [
+              -4.382407,
+              54.323663
+            ],
+            [
+              -4.38245,
+              54.323901
+            ],
+            [
+              -4.382579,
+              54.324126
+            ],
+            [
+              -4.383705,
+              54.324746
+            ],
+            [
+              -4.383641,
+              54.324846
+            ],
+            [
+              -4.383888,
+              54.325221
+            ],
+            [
+              -4.384135,
+              54.325446
+            ],
+            [
+              -4.384339,
+              54.32554
+            ],
+            [
+              -4.384571,
+              54.325713
+            ],
+            [
+              -4.384494,
+              54.325733
+            ],
+            [
+              -4.384366,
+              54.325789
+            ],
+            [
+              -4.38362,
+              54.325985
+            ],
+            [
+              -4.38337,
+              54.326017
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Ramsey Harbour",
+        "kind": "harbour-area",
+        "statutoryPort": true,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": "IMRAM",
+        "unlocode": null,
+        "tidal": true,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/99341577",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/red-pier-pier",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.474926,
+              54.147052
+            ],
+            [
+              -4.473466,
+              54.146833
+            ],
+            [
+              -4.473419,
+              54.14694
+            ],
+            [
+              -4.474872,
+              54.147165
+            ],
+            [
+              -4.474926,
+              54.147052
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Red Pier",
+        "kind": "pier",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": null,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/186703107",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/south-pier-pier",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -4.378723,
+            54.323337
+          ],
+          [
+            -4.378457,
+            54.32351
+          ],
+          [
+            -4.378118,
+            54.323613
+          ],
+          [
+            -4.377692,
+            54.323686
+          ],
+          [
+            -4.375016,
+            54.323673
+          ],
+          [
+            -4.37501,
+            54.323816
+          ]
+        ]
+      },
+      "properties": {
+        "name": "South Pier",
+        "kind": "pier",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": null,
+        "mooring": false,
+        "osmSource": "Isle of Man Government 1:25000 map (2007)",
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/40701741",
+        "coordGrade": "C",
+        "coordSource": "OpenStreetMap; upstream source tagged in OSM as: Isle of Man Government 1:25000 map (2007)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/steam-packet-linkspan-pier",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.471533,
+              54.147875
+            ],
+            [
+              -4.471563,
+              54.147821
+            ],
+            [
+              -4.471628,
+              54.147834
+            ],
+            [
+              -4.471648,
+              54.147796
+            ],
+            [
+              -4.471961,
+              54.147857
+            ],
+            [
+              -4.471939,
+              54.147908
+            ],
+            [
+              -4.472742,
+              54.148065
+            ],
+            [
+              -4.472983,
+              54.148059
+            ],
+            [
+              -4.472743,
+              54.148152
+            ],
+            [
+              -4.471897,
+              54.147992
+            ],
+            [
+              -4.471892,
+              54.14801
+            ],
+            [
+              -4.471497,
+              54.147939
+            ],
+            [
+              -4.471533,
+              54.147875
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Steam Packet Linkspan",
+        "kind": "pier",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": null,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/150641647",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "port/victoria-pier-pier",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -4.472391,
+              54.148453
+            ],
+            [
+              -4.472716,
+              54.14819
+            ],
+            [
+              -4.472729,
+              54.148181
+            ],
+            [
+              -4.472593,
+              54.148174
+            ],
+            [
+              -4.472504,
+              54.148151
+            ],
+            [
+              -4.472509,
+              54.148132
+            ],
+            [
+              -4.472167,
+              54.148068
+            ],
+            [
+              -4.472129,
+              54.148081
+            ],
+            [
+              -4.471853,
+              54.148032
+            ],
+            [
+              -4.471865,
+              54.148013
+            ],
+            [
+              -4.471621,
+              54.147966
+            ],
+            [
+              -4.471498,
+              54.147949
+            ],
+            [
+              -4.471481,
+              54.147977
+            ],
+            [
+              -4.469983,
+              54.147682
+            ],
+            [
+              -4.469868,
+              54.147684
+            ],
+            [
+              -4.467853,
+              54.147287
+            ],
+            [
+              -4.46774,
+              54.147475
+            ],
+            [
+              -4.471446,
+              54.1482
+            ],
+            [
+              -4.471547,
+              54.14822
+            ],
+            [
+              -4.471719,
+              54.148266
+            ],
+            [
+              -4.471863,
+              54.148305
+            ],
+            [
+              -4.472027,
+              54.148348
+            ],
+            [
+              -4.472223,
+              54.148399
+            ],
+            [
+              -4.47231,
+              54.148422
+            ],
+            [
+              -4.472391,
+              54.148453
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Victoria Pier",
+        "kind": "pier",
+        "statutoryPort": false,
+        "subsidiaryOfStatutoryPort": null,
+        "locode": null,
+        "unlocode": null,
+        "tidal": null,
+        "mooring": false,
+        "osmSource": null,
+        "osmApproximate": null,
+        "overlapNote": null,
+        "osmId": "way/144844699",
+        "coordGrade": "B",
+        "coordSource": "OpenStreetMap (ODbL)",
+        "source": "https://www.openstreetmap.org/",
+        "licence": "ODbL",
+        "sourceVerified": "2026-10-15"
+      }
+    }
+  ]
+}

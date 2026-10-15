@@ -1,1 +1,300 @@
-{"type":"FeatureCollection","name":"airports","properties":{"generated":"2026-10-04T13:56:26.075Z","source":"https://ourairports.com/data/","sourceVerified":"2026-10-04","licence":"PD-OurAirports","caveats":["OurAirports is crowd-maintained; positions are not independently audited.","Runway `closed` flags are carried through from OurAirports and may lag reality.","Airport type 'closed' means OurAirports has marked the aerodrome closed; the site may still be in use for private or emergency aviation.","Only the aerodrome reference point is published, not the boundary or extent of any runway strip."],"licenceId":"PD-OURAIRPORTS","sourceId":"ourairports","licenceUrl":"https://ourairports.com/data/"},"features":[{"type":"Feature","id":"airport/EGNS","geometry":{"type":"Point","coordinates":[-4.623871,54.083081]},"properties":{"name":"Isle of Man Airport","ident":"EGNS","airportType":"large_airport","icao":"EGNS","iata":"IOM","municipality":"Castletown, Rushen","elevationM":15.8,"scheduledService":true,"closed":false,"runways":[{"ident":"03/21","lengthM":1199.1,"widthM":46,"lengthFt":3934,"widthFt":151,"surface":"ASP","lighted":true,"closed":false,"le":{"lat":54.077782,"lon":-4.631711},"he":{"lat":54.087296,"lon":-4.623116},"headingLeDegT":28,"headingHeDegT":208},{"ident":"08/26","lengthM":2110.1,"widthM":46,"lengthFt":6923,"widthFt":151,"surface":"ASP","lighted":true,"closed":false,"le":{"lat":54.081387,"lon":-4.638947},"he":{"lat":54.08535,"lon":-4.60738},"headingLeDegT":78,"headingHeDegT":258},{"ident":"17/35","lengthM":903.1,"widthM":27.1,"lengthFt":2963,"widthFt":89,"surface":"ASP","lighted":false,"closed":true,"le":{"lat":54.0853,"lon":-4.63028},"he":{"lat":54.0783,"lon":-4.6275},"headingLeDegT":175,"headingHeDegT":355}],"runwayCount":3,"homeLink":"http://www.iom-airport.com/","wikipedia":"https://en.wikipedia.org/wiki/Isle_of_Man_Airport","coordGrade":"A","coordSource":"OurAirports aerodrome reference point for EGNS (public-domain OurAirports dataset).","source":"https://ourairports.com/data/","sourceVerified":"2026-10-04","licence":"PD-OurAirports"}},{"type":"Feature","id":"airport/IM-0001","geometry":{"type":"Point","coordinates":[-4.423333,54.371111]},"properties":{"name":"Andreas Airfield","ident":"IM-0001","airportType":"small_airport","icao":null,"iata":null,"municipality":"Andreas","elevationM":29.6,"scheduledService":false,"closed":false,"runways":[],"runwayCount":0,"homeLink":null,"wikipedia":"https://en.wikipedia.org/wiki/RAF_Andreas","coordGrade":"B","coordSource":"OurAirports aerodrome reference point (public-domain OurAirports dataset); crowd-maintained, not independently audited.","source":"https://ourairports.com/data/","sourceVerified":"2026-10-04","licence":"PD-OurAirports"}},{"type":"Feature","id":"airport/IM-0004","geometry":{"type":"Point","coordinates":[-4.438477,54.356006]},"properties":{"name":"Andreas-Ballavoddan House Airstrip","ident":"IM-0004","airportType":"small_airport","icao":null,"iata":null,"municipality":"Andreas","elevationM":null,"scheduledService":false,"closed":false,"runways":[],"runwayCount":0,"homeLink":null,"wikipedia":null,"coordGrade":"B","coordSource":"OurAirports aerodrome reference point (public-domain OurAirports dataset); crowd-maintained, not independently audited.","source":"https://ourairports.com/data/","sourceVerified":"2026-10-04","licence":"PD-OurAirports"}},{"type":"Feature","id":"airport/IM-0003","geometry":{"type":"Point","coordinates":[-4.51311,54.182127]},"properties":{"name":"Mount Rule Farm Airstrip","ident":"IM-0003","airportType":"small_airport","icao":null,"iata":null,"municipality":"Braddan","elevationM":96.3,"scheduledService":false,"closed":false,"runways":[],"runwayCount":0,"homeLink":null,"wikipedia":null,"coordGrade":"B","coordSource":"OurAirports aerodrome reference point (public-domain OurAirports dataset); crowd-maintained, not independently audited.","source":"https://ourairports.com/data/","sourceVerified":"2026-10-04","licence":"PD-OurAirports"}},{"type":"Feature","id":"airport/IM-0005","geometry":{"type":"Point","coordinates":[-4.507838,54.1703682]},"properties":{"name":"Noble's Hospital Heliport","ident":"IM-0005","airportType":"heliport","icao":null,"iata":null,"municipality":"Douglas","elevationM":null,"scheduledService":false,"closed":false,"runways":[],"runwayCount":0,"homeLink":null,"wikipedia":null,"coordGrade":"B","coordSource":"OurAirports aerodrome reference point (public-domain OurAirports dataset); crowd-maintained, not independently audited.","source":"https://ourairports.com/data/","sourceVerified":"2026-10-04","licence":"PD-OurAirports"}},{"type":"Feature","id":"airport/IM-0006","geometry":{"type":"Point","coordinates":[-4.4375,54.33583]},"properties":{"name":"Hall Caine Airport","ident":"IM-0006","airportType":"closed","icao":null,"iata":null,"municipality":"Ramsey","elevationM":9.1,"scheduledService":false,"closed":true,"runways":[],"runwayCount":0,"homeLink":null,"wikipedia":"https://en.wikipedia.org/wiki/Hall_Caine_Airport","coordGrade":"B","coordSource":"OurAirports aerodrome reference point (public-domain OurAirports dataset); crowd-maintained, not independently audited.","source":"https://ourairports.com/data/","sourceVerified":"2026-10-04","licence":"PD-OurAirports"}},{"type":"Feature","id":"airport/IM-0002","geometry":{"type":"Point","coordinates":[-4.5238,54.354]},"properties":{"name":"RAF Jurby","ident":"IM-0002","airportType":"closed","icao":null,"iata":null,"municipality":"Jurby","elevationM":25.6,"scheduledService":false,"closed":true,"runways":[],"runwayCount":0,"homeLink":null,"wikipedia":"https://en.wikipedia.org/wiki/RAF_Jurby","coordGrade":"B","coordSource":"OurAirports aerodrome reference point (public-domain OurAirports dataset); crowd-maintained, not independently audited.","source":"https://ourairports.com/data/","sourceVerified":"2026-10-04","licence":"PD-OurAirports"}}]}
+{
+  "type": "FeatureCollection",
+  "name": "airports",
+  "properties": {
+    "generated": "2026-10-15T01:39:04.326Z",
+    "source": "https://ourairports.com/data/",
+    "sourceVerified": "2026-10-15",
+    "licence": "PD-OurAirports",
+    "caveats": [
+      "OurAirports is crowd-maintained; positions are not independently audited.",
+      "Runway `closed` flags are carried through from OurAirports and may lag reality.",
+      "Airport type 'closed' means OurAirports has marked the aerodrome closed; the site may still be in use for private or emergency aviation.",
+      "Only the aerodrome reference point is published, not the boundary or extent of any runway strip."
+    ],
+    "licenceId": "PD-OURAIRPORTS",
+    "sourceId": "ourairports",
+    "sourceUrl": "https://ourairports.com/data/",
+    "licenceUrl": "https://ourairports.com/data/"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "airport/EGNS",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.623871,
+          54.083081
+        ]
+      },
+      "properties": {
+        "name": "Isle of Man Airport",
+        "ident": "EGNS",
+        "airportType": "large_airport",
+        "icao": "EGNS",
+        "iata": "IOM",
+        "municipality": "Castletown, Rushen",
+        "elevationM": 15.8,
+        "scheduledService": true,
+        "closed": false,
+        "runways": [
+          {
+            "ident": "03/21",
+            "lengthM": 1199.1,
+            "widthM": 46,
+            "lengthFt": 3934,
+            "widthFt": 151,
+            "surface": "ASP",
+            "lighted": true,
+            "closed": false,
+            "le": {
+              "lat": 54.077782,
+              "lon": -4.631711
+            },
+            "he": {
+              "lat": 54.087296,
+              "lon": -4.623116
+            },
+            "headingLeDegT": 28,
+            "headingHeDegT": 208
+          },
+          {
+            "ident": "08/26",
+            "lengthM": 2110.1,
+            "widthM": 46,
+            "lengthFt": 6923,
+            "widthFt": 151,
+            "surface": "ASP",
+            "lighted": true,
+            "closed": false,
+            "le": {
+              "lat": 54.081387,
+              "lon": -4.638947
+            },
+            "he": {
+              "lat": 54.08535,
+              "lon": -4.60738
+            },
+            "headingLeDegT": 78,
+            "headingHeDegT": 258
+          },
+          {
+            "ident": "17/35",
+            "lengthM": 903.1,
+            "widthM": 27.1,
+            "lengthFt": 2963,
+            "widthFt": 89,
+            "surface": "ASP",
+            "lighted": false,
+            "closed": true,
+            "le": {
+              "lat": 54.0853,
+              "lon": -4.63028
+            },
+            "he": {
+              "lat": 54.0783,
+              "lon": -4.6275
+            },
+            "headingLeDegT": 175,
+            "headingHeDegT": 355
+          }
+        ],
+        "runwayCount": 3,
+        "homeLink": "http://www.iom-airport.com/",
+        "wikipedia": "https://en.wikipedia.org/wiki/Isle_of_Man_Airport",
+        "coordGrade": "A",
+        "coordSource": "OurAirports aerodrome reference point for EGNS (public-domain OurAirports dataset).",
+        "source": "https://ourairports.com/data/",
+        "sourceVerified": "2026-10-15",
+        "licence": "PD-OurAirports"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "airport/IM-0001",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.423333,
+          54.371111
+        ]
+      },
+      "properties": {
+        "name": "Andreas Airfield",
+        "ident": "IM-0001",
+        "airportType": "small_airport",
+        "icao": null,
+        "iata": null,
+        "municipality": "Andreas",
+        "elevationM": 29.6,
+        "scheduledService": false,
+        "closed": false,
+        "runways": [],
+        "runwayCount": 0,
+        "homeLink": null,
+        "wikipedia": "https://en.wikipedia.org/wiki/RAF_Andreas",
+        "coordGrade": "B",
+        "coordSource": "OurAirports aerodrome reference point (public-domain OurAirports dataset); crowd-maintained, not independently audited.",
+        "source": "https://ourairports.com/data/",
+        "sourceVerified": "2026-10-15",
+        "licence": "PD-OurAirports"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "airport/IM-0004",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.438477,
+          54.356006
+        ]
+      },
+      "properties": {
+        "name": "Andreas-Ballavoddan House Airstrip",
+        "ident": "IM-0004",
+        "airportType": "small_airport",
+        "icao": null,
+        "iata": null,
+        "municipality": "Andreas",
+        "elevationM": null,
+        "scheduledService": false,
+        "closed": false,
+        "runways": [],
+        "runwayCount": 0,
+        "homeLink": null,
+        "wikipedia": null,
+        "coordGrade": "B",
+        "coordSource": "OurAirports aerodrome reference point (public-domain OurAirports dataset); crowd-maintained, not independently audited.",
+        "source": "https://ourairports.com/data/",
+        "sourceVerified": "2026-10-15",
+        "licence": "PD-OurAirports"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "airport/IM-0003",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.51311,
+          54.182127
+        ]
+      },
+      "properties": {
+        "name": "Mount Rule Farm Airstrip",
+        "ident": "IM-0003",
+        "airportType": "small_airport",
+        "icao": null,
+        "iata": null,
+        "municipality": "Braddan",
+        "elevationM": 96.3,
+        "scheduledService": false,
+        "closed": false,
+        "runways": [],
+        "runwayCount": 0,
+        "homeLink": null,
+        "wikipedia": null,
+        "coordGrade": "B",
+        "coordSource": "OurAirports aerodrome reference point (public-domain OurAirports dataset); crowd-maintained, not independently audited.",
+        "source": "https://ourairports.com/data/",
+        "sourceVerified": "2026-10-15",
+        "licence": "PD-OurAirports"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "airport/IM-0005",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.507838,
+          54.1703682
+        ]
+      },
+      "properties": {
+        "name": "Noble's Hospital Heliport",
+        "ident": "IM-0005",
+        "airportType": "heliport",
+        "icao": null,
+        "iata": null,
+        "municipality": "Douglas",
+        "elevationM": null,
+        "scheduledService": false,
+        "closed": false,
+        "runways": [],
+        "runwayCount": 0,
+        "homeLink": null,
+        "wikipedia": null,
+        "coordGrade": "B",
+        "coordSource": "OurAirports aerodrome reference point (public-domain OurAirports dataset); crowd-maintained, not independently audited.",
+        "source": "https://ourairports.com/data/",
+        "sourceVerified": "2026-10-15",
+        "licence": "PD-OurAirports"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "airport/IM-0006",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.4375,
+          54.33583
+        ]
+      },
+      "properties": {
+        "name": "Hall Caine Airport",
+        "ident": "IM-0006",
+        "airportType": "closed",
+        "icao": null,
+        "iata": null,
+        "municipality": "Ramsey",
+        "elevationM": 9.1,
+        "scheduledService": false,
+        "closed": true,
+        "runways": [],
+        "runwayCount": 0,
+        "homeLink": null,
+        "wikipedia": "https://en.wikipedia.org/wiki/Hall_Caine_Airport",
+        "coordGrade": "B",
+        "coordSource": "OurAirports aerodrome reference point (public-domain OurAirports dataset); crowd-maintained, not independently audited.",
+        "source": "https://ourairports.com/data/",
+        "sourceVerified": "2026-10-15",
+        "licence": "PD-OurAirports"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "airport/IM-0002",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.5238,
+          54.354
+        ]
+      },
+      "properties": {
+        "name": "RAF Jurby",
+        "ident": "IM-0002",
+        "airportType": "closed",
+        "icao": null,
+        "iata": null,
+        "municipality": "Jurby",
+        "elevationM": 25.6,
+        "scheduledService": false,
+        "closed": true,
+        "runways": [],
+        "runwayCount": 0,
+        "homeLink": null,
+        "wikipedia": "https://en.wikipedia.org/wiki/RAF_Jurby",
+        "coordGrade": "B",
+        "coordSource": "OurAirports aerodrome reference point (public-domain OurAirports dataset); crowd-maintained, not independently audited.",
+        "source": "https://ourairports.com/data/",
+        "sourceVerified": "2026-10-15",
+        "licence": "PD-OurAirports"
+      }
+    }
+  ]
+}

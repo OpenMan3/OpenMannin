@@ -67,10 +67,10 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 
 | Layer | Source | Licence | Grade | Features |
 | --- | --- | --- | --- | --- |
-| Road network (`roads`) | osmIOM | ODbL | B | 12020 |
+| Road network (`roads`) | osmIOM | ODbL | B | 12023 |
 | Bridges (`bridges`) | osmIOM | ODbL | C | 558 |
 | Emergency services (`emergency`) | osmIOM | ODbL | C | 13 |
-| Footpaths & PRoW (`footpaths`) | osmIOM | ODbL | C | 9265 |
+| Footpaths & PRoW (`footpaths`) | osmIOM | ODbL | C | 9266 |
 
 ### transport
 
@@ -81,9 +81,9 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Places of worship (`worship`) | osmIOM | ODbL | C | 97 |
 | Bus stops (`bus-stops`) | osmIOM | ODbL | C | 732 |
 | Postcodes (`postcodes`) | osmIOM | ODbL | C | 1414 |
-| House numbers (`house-numbers`) | osmIOM | ODbL | C | 8396 |
+| House numbers (`house-numbers`) | osmIOM | ODbL | C | 8287 |
 | Railways & tramways (`railways`) | osmIOM | ODbL | B | 284 |
-| EV charging sites (`ev`) | osmIOM | ODbL | C | 59 |
+| EV charging sites (`ev`) | osmIOM | ODbL | C | 60 |
 | Traffic signals & crossings (`traffic-signals`) | osmIOM | ODbL | C | 155 |
 
 ### cables
@@ -100,7 +100,7 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 | Ports & harbours (`ports`) | osmHarbours | ODbL | B | 27 |
 | Satellite ground stations (`satellite`) | spaceman | PUBLIC-DOMAIN | B | 2 |
 | Chemical & ordnance dumpsites (`dumpsites`) | ospar | PUBLIC-DOMAIN | B | 2 |
-| Lighthouses & seamarks (`lighthouses`) | osmIOM | ODbL | B | 102 |
+| Lighthouses & seamarks (`lighthouses`) | osmIOM | ODbL | B | 101 |
 | Communication towers & masts (`comms-towers`) | osmIOM | ODbL | C | 97 |
 | Places offering WiFi (`wifi`) | osmIOM | ODbL | C | 46 |
 
@@ -118,12 +118,12 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 
 | Layer | Source | Licence | Grade | Features |
 | --- | --- | --- | --- | --- |
-| Monuments & archaeology (`archaeology`) | osmIOM | ODbL | C | 140 |
-| Places & businesses (`overture-places`) | overturePlaces | CDLA-PERMISSIVE-2.0 | C | 3483 |
-| Mine shafts, adits & mines (`mine-infrastructure`) | osmIOM | ODbL | C | 19 |
-| Tholtans & ruined buildings (`tholtans-ruins`) | osmIOM | ODbL | C | 848 |
+| Monuments & archaeology (`archaeology`) | osmIOM | ODbL | C | 281 |
+| Places & businesses (`overture-places`) | overturePlaces | CDLA-PERMISSIVE-2.0 | C | 3488 |
+| Mines & industrial heritage (`mine-infrastructure`) | osmIOM | ODbL | C | 30 |
+| Tholtans & ruined buildings (`tholtans-ruins`) | osmIOM | ODbL | C | 860 |
 | Essential utilities & services (`essential-utilities`) | osmIOM | ODbL | C | 187 |
-| Food & drink (`food-drink`) | osmIOM | ODbL | C | 308 |
+| Food & drink (`food-drink`) | osmIOM | ODbL | C | 310 |
 | Coastal & outdoor (`coastal-outdoor`) | osmIOM | ODbL | C | 1067 |
 | Wikidata memorials & monuments (`wikidata-memorials`) | wikidata | CC0-1.0 | C | 12 |
 
@@ -131,8 +131,8 @@ This project does **not** ingest, cache, trace or derive anything from governmen
 
 | Layer | Source | Licence | Grade | Features |
 | --- | --- | --- | --- | --- |
-| Protected areas (`protected`) | osmIOM | ODbL | C | 13 |
-| Rivers & streams (`hydro`) | osmIOM | ODbL | C | 1422 |
+| Protected areas (`protected`) | osmIOM | ODbL | C | 12 |
+| Rivers & streams (`hydro`) | osmIOM | ODbL | C | 1430 |
 | Marine habitats (biogenic substrate) (`marine-habitats`) | emodnetHabitats | CC-BY-4.0 | C | 8 |
 
 ### aviation

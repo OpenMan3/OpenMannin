@@ -139,4 +139,3 @@ async function main() {
 }
 
 await main();
-PY

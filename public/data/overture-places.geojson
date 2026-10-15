@@ -2,8 +2,8 @@
   "type": "FeatureCollection",
   "name": "overture-places",
   "properties": {
-    "generated": "2026-10-13T23:27:35.551Z",
-    "source": "Overture Maps \u2014 Places",
+    "generated": "2026-10-15T01:52:45.165Z",
+    "source": "Overture Maps — Places",
     "sourceId": "overturePlaces",
     "sourceUrl": "https://docs.overturemaps.org/",
     "licence": "CDLA-Permissive-2.0",
@@ -212,7 +212,7 @@
       },
       "properties": {
         "id": "dbaec79a-caed-4b13-858a-4ae8d5507d62",
-        "name": "Cregneash Caf\u00e9",
+        "name": "Cregneash Café",
         "category": "tea_room",
         "basicCategory": "non_alcoholic_beverage_venue",
         "address": "Sound Road Cregneash",
@@ -3138,10 +3138,10 @@
       },
       "properties": {
         "id": "b20fd281-bed3-41a8-8546-e9c0180f711b",
-        "name": "Bah\u00e1'\u00ed Memorial Arboretum",
+        "name": "Bahá'í Memorial Arboretum",
         "category": "park",
         "basicCategory": "park",
-        "address": "Bah\u00e1'\u00ed Memorial Arboretum, 4 \\nGrenea Cottages, Shore Road.",
+        "address": "Bahá'í Memorial Arboretum, 4 \\nGrenea Cottages, Shore Road.",
         "confidence": 0.704,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -3160,7 +3160,7 @@
       },
       "properties": {
         "id": "0cfcd2ba-3f3e-4440-96d7-3ecb144d77fa",
-        "name": "Bah\u00e1\u2019\u00ed\u2019s Isle of Man",
+        "name": "Bahá’í’s Isle of Man",
         "category": "religious_organization",
         "basicCategory": "religious_organization",
         "address": "4 Grenea Cottage, Shore road, Kentraugh",
@@ -6837,7 +6837,7 @@
         "name": "Leonardo's Restaurant ",
         "category": "restaurant",
         "basicCategory": "restaurant",
-        "address": "Sami\u2019s restaurant at the Bradda Glen ",
+        "address": "Sami’s restaurant at the Bradda Glen ",
         "confidence": 0.65,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -7277,7 +7277,7 @@
         "name": "Rushen Lodge of Freemasons",
         "category": "social_or_community_service",
         "basicCategory": "social_or_community_service",
-        "address": "Freemasons\u2019 Hall Hope Street ",
+        "address": "Freemasons’ Hall Hope Street ",
         "confidence": 0.799,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -8132,7 +8132,7 @@
       },
       "properties": {
         "id": "420afaf8-8710-481e-a78a-46797b563ddc",
-        "name": "Caf\u00e9 Bar Two Six",
+        "name": "Café Bar Two Six",
         "category": "cafe",
         "basicCategory": "cafe",
         "address": "Airport Rd",
@@ -8770,7 +8770,7 @@
       },
       "properties": {
         "id": "1b8dd6ab-e153-4776-a16d-273875db69a0",
-        "name": "Ha\u00fcsbuild't Property Services & Management",
+        "name": "Haüsbuild't Property Services & Management",
         "category": "real_estate_service",
         "basicCategory": "real_estate_service",
         "address": "isle of man",
@@ -8858,7 +8858,7 @@
       },
       "properties": {
         "id": "11ea39dc-4b4f-4973-bc11-ddb1338a774a",
-        "name": "\u00c1gi\u2019s Snackshack",
+        "name": "Ági’s Snackshack",
         "category": "food_truck_stand",
         "basicCategory": "food_truck_stand",
         "address": "Arbory Road, Southern 100 clubhouse ",
@@ -9210,7 +9210,7 @@
       },
       "properties": {
         "id": "82df97b7-f481-48ab-b17e-7b587615af4d",
-        "name": "K&W Auto\u2019s",
+        "name": "K&W Auto’s",
         "category": "automotive_repair",
         "basicCategory": "automotive_service",
         "address": "Unit 8b balder-ton court, balthane ind estate ",
@@ -9936,7 +9936,7 @@
       },
       "properties": {
         "id": "18d31c3b-62ee-45ec-b986-edfdf47f4f5d",
-        "name": "Foxy\u2019s Garage",
+        "name": "Foxy’s Garage",
         "category": "automotive_service",
         "basicCategory": "automotive_service",
         "address": "Unit 85 Balthane Park, Balthane , Ballasalla, IM9 2AX",
@@ -11677,7 +11677,7 @@
         "name": "BarberTop Studio",
         "category": null,
         "basicCategory": null,
-        "address": "Lower Duke\u2019s Road, on the corner from the TUCK INN chippy",
+        "address": "Lower Duke’s Road, on the corner from the TUCK INN chippy",
         "confidence": 0.931,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -16492,7 +16492,7 @@
       },
       "properties": {
         "id": "16f27b85-45e5-4ac8-b3ff-b47b84f7ee92",
-        "name": "B\u00e0 S\u00f9ng Ch\u1eefa Xoang - Thu\u1ed1c Nam Hi\u1ec7u Qu\u1ea3 T\u1eadn G\u1ed1c 0387.315.893",
+        "name": "Bà Sùng Chữa Xoang - Thuốc Nam Hiệu Quả Tận Gốc 0387.315.893",
         "category": "dental_clinic",
         "basicCategory": "dental_clinic",
         "address": "16 - 18 Ridgeway Street",
@@ -16888,7 +16888,7 @@
       },
       "properties": {
         "id": "250c7090-c822-4394-9ccc-2b06dad82902",
-        "name": "Goldie\u2019s Garage",
+        "name": "Goldie’s Garage",
         "category": "automotive_repair",
         "basicCategory": "automotive_service",
         "address": "Unit 6, South Quay, Industrial Estate",
@@ -17460,7 +17460,7 @@
       },
       "properties": {
         "id": "0f5518d9-493d-4d5c-a5f3-43ab1de2be9c",
-        "name": "Ticket Hall Restaurant & Caf\u00e9",
+        "name": "Ticket Hall Restaurant & Café",
         "category": "restaurant",
         "basicCategory": "restaurant",
         "address": "Bank Hill",
@@ -17727,7 +17727,7 @@
         "name": "Just Pizza & Pasta",
         "category": "italian_restaurant",
         "basicCategory": "restaurant",
-        "address": "Clinch\u2019s Court, N Quay",
+        "address": "Clinch’s Court, N Quay",
         "confidence": 0.996,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -18758,7 +18758,7 @@
       },
       "properties": {
         "id": "4505974f-f2c0-40cd-81d6-73e5f5f951e4",
-        "name": "Santander Work Caf\u00e9, Isle of Man",
+        "name": "Santander Work Café, Isle of Man",
         "category": "bank",
         "basicCategory": "bank_or_credit_union",
         "address": "Market Hall, North Quay",
@@ -19286,7 +19286,7 @@
       },
       "properties": {
         "id": "3e26f0ef-201c-43fe-8bd8-26436f7292d0",
-        "name": "Milner\u2019s Tower",
+        "name": "Milner’s Tower",
         "category": "historic_site",
         "basicCategory": "historic_site",
         "address": null,
@@ -19550,7 +19550,7 @@
       },
       "properties": {
         "id": "b62a01ec-a821-4bf4-afcf-2c7b2b4afc87",
-        "name": "AMaisin\u2019 Beauty",
+        "name": "AMaisin’ Beauty",
         "category": "spa",
         "basicCategory": "wellness_service",
         "address": "2, Market Hill",
@@ -19924,7 +19924,7 @@
       },
       "properties": {
         "id": "5878f4a3-d921-45b8-be0a-bdf707282866",
-        "name": "O\u2019Malley\u2019s Isle of Man",
+        "name": "O’Malley’s Isle of Man",
         "category": "whiskey_bar",
         "basicCategory": "bar",
         "address": "17, Victoria Street",
@@ -20804,7 +20804,7 @@
       },
       "properties": {
         "id": "3576896e-0acb-42ab-96d4-84dd4b49ea83",
-        "name": "Ella\u2019s Barber Studio",
+        "name": "Ella’s Barber Studio",
         "category": "barber",
         "basicCategory": "personal_or_beauty_service",
         "address": "36 Victoria St",
@@ -22809,7 +22809,7 @@
         "name": "Paul Ridgway IOM",
         "category": "auto_dealer",
         "basicCategory": "auto_dealer",
-        "address": "Unit 15A, Tromode Estate, Carr\u2019s Lane, Tromode",
+        "address": "Unit 15A, Tromode Estate, Carr’s Lane, Tromode",
         "confidence": 0.926,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -23334,7 +23334,7 @@
       },
       "properties": {
         "id": "ef8b33fc-a5f9-457a-8cf9-963ad8c2294d",
-        "name": "Vellika\u2019s Kitchen",
+        "name": "Vellika’s Kitchen",
         "category": "restaurant",
         "basicCategory": "restaurant",
         "address": "3, Peel Road",
@@ -25556,7 +25556,7 @@
       },
       "properties": {
         "id": "c0444c99-115c-40c3-ae7b-7566d8f1f515",
-        "name": "Niko\u2019s Grill",
+        "name": "Niko’s Grill",
         "category": "mediterranean_restaurant",
         "basicCategory": "restaurant",
         "address": "50, Duke Street",
@@ -26260,7 +26260,7 @@
       },
       "properties": {
         "id": "cf1155ff-3182-451c-88a3-40d53ffa9f5d",
-        "name": "\u6cf0\u6664\u58eb\u6cb3",
+        "name": "泰晤士河",
         "category": "arts_and_entertainment",
         "basicCategory": "arts_and_entertainment",
         "address": null,
@@ -26304,7 +26304,7 @@
       },
       "properties": {
         "id": "c1e82e3b-5c4d-4a13-ae32-58ee8be046d6",
-        "name": "Namast\u00e8 Beauty and Holistic Therapy by Stephanie",
+        "name": "Namastè Beauty and Holistic Therapy by Stephanie",
         "category": "beauty_salon",
         "basicCategory": "personal_or_beauty_service",
         "address": "Eternity Hair Specialists, 4, Market Hill",
@@ -29098,7 +29098,7 @@
       },
       "properties": {
         "id": "4f29f94f-0359-43a0-927c-a319f96d9d49",
-        "name": "Jane\u2019s Holistic Therapy",
+        "name": "Jane’s Holistic Therapy",
         "category": null,
         "basicCategory": null,
         "address": "41, Bucks Road",
@@ -30154,7 +30154,7 @@
       },
       "properties": {
         "id": "88d29a00-46ec-4dd2-8126-5852d3269958",
-        "name": "Kennito D\u2019 Barber",
+        "name": "Kennito D’ Barber",
         "category": null,
         "basicCategory": null,
         "address": "2a, Windsor Road",
@@ -30264,7 +30264,7 @@
       },
       "properties": {
         "id": "049cc69a-61ff-4be4-a517-92852daf895c",
-        "name": "\u0414\u0435\u0442\u0441\u043a\u0438 \u0423\u0447\u0435\u0431\u0435\u043d \u0426\u0435\u043d\u0442\u044a\u0440 \"\u0421\u0442\u044a\u043f\u043a\u0430 \u043f\u043e \u0421\u0442\u044a\u043f\u043a\u0430\" \u043e-\u0432 \u041c\u0430\u043d",
+        "name": "Детски Учебен Център \"Стъпка по Стъпка\" о-в Ман",
         "category": "school",
         "basicCategory": "place_of_learning",
         "address": "92, Bucks Road",
@@ -30330,7 +30330,7 @@
       },
       "properties": {
         "id": "35923164-3c98-4754-a4c1-2460f4d9add2",
-        "name": "Booboo\u2019s Groom Room",
+        "name": "Booboo’s Groom Room",
         "category": "pet_groomer",
         "basicCategory": "animal_or_pet_service",
         "address": "31 Christian Rd",
@@ -32212,6 +32212,28 @@
     },
     {
       "type": "Feature",
+      "id": "0a94a959-6bf7-42b7-91c8-7adda501b73d",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.48006,
+          54.15329
+        ]
+      },
+      "properties": {
+        "id": "0a94a959-6bf7-42b7-91c8-7adda501b73d",
+        "name": "Peel Harbour",
+        "category": "geographic_entities",
+        "basicCategory": "geographic_entities",
+        "address": "Peel, Isle of Man",
+        "confidence": 0.834,
+        "sourceDataset": "meta",
+        "originLicence": "CDLA-Permissive-2.0",
+        "source": "overture"
+      }
+    },
+    {
+      "type": "Feature",
       "id": "c1dab6f2-aff3-4801-975a-9105188ddf40",
       "geometry": {
         "type": "Point",
@@ -32266,7 +32288,7 @@
       },
       "properties": {
         "id": "d8514574-1b8c-4f0b-90d1-a973b6dcf50f",
-        "name": "Ruth\u2019s Retreat",
+        "name": "Ruth’s Retreat",
         "category": "beauty_salon",
         "basicCategory": "personal_or_beauty_service",
         "address": "Unit 3 rosemary house, finch road",
@@ -36568,6 +36590,28 @@
     },
     {
       "type": "Feature",
+      "id": "f575f59b-e525-46e5-b0f5-16510bed902d",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.48083,
+          54.15517
+        ]
+      },
+      "properties": {
+        "id": "f575f59b-e525-46e5-b0f5-16510bed902d",
+        "name": "Laxey Health Centre",
+        "category": "real_estate_service",
+        "basicCategory": "real_estate_service",
+        "address": "",
+        "confidence": 0.471,
+        "sourceDataset": "meta",
+        "originLicence": "CDLA-Permissive-2.0",
+        "source": "overture"
+      }
+    },
+    {
+      "type": "Feature",
       "id": "014db567-3b37-4c4d-8d5a-6034570f3e5e",
       "geometry": {
         "type": "Point",
@@ -37106,7 +37150,7 @@
       },
       "properties": {
         "id": "ac78f4c9-4408-4538-a4b8-c74c86fb7fcd",
-        "name": "Cherie\u2019s family Cakes & Cookery",
+        "name": "Cherie’s family Cakes & Cookery",
         "category": "bakery",
         "basicCategory": "casual_eatery",
         "address": "Douglas",
@@ -37502,10 +37546,10 @@
       },
       "properties": {
         "id": "b149926d-acc4-4eee-96a8-71e1e9e734af",
-        "name": "Queen\u2019s Ave Square",
+        "name": "Queen’s Ave Square",
         "category": "park",
         "basicCategory": "park",
-        "address": "Queen\u2019s Ave",
+        "address": "Queen’s Ave",
         "confidence": 0.72,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -37964,7 +38008,7 @@
       },
       "properties": {
         "id": "8d4bf703-cafa-4889-86a0-b6a15cca6a52",
-        "name": "Anna\u2019s Deli ",
+        "name": "Anna’s Deli ",
         "category": "grocery_store",
         "basicCategory": "food_and_beverage_store",
         "address": "4, Bathurst Street",
@@ -38426,7 +38470,7 @@
       },
       "properties": {
         "id": "b0ec1c02-c86a-4a1a-bd07-fd736829cadf",
-        "name": "Chengdu Impression \u6210\u90fd\u5370\u8c61",
+        "name": "Chengdu Impression 成都印象",
         "category": "restaurant",
         "basicCategory": "restaurant",
         "address": "18 Broadway Douglas",
@@ -39504,7 +39548,7 @@
       },
       "properties": {
         "id": "a5eba241-0658-416f-bced-d5317a0ff578",
-        "name": "Drewry\u2019s",
+        "name": "Drewry’s",
         "category": "beauty_salon",
         "basicCategory": "personal_or_beauty_service",
         "address": "7-11 Walpole Avenue",
@@ -41342,6 +41386,28 @@
     },
     {
       "type": "Feature",
+      "id": "1958ee57-40cd-4f99-bd84-d0a7684713fd",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.52278,
+          54.15659
+        ]
+      },
+      "properties": {
+        "id": "1958ee57-40cd-4f99-bd84-d0a7684713fd",
+        "name": "Curraghs Wildlife Park",
+        "category": "park",
+        "basicCategory": "park",
+        "address": "Ballaugh, Isle of Man",
+        "confidence": 0.757,
+        "sourceDataset": "meta",
+        "originLicence": "CDLA-Permissive-2.0",
+        "source": "overture"
+      }
+    },
+    {
+      "type": "Feature",
       "id": "48ea63bd-fd62-43f3-9d1d-867576ca3e8f",
       "geometry": {
         "type": "Point",
@@ -41861,7 +41927,7 @@
         "name": "Selena & David",
         "category": "party_and_event_planning",
         "basicCategory": "event_or_party_service",
-        "address": "Selena & David's Wedding, St Mary\u2019s Church, Hill Street",
+        "address": "Selena & David's Wedding, St Mary’s Church, Hill Street",
         "confidence": 0.546,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -41883,7 +41949,7 @@
         "name": "Auto Sparks Auto Electrical Specialists",
         "category": null,
         "basicCategory": null,
-        "address": "Unit 5 Corlett\u2019s yard Union mills",
+        "address": "Unit 5 Corlett’s yard Union mills",
         "confidence": 0.776,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -43247,7 +43313,7 @@
         "name": "Manx Embroiderers & Stitchers",
         "category": "social_or_community_service",
         "basicCategory": "social_or_community_service",
-        "address": "St. Andrew\u2019s Church Hall, Glencrutchery Road",
+        "address": "St. Andrew’s Church Hall, Glencrutchery Road",
         "confidence": 0.539,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -43645,6 +43711,28 @@
         "basicCategory": "event_or_party_service",
         "address": "",
         "confidence": 0.507,
+        "sourceDataset": "meta",
+        "originLicence": "CDLA-Permissive-2.0",
+        "source": "overture"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "7f5b1f94-9d72-4f17-810a-26135ab6b5ce",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.48913,
+          54.17025
+        ]
+      },
+      "properties": {
+        "id": "7f5b1f94-9d72-4f17-810a-26135ab6b5ce",
+        "name": "Port Cornaa",
+        "category": "beach",
+        "basicCategory": "beach",
+        "address": null,
+        "confidence": 0.903,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
         "source": "overture"
@@ -44831,7 +44919,7 @@
         "name": "RCN Isle of Man",
         "category": "labor_union",
         "basicCategory": "labor_union",
-        "address": "Mwyllin Doo Aah, Noble\u2019s Hospital, Strang, Braddan",
+        "address": "Mwyllin Doo Aah, Noble’s Hospital, Strang, Braddan",
         "confidence": 0.833,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -45554,10 +45642,10 @@
       },
       "properties": {
         "id": "59d491af-ea81-451d-a7d1-eceec78d7639",
-        "name": "Kissack\u2019s Funeral Directors",
+        "name": "Kissack’s Funeral Directors",
         "category": "funeral_service",
         "basicCategory": "family_service",
-        "address": "Rose villa, Kissack\u2019s lane",
+        "address": "Rose villa, Kissack’s lane",
         "confidence": 0.704,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -46503,7 +46591,7 @@
         "name": "The Event Stylists IOM",
         "category": null,
         "basicCategory": null,
-        "address": "The Studio, Kennaa, St John\u2019s, Isle of Man, Im4 3LW",
+        "address": "The Studio, Kennaa, St John’s, Isle of Man, Im4 3LW",
         "confidence": 0.266,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -47072,7 +47160,7 @@
       },
       "properties": {
         "id": "ab0305a5-b363-4f52-a6ce-f36a34e9fcf6",
-        "name": "Rose Cottage, St John\u2019s",
+        "name": "Rose Cottage, St John’s",
         "category": "real_estate_service",
         "basicCategory": "real_estate_service",
         "address": "Patrick Road",
@@ -47292,7 +47380,7 @@
       },
       "properties": {
         "id": "06dd20d4-6379-40fc-8097-0d5a93ec8847",
-        "name": "Drewry\u2019s",
+        "name": "Drewry’s",
         "category": "barber",
         "basicCategory": "personal_or_beauty_service",
         "address": "The Courtyard, Tynwald Mills",
@@ -49096,7 +49184,7 @@
       },
       "properties": {
         "id": "0bd642e8-add2-4495-a555-1cb74df1c6cb",
-        "name": "Shamyr Hey - Tearoom\u2019s",
+        "name": "Shamyr Hey - Tearoom’s",
         "category": "tea_room",
         "basicCategory": "non_alcoholic_beverage_venue",
         "address": "41, Michael Street",
@@ -49118,7 +49206,7 @@
       },
       "properties": {
         "id": "455b488f-22ac-4c24-ba87-083c4be62af1",
-        "name": "The Miller\u2019s T\u2019Ale",
+        "name": "The Miller’s T’Ale",
         "category": "pub",
         "basicCategory": "bar",
         "address": "33, Michael Street",
@@ -49162,7 +49250,7 @@
       },
       "properties": {
         "id": "f6bc97ec-67af-4d65-9697-c55b4391e4fa",
-        "name": "Harry\u2019s Cottage Isle of Man",
+        "name": "Harry’s Cottage Isle of Man",
         "category": "lodging",
         "basicCategory": "lodging",
         "address": "Old Smokehouse Yard, Factory Lane",
@@ -50812,10 +50900,10 @@
       },
       "properties": {
         "id": "a63019be-c693-4741-bc9b-0a673346e702",
-        "name": "Ethne\u2019s Groom Room",
+        "name": "Ethne’s Groom Room",
         "category": "pet_groomer",
         "basicCategory": "animal_or_pet_service",
-        "address": "Ethne\u2019s Groom Room, 19 Douglas St",
+        "address": "Ethne’s Groom Room, 19 Douglas St",
         "confidence": 0.243,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -51321,7 +51409,7 @@
         "name": "Rinkey Dance Company",
         "category": "sports_and_recreation",
         "basicCategory": "sports_and_recreation",
-        "address": "Sailor\u2019s shelter, East Quay",
+        "address": "Sailor’s shelter, East Quay",
         "confidence": 0.825,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -51607,7 +51695,7 @@
         "name": "Moore's Smokehouse 1882",
         "category": "barbecue_restaurant",
         "basicCategory": "restaurant",
-        "address": "Moore\u2019s Smoke House",
+        "address": "Moore’s Smoke House",
         "confidence": 0.859,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -55168,7 +55256,7 @@
       },
       "properties": {
         "id": "3600fc71-110f-478e-9d07-7c0d8d68ab41",
-        "name": "Wildlife Park Caf\u00e8",
+        "name": "Wildlife Park Cafè",
         "category": null,
         "basicCategory": null,
         "address": " Wildlife Park",
@@ -58216,6 +58304,28 @@
     },
     {
       "type": "Feature",
+      "id": "09b4d56d-0bf2-4b0e-99dc-d52c08b88747",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.32506,
+          54.29275
+        ]
+      },
+      "properties": {
+        "id": "09b4d56d-0bf2-4b0e-99dc-d52c08b88747",
+        "name": "Foxdale Mines",
+        "category": "historic_site",
+        "basicCategory": "historic_site",
+        "address": null,
+        "confidence": 0.73,
+        "sourceDataset": "meta",
+        "originLicence": "CDLA-Permissive-2.0",
+        "source": "overture"
+      }
+    },
+    {
+      "type": "Feature",
       "id": "0619e33e-afd0-4663-9fdd-56355ceff8a2",
       "geometry": {
         "type": "Point",
@@ -60781,7 +60891,7 @@
         "name": "Drop Inn Kids .Ramsey . IOM",
         "category": "charity_organization",
         "basicCategory": "civic_organization",
-        "address": "1 Church Walk . St Paul\u2019s Square. ",
+        "address": "1 Church Walk . St Paul’s Square. ",
         "confidence": 0.912,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -62978,7 +63088,7 @@
       },
       "properties": {
         "id": "d4110060-3dad-490e-9f35-4f03a6a91280",
-        "name": "Hersham Electrical Engineers Ltd - K\u00e4rcher IOM",
+        "name": "Hersham Electrical Engineers Ltd - Kärcher IOM",
         "category": "engineering_service",
         "basicCategory": "building_or_construction_service",
         "address": "Unit 5, Shipyard Industrial Estate",
@@ -66850,7 +66960,7 @@
       },
       "properties": {
         "id": "d55a872c-6232-4186-a098-5760b0cdb979",
-        "name": "Isabellas - Caf\u00e9, Pizzeria and Take-Away",
+        "name": "Isabellas - Café, Pizzeria and Take-Away",
         "category": "cafe",
         "basicCategory": "cafe",
         "address": "9, Glen Road Terrace",
@@ -68415,7 +68525,7 @@
         "name": "St Adamnan's Church",
         "category": "christian_place_of_worship",
         "basicCategory": "christian_place_of_worship",
-        "address": "St Adamnan\u2019s Church (Lonan Old Church), Ballamenaugh Road, Baldrine, Isle of Man.",
+        "address": "St Adamnan’s Church (Lonan Old Church), Ballamenaugh Road, Baldrine, Isle of Man.",
         "confidence": 0.997,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -68742,7 +68852,7 @@
       },
       "properties": {
         "id": "6f287451-9ae9-406b-b5e5-97a3d4149e9d",
-        "name": "Palero\u2019s Kitchen",
+        "name": "Palero’s Kitchen",
         "category": null,
         "basicCategory": null,
         "address": "18, Hillcroft Green",
@@ -72331,7 +72441,7 @@
         "name": "Summerhill Wetlands",
         "category": "nature_reserve",
         "basicCategory": "nature_reserve",
-        "address": "Governor\u2019s Bridge",
+        "address": "Governor’s Bridge",
         "confidence": 0.721,
         "sourceDataset": "meta",
         "originLicence": "CDLA-Permissive-2.0",
@@ -72856,7 +72966,7 @@
       },
       "properties": {
         "id": "89758c64-b040-4112-931d-2ddbf085edc8",
-        "name": "Caf\u00e9 Royale Halt",
+        "name": "Café Royale Halt",
         "category": "cafe",
         "basicCategory": "cafe",
         "address": null,
@@ -73010,7 +73120,7 @@
       },
       "properties": {
         "id": "ec737acd-af3c-4b7f-97ea-3b53092de45d",
-        "name": "Derby Castle Dep\u00f4t",
+        "name": "Derby Castle Depôt",
         "category": "train_station",
         "basicCategory": "train_station",
         "address": null,
@@ -73318,7 +73428,7 @@
       },
       "properties": {
         "id": "8766151a-4d42-41d3-af0e-b82a1a4695b5",
-        "name": "Purit\u00e9 on the Bay",
+        "name": "Purité on the Bay",
         "category": "beauty_salon",
         "basicCategory": "personal_or_beauty_service",
         "address": "16-18 Port Jack, Onchan, IOM",
@@ -73516,7 +73626,7 @@
       },
       "properties": {
         "id": "dd1ce57f-1b3c-4444-9bce-b0749ef3a75a",
-        "name": "NikkiNoo\u2019s 26.2",
+        "name": "NikkiNoo’s 26.2",
         "category": null,
         "basicCategory": null,
         "address": "68, Royal Avenue",
@@ -75386,7 +75496,7 @@
       },
       "properties": {
         "id": "fc80af32-8dca-4453-8d62-4b7a52cd352b",
-        "name": "Kent\u2019s Apartments",
+        "name": "Kent’s Apartments",
         "category": "lodging",
         "basicCategory": "lodging",
         "address": "Esplanade 2 ",

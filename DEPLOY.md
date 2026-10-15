@@ -243,7 +243,7 @@ Check, in order:
 2. `"worker": true` - otherwise every data layer is invisible while the
    basemap still draws. This is the failure that cost the most time so far.
 3. `"absent": []` - no registered layer without data.
-4. `"features"` - a plausible number (currently ~43,600). Small means ingest
+4. `"features"` - a plausible number (currently ~93,000). Small means ingest
    partially failed and you have a half-empty island.
 
 Then load the page and confirm:

@@ -89,7 +89,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "B",
     sourceId: "osmIOM",
-    featureCount: 12020,
+    featureCount: 12023,
   },
   {
     id: "bridges",
@@ -156,7 +156,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 9265,
+    featureCount: 9266,
   },
   {
     id: "schools-health",
@@ -308,7 +308,7 @@ export const LAYERS: LayerDef[] = [
     defaultOn: false,
     minZoom: 14,
     description:
-      "8,395 address points from OpenStreetMap: 6,949 with addr:housenumber (numbered street addresses) and 1,446 named rural/heritage properties mapped with addr:housename instead of a number. Each point is a building, entrance or standalone address node.",
+      "8,287 address points from OpenStreetMap: 6,851 with addr:housenumber (numbered street addresses) and 1,436 named rural/heritage properties mapped with addr:housename instead of a number. Each point is a building, entrance or standalone address node.",
     caveats: [
       "Coverage depends on OSM mapping activity. Rural and newly-built areas may be incomplete.",
       "addr:interpolation ways are not expanded — intermediate house numbers are not invented.",
@@ -316,7 +316,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 8396,
+    featureCount: 8287,
   },
   {
     id: "railways",
@@ -360,7 +360,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 59,
+    featureCount: 60,
   },
   {
     id: "traffic-signals",
@@ -532,7 +532,7 @@ export const LAYERS: LayerDef[] = [
     defaultOn: false,
     minZoom: 10,
     description:
-      "106 lights, light-vessels, beacons and buoys from OpenStreetMap, including Chicken Rock, Calf of Man, Point of Ayre and Bradda Head. Unnamed beacons are kept and flagged rather than discarded.",
+      "101 lights, light-vessels, beacons and buoys from OpenStreetMap, including Chicken Rock, Calf of Man, Point of Ayre and Bradda Head. Unnamed beacons are kept and flagged rather than discarded.",
     caveats: [
       "OpenStreetMap geometry, not a UKHO or Northern Lighthouse Board publication. No official seamark layer is published as open data, so OSM is the only open route.",
       "Characteristics (range, colour, period) are frequently absent or simply wrong in OSM. Do not present them as authoritative for navigation.",
@@ -541,7 +541,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "B",
     sourceId: "osmIOM",
-    featureCount: 102,
+    featureCount: 101,
   },
   {
     id: "comms-towers",
@@ -759,7 +759,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 13,
+    featureCount: 12,
   },
   {
     id: "hydro",
@@ -780,7 +780,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 1422,
+    featureCount: 1430,
   },
   {
     id: "marine-habitats",
@@ -834,7 +834,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "overturePlaces",
-    featureCount: 3483,
+    featureCount: 3488,
   },
   {
     id: "airport",
@@ -982,7 +982,7 @@ export const LAYERS: LayerDef[] = [
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 308,
+    featureCount: 310,
   },
   {
     id: "coastal-outdoor",

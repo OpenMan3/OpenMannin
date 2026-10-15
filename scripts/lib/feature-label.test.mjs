@@ -35,6 +35,36 @@ test("a charge point is recognised by its socket columns", () => {
   assert.equal(resolveFeatureLabel({ operator: "Pod Point", socketType2: "2" }), "Charge point");
 });
 
+test("an address-only building is labelled with its house number and street", () => {
+  assert.equal(
+    resolveFeatureLabel({ osmId: "w1494299465@2", housenumber: "51", street: "Cronk Drean" }),
+    "51 Cronk Drean",
+  );
+  assert.equal(
+    resolveFeatureLabel({ sourceDataset: "OpenStreetMap", osmId: "w1241477850@2", housenumber: "3", street: "Hutchinson Square" }),
+    "3 Hutchinson Square",
+  );
+});
+
+test("a bare house number survives when the building has no street", () => {
+  assert.equal(resolveFeatureLabel({ osmId: "w1", housenumber: "51" }), "51");
+});
+
+test("a named building keeps its name, not the composed address", () => {
+  assert.equal(
+    resolveFeatureLabel({ osmId: "w1", name: "Bar George", housenumber: "51", street: "Cronk Drean" }),
+    "Bar George",
+  );
+  assert.equal(
+    resolveFeatureLabel({ osmId: "w1", housename: "Ballaglass", housenumber: "51", street: "Cronk Drean" }),
+    "Ballaglass",
+  );
+});
+
+test("house numbers outside the buildings layer are left unqualified", () => {
+  assert.equal(resolveFeatureLabel({ kind: "number", label: "1", housenumber: "1", street: "Onchan Main Road" }), "1");
+});
+
 test("an anonymous feature is qualified by the nearest place when one exists", () => {
   assert.equal(
     resolveFeatureLabel({ kind: "substation", nearestPlace: "Jurby" }),

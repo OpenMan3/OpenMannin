@@ -2,10 +2,10 @@
   "ok": true,
   "worker": true,
   "layers": 43,
-  "features": 93311,
+  "features": 79999,
   "absent": [],
   "check": "static-build",
-  "generated": "2026-10-15T16:40:10.655Z",
+  "generated": "2026-10-15T17:07:05.099Z",
   "hosting": {
     "static": true,
     "clientFeeds": [

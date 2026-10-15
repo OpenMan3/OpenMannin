@@ -198,6 +198,16 @@ function buildingLabel(value: string): string {
   return BUILDING_CLASS_LABELS[key] ?? humanise(value.trim());
 }
 
+/** True for a building footprint: it carries a building class, an OSM element
+ *  id, OSM enrichment, or a buildings source dataset. Used to decide when a
+ *  bare house number should be qualified with its street. */
+function isBuildingProps(props: Record<string, unknown>): boolean {
+  return props.buildingClass !== undefined
+    || typeof props.osmId === "string"
+    || props.enrichedBy === "osm-overpass"
+    || (typeof props.sourceDataset === "string" && /buildings/i.test(props.sourceDataset));
+}
+
 /** Buildings carry many derived values that are not an identity (no name) but
  *  make a better row label than a blank or the literal "(unnamed)". */
 function buildingDescriptor(props: Record<string, unknown>): string | null {
@@ -219,6 +229,21 @@ function buildingDescriptor(props: Record<string, unknown>): string | null {
   const osm = typeof props.osmId === "string" ? props.osmId.trim() : "";
   if (osm) return `Feature ${osm}`;
   return null;
+}
+
+/**
+ * Qualify a bare house number with its street, so an address-only building
+ * reads "51 Cronk Drean" instead of "51". Only fires for buildings, only when
+ * the resolved identity is the house number itself (an explicit name or house
+ * name is left alone), and only when a street is present.
+ */
+function buildingAddressLabel(props: Record<string, unknown>, identity: string): string | null {
+  if (!isBuildingProps(props)) return null;
+  const number = firstString(props, ["housenumber", "addr:housenumber"]);
+  if (!number || number !== identity) return null;
+  const street = firstString(props, ["street", "addr:street", "substreet", "addr:substreet", "addr:place", "place"]);
+  if (!street) return null;
+  return `${number} ${street}`.trim();
 }
 
 export function featureKind(props: Record<string, unknown> | null | undefined): string | null {
@@ -306,7 +331,7 @@ export function resolveFeatureLabel(props: Record<string, unknown> | null | unde
   if (!props) return "(unnamed)";
 
   const identity = firstString(props, IDENTITY_KEYS);
-  if (identity) return identity;
+  if (identity) return buildingAddressLabel(props, identity) ?? identity;
 
   if (typeof props.asn === "number" && Number.isFinite(props.asn)) return `AS${props.asn}`;
   if (typeof props.regNo === "string" && props.regNo.trim()) return `Reg. ${props.regNo.trim()}`;
@@ -316,8 +341,7 @@ export function resolveFeatureLabel(props: Record<string, unknown> | null | unde
   const holder = firstString(props, ["holder", "asName"]);
   if (holder) return holder;
 
-  const isBuilding = props.buildingClass !== undefined || typeof props.osmId === "string" || props.enrichedBy === "osm-overpass" || (typeof props.sourceDataset === "string" && /buildings/i.test(props.sourceDataset));
-  const descriptor = isBuilding ? buildingDescriptor(props) : null;
+  const descriptor = isBuildingProps(props) ? buildingDescriptor(props) : null;
   if (descriptor && !PLACEHOLDERS.has(descriptor.toLowerCase()) && descriptor !== "(unnamed)") return descriptor;
 
   const kind = featureKind(props);

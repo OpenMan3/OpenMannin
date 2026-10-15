@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.10] - 2026-10-15
+### Changed
+- Address-only buildings are now labelled with their street, not just the house number: an OpenStreetMap footprint with house number 51 on Cronk Drean reads "51 Cronk Drean" in the popup, the Browse list and global search rather than a bare "51", and likewise "3 Hutchinson Square". The rule is in the shared `resolveFeatureLabel` resolver (`src/lib/feature-label.ts`), so the popup, the browse list and the search index keep agreeing: it fires only for buildings, only when the resolved identity is the house number itself, and only when a street is present. Buildings with a name or house name keep that name, a number with no street stays a bare number, and the separate house-numbers layer is left as-is. About 5,100 unnamed footprints gain the fuller label. `public/data/search-index.json` was rebuilt; four resolver tests were added.
+
 ## [0.3.9] - 2026-10-15
 ### Fixed
 - `scripts/lib/pmtiles-writer.mjs` wrote a single root directory containing every tile entry. The browser PMTiles reader fetches only the first 16 KiB of an archive to read the header *and the root directory*, so any layer whose compressed root crossed that line would not open at all: roads (root 24,780 B) and footpaths (17,562 B) rendered nothing, while the smaller archives were fine. The writer now emits the leaf-directory form of the spec: the root holds one run-length-0 entry per leaf, one leaf per 1024-tile chunk. Every root is now 64 B or less (roads 64 B, footpaths 59 B on the current data). A second bug in the same rewrite wrote `offset: 0` for every leaf because the offset cursor advanced *after* the entry map was built; leaf offsets are now cumulative. All seven archives were rebuilt and every tile decompresses. `scripts/lib/pmtiles-writer.test.mjs` (new) guards both: distinct leaf offsets, and a full reader round-trip of a multi-leaf archive plus a small single-leaf one.

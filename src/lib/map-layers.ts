@@ -32,10 +32,12 @@ const ALL_KINDS: ReadonlySet<GeometryKind> = new Set(["point", "line", "polygon"
  * read identically. Keyed by layer id, and deliberately small: a layer that is
  * not listed falls back to the standard marker.
  */
-const BUILDING_VISUAL: Record<string, { fill: number; line: number }> = {
-  // Buildings are the densest layer on the map. A slightly lighter fill with a
-  // firmer outline matches the "outlined footprint" look used for power assets.
-  buildings: { fill: 0.15, line: 2.0 },
+const BUILDING_VISUAL: Record<string, { fill: number; line: number; lineColor?: string }> = {
+  // Buildings are the densest layer on the map. A slightly lighter fill under a
+  // darker outline is what makes a footprint read as an outlined footprint
+  // rather than a faint smudge - the registry colour is light enough to vanish
+  // against the basemap as a line.
+  buildings: { fill: 0.28, line: 1.4, lineColor: "#6b7280" },
 };
 
 const POINT_STYLE: Record<string, { radius: number; stroke: string; strokeWidth: number }> = {
@@ -82,6 +84,7 @@ export function addPaintLayers(
   const sourceLayer = isVector ? { "source-layer": def.id } : {};
 
   const visual = BUILDING_VISUAL[def.id] ?? { fill: 0.22, line: 1.5 };
+  const lineColor = visual.lineColor ?? def.color;
 
   if (kinds.has("polygon")) {
     map.addLayer({
@@ -106,7 +109,7 @@ export function addPaintLayers(
       source: id,
       minzoom,
       ...sourceLayer,
-      paint: { "line-color": def.color, "line-width": visual.line, "line-opacity": 0.85 },
+      paint: { "line-color": lineColor, "line-width": visual.line, "line-opacity": 0.85 },
     });
   }
 

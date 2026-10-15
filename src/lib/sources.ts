@@ -243,6 +243,6 @@ export const SOURCES: Record<string, Source> = {
     licence: "ODbL",
     lastChecked: "2026-10-14",
     notes:
-      "Global buildings release. Over the Isle of Man the theme is entirely ODbL-1.0: OpenStreetMap is the primary source and Microsoft ML Buildings fills the remainder. Because ODbL carries attribution AND share-alike, the layer is ODbL, not CDLA. The ingest enforces a buildings-specific licence map and fails on any unknown contributor/licence pair. Pinned release lives in scripts/lib/overture-release.mjs.",
+      "Global buildings release. Over the Isle of Man the theme is entirely ODbL-1.0 (OpenStreetMap and Microsoft ML Buildings). Because ODbL carries attribution AND share-alike, the layer is ODbL, not CDLA. The ingest enforces a buildings-specific licence map and fails on any unknown contributor/licence pair, then applies an accuracy policy on top: only OpenStreetMap records ship, because only they carry an OSM element id that can be verified. Microsoft ML roofprints are dropped. Pinned release lives in scripts/lib/overture-release.mjs.",
   },
 };

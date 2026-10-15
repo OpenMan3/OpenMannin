@@ -2,11 +2,13 @@
  * Minimal PMTiles v3 writer.
  *
  * The JS tooling ships a reader and protocol but no writer, and tippecanoe is
- * not available in this environment. This writes the single-root-directory
- * form of the spec: every tile entry lives in the root directory, no leaf
- * directories, gzip internal + tile compression, MVT payloads. That is enough
- * for the layer sizes this app produces (tens of thousands of features) and is
- * read back by the `pmtiles` package's own PMTiles/Protocol classes.
+ * not available in this environment. This writes PMTiles with:
+ *   - a root directory containing one entry per leaf directory (runLength 0), so
+ *     the root stays small enough for the reader's 16 KiB header fetch; and
+ *   - one leaf directory per chunk of tiles. The 16 KiB limit is what breaks a
+ *     single large root directory, so chunking is required for wide layers.
+ * gzip internal + tile compression, MVT payloads. Read back by the `pmtiles`
+ * package's own PMTiles/Protocol classes.
  */
 
 import { gzipSync } from "node:zlib";
@@ -35,7 +37,7 @@ function writeInt32(buf, offset, value) {
 
 /**
  * Serialise a directory. Entries must be sorted by tileId. Offsets are
- * absolute within the tile-data section; the spec stores offset+1 so 0 can
+ * absolute within the relevant section; the spec stores offset+1 so 0 can
  * mean "contiguous with the previous entry".
  */
 function serializeDirectory(entries) {
@@ -50,6 +52,15 @@ function serializeDirectory(entries) {
   for (const entry of entries) parts.push(writeVarint(entry.length));
   for (const entry of entries) parts.push(writeVarint(entry.offset + 1));
   return gzipSync(Buffer.concat(parts));
+}
+
+function makeLeafEntries(tiles) {
+  return tiles.map((t) => ({
+    tileId: t.tileId,
+    offset: t.offset,
+    length: t.length,
+    runLength: 1,
+  }));
 }
 
 /**
@@ -75,26 +86,42 @@ export function buildPmtiles({ tiles, metadata, minZoom, maxZoom, bounds, center
   }
   const tileData = Buffer.concat(tileParts);
 
-  const entries = sorted.map((t) => ({
-    tileId: t.tileId,
-    offset: t.offset,
-    length: t.length,
-    runLength: 1,
-  }));
+  const CHUNK = 1024;
+  const leafDirs = [];
+  for (let i = 0; i < sorted.length; i += CHUNK) {
+    const chunk = sorted.slice(i, i + CHUNK);
+    const leafEntries = makeLeafEntries(chunk);
+    const leafData = serializeDirectory(leafEntries);
+    leafDirs.push({ firstTileId: chunk[0].tileId, data: leafData });
+  }
 
-  const rootDirectory = serializeDirectory(entries);
+  let leafCursor = 0;
+  const rootEntries = leafDirs.map((d) => {
+    const entry = {
+      tileId: d.firstTileId,
+      runLength: 0,
+      length: d.data.length,
+      offset: leafCursor,
+    };
+    leafCursor += d.data.length;
+    return entry;
+  });
+  const leafBytes = Buffer.concat(leafDirs.map((d) => d.data));
+
+  const rootDirectory = serializeDirectory(rootEntries);
   const jsonMetadata = gzipSync(Buffer.from(JSON.stringify(metadata), "utf8"));
 
   const header = Buffer.alloc(127);
   header.write("PMTiles", 0, "latin1");
   header.writeUInt8(3, 7);
 
+  // Layout: header | root | leaf directories | json metadata | tile data.
   const rootDirectoryOffset = 127;
   const rootDirectoryLength = rootDirectory.length;
-  const jsonMetadataOffset = rootDirectoryOffset + rootDirectoryLength;
+  const leafDirectoryOffset = rootDirectoryOffset + rootDirectoryLength;
+  const leafDirectoryLength = leafBytes.length;
+  const jsonMetadataOffset = leafDirectoryOffset + leafDirectoryLength;
   const jsonMetadataLength = jsonMetadata.length;
-  const leafDirectoryOffset = 0;
-  const leafDirectoryLength = 0;
   const tileDataOffset = jsonMetadataOffset + jsonMetadataLength;
 
   writeUInt64(header, 8, rootDirectoryOffset);
@@ -105,9 +132,9 @@ export function buildPmtiles({ tiles, metadata, minZoom, maxZoom, bounds, center
   writeUInt64(header, 48, leafDirectoryLength);
   writeUInt64(header, 56, tileDataOffset);
   writeUInt64(header, 64, tileData.length);
-  writeUInt64(header, 72, entries.length);
-  writeUInt64(header, 80, entries.length);
-  writeUInt64(header, 88, entries.length);
+  writeUInt64(header, 72, sorted.length);
+  writeUInt64(header, 80, sorted.length);
+  writeUInt64(header, 88, sorted.length);
   header.writeUInt8(1, 96); // clustered
   header.writeUInt8(COMPRESSION_GZIP, 97);
   header.writeUInt8(COMPRESSION_GZIP, 98);
@@ -122,5 +149,5 @@ export function buildPmtiles({ tiles, metadata, minZoom, maxZoom, bounds, center
   writeInt32(header, 119, Math.round(center[0] * 1e7));
   writeInt32(header, 123, Math.round(center[1] * 1e7));
 
-  return Buffer.concat([header, rootDirectory, jsonMetadata, tileData]);
+  return Buffer.concat([header, rootDirectory, leafBytes, jsonMetadata, tileData]);
 }

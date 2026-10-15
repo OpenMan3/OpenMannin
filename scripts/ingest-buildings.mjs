@@ -1,11 +1,11 @@
 /**
  * Overture Maps building footprints within the Isle of Man bbox.
  *
- * The buildings theme over the island is entirely ODbL-1.0 (OpenStreetMap and
- * Microsoft ML Buildings). The primary source is OpenStreetMap; Microsoft ML
- * roofprints fill in coverage. Unlike Overture Places, there is no
- * CDLA-Permissive-2.0 content here, so the licence gate is the buildings map,
- * which enforces ODbL attribution AND share-alike.
+ * The buildings theme over the island is ODbL-1.0 (OpenStreetMap and Microsoft
+ * ML Buildings). Only the OpenStreetMap records ship: they carry an OSM element
+ * id that can be checked against the live database, so every footprint on the
+ * map is verifiable. Microsoft ML Buildings are machine-generated roofprints
+ * with no id to confirm, and are dropped rather than presented as surveyed.
  *
  * The release is pinned in scripts/lib/overture-release.mjs.
  *
@@ -215,14 +215,31 @@ async function run() {
 
   const features = [];
   let enrichedCount = 0;
+  let droppedUnverifiable = 0;
+  let droppedNoOsmId = 0;
   for (const { row, geometry } of featureRecords) {
     const decision = classifyBuildingRecord(row.sourceDataset, row.sourceLicense);
     if (decision.action !== "keep") continue;
-    const simplified = simplifyGeometry(geometry, SIMPLIFY_TOL);
-    if (!simplified) continue;
+
+    // Accuracy policy: ship only footprints we can independently verify. In
+    // Overture's buildings theme that means OpenStreetMap records, which carry
+    // an OSM element id and can be checked against the live OSM database. The
+    // Microsoft ML Buildings remainder is machine-generated roofprints with no
+    // id to check, so it is dropped rather than shown as if surveyed.
+    if (String(row.sourceDataset) !== "OpenStreetMap") {
+      droppedUnverifiable++;
+      continue;
+    }
     const osmId = s(row.osmId);
     const canonical = osmId ? canonicalOsmId(osmId) : null;
-    const matchKey = canonical && osmMatches.has(canonical) ? canonical : null;
+    if (!canonical) {
+      droppedNoOsmId++;
+      continue;
+    }
+
+    const simplified = simplifyGeometry(geometry, SIMPLIFY_TOL);
+    if (!simplified) continue;
+    const matchKey = osmMatches.has(canonical) ? canonical : null;
     const osmTags = matchKey ? osmMatches.get(matchKey) : null;
     const props = {
       name: row.name ?? null,
@@ -243,11 +260,12 @@ async function run() {
       else if (typeof props.subtype === "string" && props.subtype) props.purpose = String(props.subtype).toLowerCase();
       else props.purpose = null;
     }
-    // A deliberate gap here: some roofprints only exist in the aerial layer and
-    // carry no OSM name or kind. They are kept on the map but deliberately do
-    // not receive a generic "Building" identity; feature-label derives context
-    // from the osmId. scripts/enrich-buildings-names.mjs may add real names.
-    // named buildings: prefer purpose from kind tags but leave (already set if tags)
+    // Unnamed buildings stay unnamed. No generic "Building" identity is
+    // invented and no name is copied from a nearby point of interest: names on
+    // this layer come only from the footprint's own OpenStreetMap tags, merged
+    // above by OSM element id. feature-label derives any contextual label from
+    // the building class and OSM id. Missing addresses are filled, strictly by
+    // containment, in scripts/enrich-buildings-addresses.mjs.
     features.push({
       type: "Feature",
       id: row.id,
@@ -263,9 +281,11 @@ async function run() {
 
   console.log(`  records in bbox:   ${parsedRows.length}`);
   console.log(`  records parsed:    ${featureRecords.length}`);
-  console.log(`  kept (ODbL):       ${summary.kept}`);
+  console.log(`  licence-kept:      ${summary.kept}`);
   console.log(`  excluded:          ${summary.excluded}`);
   for (const [key, value] of summary.excludedCounts) console.log(`    ${key}: ${value}`);
+  console.log(`  dropped unverifiable (not OSM): ${droppedUnverifiable}`);
+  console.log(`  dropped (OSM source, no element id): ${droppedNoOsmId}`);
   console.log(`  enriched from OSM: ${enrichedCount} / ${features.length} (${Math.round(enrichedCount/features.length*100)}%)`);
 
   const namedCount = features.filter((f) => f.properties.name).length;
@@ -288,9 +308,9 @@ async function run() {
       release,
       bbox: [BBOX.minLon, BBOX.minLat, BBOX.maxLon, BBOX.maxLat],
       caveats: [
-        "Overture buildings theme. The primary contributor is OpenStreetMap (ODbL); remaining coverage is Microsoft ML roofprints (ODbL) derived from aerial imagery.",
+        "Building footprints from OpenStreetMap via the Overture Maps buildings theme. Every feature carries its OSM element id so it can be checked against OpenStreetMap.",
+        "Microsoft ML Buildings roofprints are deliberately NOT included: they are machine-generated from aerial imagery with no element id to verify, and unverifiable geometry has no place on an accuracy-first map.",
         "Enriched from OpenStreetMap's own building tags via Overpass (operator, address, heritage, purpose), merged by OSM element id. Enrichment therefore remains ODbL.",
-        "ML-derived footprints are indicative, not survey-grade, and heights (where present) are modelled rather than measured.",
         "ODbL requires attribution AND share-alike on derived databases: (c) OpenStreetMap contributors and the Overture Maps contributors, ODbL.",
         "Not an official building register and not a proxy for addresses, occupancy or planning status.",
       ],

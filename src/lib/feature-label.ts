@@ -316,7 +316,7 @@ export function resolveFeatureLabel(props: Record<string, unknown> | null | unde
   const holder = firstString(props, ["holder", "asName"]);
   if (holder) return holder;
 
-  const isBuilding = props.buildingClass !== undefined || typeof props.osmId === "string" || props.enrichedBy === "osm-overpass" || props.sourceDataset === "Microsoft ML Buildings" || (typeof props.sourceDataset === "string" && /buildings/i.test(props.sourceDataset));
+  const isBuilding = props.buildingClass !== undefined || typeof props.osmId === "string" || props.enrichedBy === "osm-overpass" || (typeof props.sourceDataset === "string" && /buildings/i.test(props.sourceDataset));
   const descriptor = isBuilding ? buildingDescriptor(props) : null;
   if (descriptor && !PLACEHOLDERS.has(descriptor.toLowerCase()) && descriptor !== "(unnamed)") return descriptor;
 

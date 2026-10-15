@@ -1072,16 +1072,16 @@ export const LAYERS: LayerDef[] = [
     defaultOn: false,
     minZoom: 14,
     description:
-      "Building footprints across the island from the Overture Maps buildings theme: OpenStreetMap outlines supplemented by Microsoft ML roofprints derived from aerial imagery. Streamed as vector tiles, with building class, subtype and modelled height where present.",
+      "Building footprints across the island from OpenStreetMap, via the Overture Maps buildings theme. Every footprint carries its OSM element id and its OSM tags (name, address, purpose, operator) where mapped. Streamed as vector tiles, with building class, subtype and height where OpenStreetMap records them.",
     caveats: [
       "ODbL: attribution AND share-alike. Data (c) OpenStreetMap contributors and the Overture Maps contributors, ODbL.",
-      "Mixed provenance. OpenStreetMap is the primary and preferred source; the remainder is Microsoft ML roofprints inferred from imagery, which are indicative rather than surveyed.",
-      "Modelled heights (where present) are approximate and must not be used for aviation, solar, or structural purposes.",
+      "OpenStreetMap only. Microsoft ML roofprints were removed: they are machine-generated from aerial imagery with no element id to verify, and unverifiable geometry does not belong on an accuracy-first map. Coverage is therefore smaller, and honest, rather than padded.",
+      "Every feature links to its OSM element id, so any footprint can be checked against OpenStreetMap. Absent or wrong OSM mapping will be absent or wrong here.",
       "Geometry is simplified to about 2 m for shipping; do not use this layer for land registry, planning or anything requiring cadastral accuracy.",
     ],
     confidence: "C",
     sourceId: "overtureBuildings",
-    featureCount: 46106,
+    featureCount: 32794,
   },
 ];
 

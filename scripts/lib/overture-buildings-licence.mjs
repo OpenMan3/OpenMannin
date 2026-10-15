@@ -8,6 +8,13 @@
  * obligation that CDLA does not. Keeping the two maps separate stops a
  * buildings contributor from being silently accepted under the places rules.
  *
+ * This module answers a LICENCE question only. Both contributors are ODbL and
+ * therefore licence-keep. What actually ships is a separate ACCURACY decision,
+ * made in scripts/ingest-buildings.mjs: only OpenStreetMap records are kept,
+ * because they carry an OSM element id and can be verified; Microsoft ML
+ * roofprints cannot be checked and are dropped. Do not fold that policy in
+ * here — a contributor being licence-clean is not the same as being verifiable.
+ *
  * Unknown contributors/licenses are hard errors, not silent drops.
  */
 

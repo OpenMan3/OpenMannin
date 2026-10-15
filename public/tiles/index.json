@@ -4,43 +4,43 @@
     {
       "id": "roads",
       "tiles": 4938,
-      "bytes": 5454265,
+      "bytes": 5454615,
       "sourceBytes": 4339463
     },
     {
       "id": "footpaths",
       "tiles": 3439,
-      "bytes": 3450484,
+      "bytes": 3450629,
       "sourceBytes": 3225112
     },
     {
       "id": "overture-places",
       "tiles": 364,
-      "bytes": 2017978,
+      "bytes": 2018006,
       "sourceBytes": 2110789
     },
     {
       "id": "house-numbers",
       "tiles": 297,
-      "bytes": 960315,
+      "bytes": 960343,
       "sourceBytes": 1973280
     },
     {
       "id": "power-lines",
       "tiles": 329,
-      "bytes": 761342,
+      "bytes": 761370,
       "sourceBytes": 1101147
     },
     {
       "id": "buildings",
-      "tiles": 426,
-      "bytes": 3985191,
-      "sourceBytes": 20955415
+      "tiles": 399,
+      "bytes": 3193556,
+      "sourceBytes": 16058476
     },
     {
       "id": "marine-habitats",
       "tiles": 125,
-      "bytes": 34654,
+      "bytes": 34682,
       "sourceBytes": 4514
     }
   ]

@@ -50,6 +50,8 @@ const IDENTITY_KEYS = [
   "site",
   "code",
   "ref",
+  "ref:registered_building",
+  "ref:planning",
   "designation",
   "species",
   "plot",
@@ -204,6 +206,11 @@ export function featureKind(props: Record<string, unknown> | null | undefined): 
   if (typeof props.kind === "string" && props.kind.trim()) {
     return humanise(props.kind.trim());
   }
+
+  // Buildings may arrive with class/subtype/purpose tags instead of a name.
+  if (typeof props.purpose === "string" && props.purpose.trim()) return humanise(props.purpose.trim());
+  if (typeof props.buildingClass === "string" && props.buildingClass.trim()) return humanise(props.buildingClass.trim());
+  if (typeof props.subtype === "string" && props.subtype.trim()) return humanise(props.subtype.trim());
 
   // The heritage ingests write a ready-made human `type` ("Mine adit",
   // "Ruins", "Castle"). It is already cased, so use it verbatim rather than

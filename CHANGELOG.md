@@ -105,3 +105,9 @@
 
 ### Fixed
 - "Too far down to see" when scrolling sidebar lists past floating tab bar.
+
+## Unreleased
+
+- Fixed building footprints failing to render: vector-tile (PMTiles) paint layers now declare `source-layer`, which was missing and caused MapLibre to reject every building layer as invalid.
+- Enriched building footprints from OpenStreetMap tags (name, purpose, address, operator, heritage/RB reference, wiki/data, architect, levels, material) while keeping the ODbL licence map; enrichment matched 32,786 of 46,106 footprints by OSM element id.
+- Building labels now coalesce name → purpose → subtype → building class, and unnamed buildings fall through to nearest-place context. Search keeps only named-property features.

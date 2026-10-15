@@ -32,6 +32,12 @@ const ALL_KINDS: ReadonlySet<GeometryKind> = new Set(["point", "line", "polygon"
  * read identically. Keyed by layer id, and deliberately small: a layer that is
  * not listed falls back to the standard marker.
  */
+const BUILDING_VISUAL: Record<string, { fill: number; line: number }> = {
+  // Buildings are the densest layer on the map. A slightly lighter fill with a
+  // firmer outline matches the "outlined footprint" look used for power assets.
+  buildings: { fill: 0.15, line: 2.0 },
+};
+
 const POINT_STYLE: Record<string, { radius: number; stroke: string; strokeWidth: number }> = {
   // Mine features are the one POI category that is an outright hazard, so they
   // get a heavier, darker ring that stands out from the benign layers.
@@ -69,13 +75,22 @@ export function addPaintLayers(
   const id = `om-${def.id}`;
   const minzoom = def.minZoom ?? 0;
 
+  // Vector (PMTiles) sources keep their members under a source-layer that must
+  // be named when the layer is added; GeoJSON sources do not. Detect by source.
+  const src = map.getSource(id);
+  const isVector = src?.type === "vector";
+  const sourceLayer = isVector ? { "source-layer": def.id } : {};
+
+  const visual = BUILDING_VISUAL[def.id] ?? { fill: 0.22, line: 1.5 };
+
   if (kinds.has("polygon")) {
     map.addLayer({
       id: `${id}-fill`,
       type: "fill",
       source: id,
       minzoom,
-      paint: { "fill-color": def.color, "fill-opacity": 0.22 },
+      ...sourceLayer,
+      paint: { "fill-color": def.color, "fill-opacity": visual.fill },
     });
   }
 
@@ -90,7 +105,8 @@ export function addPaintLayers(
       type: "line",
       source: id,
       minzoom,
-      paint: { "line-color": def.color, "line-width": 1.5, "line-opacity": 0.85 },
+      ...sourceLayer,
+      paint: { "line-color": def.color, "line-width": visual.line, "line-opacity": 0.85 },
     });
   }
 
@@ -101,6 +117,7 @@ export function addPaintLayers(
       type: "circle",
       source: id,
       minzoom,
+      ...sourceLayer,
       paint: {
         "circle-radius": ps.radius,
         "circle-color": def.color,
@@ -111,29 +128,30 @@ export function addPaintLayers(
     });
   }
 
-  // Symbol (label) layer for named point features
-  // Check if any point feature has a name property
-  if (kinds.has("point")) {
-    // We can't easily check at this level if points have names,
-    // so we add the symbol layer for all point layers and let
-    // the text-field expression handle empty names
+  // Symbol (label) layer. Coalesce the identity-ish fields so an unnamed
+  // building still reads from its class/subtype instead of staying blank.
+  // Points, and polygons at close zoom, can carry a label.
+  const symbolZoom = def.minZoom ? Math.max(def.minZoom, 15) : 15;
+  if (kinds.has("polygon") || kinds.has("point")) {
     map.addLayer({
       id: `${id}-symbol`,
       type: "symbol",
       source: id,
-      minzoom,
+      minzoom: symbolZoom,
+      ...sourceLayer,
       layout: {
-        "text-field": ["coalesce", ["get", "name"], ""],
+        "text-field": ["coalesce", ["get", "name"], ["get", "purpose"], ["get", "subtype"], ["get", "buildingClass"], ""],
         "text-font": ["Noto Sans Regular"],
-        "text-size": 11,
+        "text-size": 10,
         "text-anchor": "top",
-        "text-offset": [0, 0.6],
+        "text-offset": [0, 0.5],
+        "text-max-width": 9,
         "text-allow-overlap": false,
       },
       paint: {
-        "text-color": "#0b0f14",
+        "text-color": "#1f2937",
         "text-halo-color": "#ffffff",
-        "text-halo-width": 1,
+        "text-halo-width": 1.2,
         "text-halo-blur": 0.5,
       },
     });

@@ -15,14 +15,14 @@
     },
     {
       "id": "overture-places",
-      "tiles": 364,
-      "bytes": 2018006,
+      "tiles": 363,
+      "bytes": 2015381,
       "sourceBytes": 2110789
     },
     {
       "id": "house-numbers",
       "tiles": 297,
-      "bytes": 960343,
+      "bytes": 960045,
       "sourceBytes": 1973280
     },
     {
@@ -34,7 +34,7 @@
     {
       "id": "buildings",
       "tiles": 399,
-      "bytes": 3193556,
+      "bytes": 3463665,
       "sourceBytes": 16058476
     },
     {

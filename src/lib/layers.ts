@@ -28,7 +28,7 @@ export const LAYERS: LayerDef[] = [
     file: "toponyms.geojson",
     color: "#8b8b8b",
     defaultOn: true,
-    minZoom: 11,
+    minZoom: 10,
     description:
       "1,253 distinct named places from OpenStreetMap: towns, villages, hamlets, localities and suburbs. Ordered by significance (OSM place_rank where mapped, otherwise derived from the place type) so a label renderer can drop the least significant first. Includes wikidata IDs where mapped.",
     caveats: [

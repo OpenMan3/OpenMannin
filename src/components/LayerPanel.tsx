@@ -273,7 +273,7 @@ export function LayerPanel({
         )}
       </div>
 
-      <div className="scroll-thin flex-1 overflow-y-auto md:pb-16">
+      <div className="scroll-thin flex-1 overflow-y-auto pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-16">
         {/* Map Display section */}
         <section className="border-b border-line-soft">
           <div className="px-3 py-2">

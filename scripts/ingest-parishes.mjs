@@ -91,7 +91,7 @@ function reconstructRings(ways) {
     const firstGeom = ring[0].way.geometry;
     const firstStart = ring[0].reversed ? firstGeom[firstGeom.length - 1] : firstGeom[0];
     const closed = key(lastEnd) === key(firstStart);
-    if (ring.length >= 3 && closed) rings.push(ring);
+    if (ring.length >= 2 && closed) rings.push(ring);
   }
 
   return rings;
@@ -99,9 +99,14 @@ function reconstructRings(ways) {
 
 /** Parse OSM XML relation response into a structured object. */
 function parseRelationXml(xml) {
-  // Extract relation tags - use fresh regex each time to avoid lastIndex issues
+  const _rb = xml.match(/<relation\s+id="\d+"[^>]*>([\s\S]*?)<\/relation>/)?.[1] ?? xml;
+  const _tg = {};
+  for (const _m of _rb.matchAll(/<tag k="([^"]+)" v="([^"]+)"\/>/g)) _tg[_m[1]] = _m[2];
+
+  // Extract tags ONLY from the relation element itself, not member ways/nodes.
+  const relationBlock = xml.match(/<relation\s+id="\d+"[^>]*>([\s\S]*?)<\/relation>/)?.[1] ?? xml;
   const tags = {};
-  const tagMatches = xml.matchAll(/<tag k="([^"]+)" v="([^"]+)"\/>/g);
+  const tagMatches = relationBlock.matchAll(/<tag k="([^"]+)" v="([^"]+)"\/>/g);
   for (const m of tagMatches) tags[m[1]] = m[2];
 
   // Member roles tell outer vs inner boundaries for multipolygon relations.
@@ -121,6 +126,7 @@ function parseRelationXml(xml) {
   const nodeMatches = xml.matchAll(/<node\s+id="(\d+)"[^>]*\slat="([-\d.]+)"\s+lon="([-\d.]+)"/g);
   for (const m of nodeMatches) nodes.set(Number(m[1]), { lat: Number(m[2]), lon: Number(m[3]) });
 
+  if (memberRole.size === 0) {}
   // Extract way members with their node references
   const ways = [];
   const wayMatches = xml.matchAll(/<way id="(\d+)"[^>]*>([\s\S]*?)<\/way>/g);
@@ -157,8 +163,8 @@ async function main() {
         continue;
       }
 
-      if (ways.length < 3) {
-        console.log(`  ${name}: only ${ways.length} ways, skipping`);
+      if (ways.length < 2) {
+        console.log(`  ${name}: only ${ways.length} way(s), skipping`);
         continue;
       }
 

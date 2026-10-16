@@ -126,9 +126,9 @@
     "parish-boundaries": {
       "file": "parish-boundaries.geojson",
       "present": true,
-      "features": 23,
-      "bytes": 989480,
-      "generated": "2026-10-16T01:35:49.041Z",
+      "features": 24,
+      "bytes": 1004456,
+      "generated": "2026-10-16T01:49:01.630Z",
       "bbox": [
         -4.794392,
         54.053869,

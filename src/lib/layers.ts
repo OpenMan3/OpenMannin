@@ -237,15 +237,15 @@ export const LAYERS: LayerDef[] = [
     defaultOn: true,
     minZoom: 8,
     description:
-      "Civil parish boundaries of the Isle of Man from OpenStreetMap (admin_level=8 relations). 23 of 24 parishes successfully reconstructed from OSM API.",
+      "Civil parish boundaries of the Isle of Man from OpenStreetMap (admin_level=8 relations). All 24 parishes (incl. Laxey) successfully reconstructed from OSM API.",
     caveats: [
       "Community-mapped boundaries from OSM; not the legal definitive map. May not match exact legal boundaries.",
-      "Laxey parish (relation 1061138) had only 2 ways and was not reconstructed.",
+      "Laxey parish (relation 1061137) was reconstructed from 2 ways.",
       "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
     confidence: "C",
     sourceId: "osmIOM",
-    featureCount: 23,
+    featureCount: 24,
   },
 
   // ==========================================================================

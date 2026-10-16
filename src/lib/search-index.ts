@@ -30,12 +30,18 @@ export async function loadSearchIndex(): Promise<SearchIndex> {
   if (cache) return cache;
   if (!inflight) {
     inflight = (async () => {
-      const res = await fetch("/data/search-index.json", { cache: "force-cache" });
-      if (!res.ok) throw new Error(`HTTP ${res.status} for /data/search-index.json`);
-      const idx = (await res.json()) as SearchIndex;
-      cache = idx;
-      inflight = null;
-      return idx;
+      try {
+        const res = await fetch("/data/search-index.json", { cache: "force-cache" });
+        if (!res.ok) throw new Error(`HTTP ${res.status} for /data/search-index.json`);
+        const idx = (await res.json()) as SearchIndex;
+        cache = idx;
+        return idx;
+      } finally {
+        // Always clear the in-flight entry: caching only on success left a
+        // rejected promise in `inflight` for good, so one transient failure
+        // (first keystroke offline, a 5xx) broke search until a full reload.
+        inflight = null;
+      }
     })();
   }
   return inflight;

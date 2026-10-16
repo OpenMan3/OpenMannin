@@ -80,6 +80,8 @@ const OFF_ROUTE_M: Record<RouteMode, number> = { driving: 35, cycling: 25, walki
 const ARRIVED_M = 15;
 /** Delay before auto-recalculating after the first off-route detection. */
 const RECALC_DEBOUNCE_MS = 3500;
+/** Minimum gap between fix-driven retries after a failed route request. */
+const ROUTE_RETRY_COOLDOWN_MS = 10_000;
 
 /**
  * Layers whose features are worth snapping a long-press to. These carry a
@@ -696,6 +698,8 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
   let pulseT = 0;
   /** Bumped per route request; a stale reply from an older pin is discarded. */
   let reqToken = 0;
+  /** Timestamp of the last failed route request; gates the retry cooldown. */
+  let routeErrorAt = 0;
 
   const setUserData = (loc: UserLocation) => {
     if (!map.getSource(SOURCE_USER)) return;
@@ -954,7 +958,10 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       typeof nativeSpeed === "number" && Number.isFinite(nativeSpeed) && nativeSpeed >= 0;
     const haveHeading = typeof nativeHeading === "number" && Number.isFinite(nativeHeading);
     if ((!haveSpeed || !haveHeading) && prevLoc && dtS > 0.3 && dtS < 30) {
-      const dist = haversineM(prevLoc.lat, prevLoc.lon, lat, lon);
+      // haversineM takes (lon, lat) pairs; passing lat first mirrored both
+      // fixes across the equator, so the derived speed/heading were wrong on
+      // devices that omit coords.speed/coords.heading.
+      const dist = haversineM(prevLoc.lon, prevLoc.lat, lon, lat);
       if (dist > 1) {
         if (!haveSpeed) state.speedMph = (dist / dtS) * 2.2369363;
         if (!haveHeading) state.headingDeg = bearingDeg(prevLoc.lon, prevLoc.lat, lon, lat);
@@ -981,7 +988,19 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       startFollowAnim();
     }
 
-    if (state.destination && !state.routesFresh) void requestRoutes();
+    // Re-route when a fix lands and the route is missing, but never
+    // stampede: while a request is in flight the old behaviour fired a new
+    // one every fix (~1 Hz), each bumping reqToken and discarding the
+    // previous reply - if routing took longer than the fix interval the
+    // route could never settle. Errors cool down instead of retrying at
+    // fix rate too.
+    const routeBusy =
+      state.routeStatus === "loading" || state.routeStatus === "recalculating";
+    const routeCoolingDown =
+      state.routeStatus === "error" && now - routeErrorAt < ROUTE_RETRY_COOLDOWN_MS;
+    if (state.destination && !state.routesFresh && !routeBusy && !routeCoolingDown) {
+      void requestRoutes();
+    }
     publish();
 
     // Driving off the drawn line: hand off to an auto-recalculate. Status is
@@ -1177,6 +1196,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     if (token !== reqToken) return; // a newer drop superseded this one
     if (!reply.ok) {
       state.routeStatus = "error";
+      routeErrorAt = Date.now();
       state.routeError = reply.error ?? "Routing failed.";
       state.routes = {};
       state.steps = [];
@@ -1604,7 +1624,10 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
   };
 
   const onNavEndEvent = () => {
-    if (!ensureLayersAndRoute) ensureLayers();
+    // Redraw the pin, destination and route if a style swap or the nav
+    // teardown dropped them - the guard used to test the function for
+    // truthiness, which is always true, so this branch was dead.
+    ensureLayersAndRoute();
     state.navigating = false;
     spokenKeys = new Set<string>();
     cancelSpeech();

@@ -288,7 +288,9 @@ export function deriveSteps(
   const folded = legs.slice(0, MAX_LEGS);
   if (legs.length > MAX_LEGS) {
     const last = folded[folded.length - 1];
-    const rest = legs.slice(MAX_LEGS - 1);
+    // slice(MAX_LEGS), not MAX_LEGS - 1: folded already contains legs[15],
+    // so starting one earlier double-counted that leg's distance.
+    const rest = legs.slice(MAX_LEGS);
     folded[folded.length - 1] = {
       bearing: last.bearing,
       distanceM: last.distanceM + rest.reduce((n, l) => n + l.distanceM, 0),

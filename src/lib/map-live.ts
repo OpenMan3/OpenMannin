@@ -248,6 +248,7 @@ export function highlightFeature(
   map.addSource(id, { type: "geojson", data: fc as never });
 
   const isPoint = geometry.type === "Point" || geometry.type === "MultiPoint";
+  const isLine = geometry.type === "LineString" || geometry.type === "MultiLineString";
   if (isPoint) {
     map.addLayer({
       id,
@@ -259,6 +260,19 @@ export function highlightFeature(
         "circle-opacity": 0.95,
         "circle-stroke-color": "#0b0f14",
         "circle-stroke-width": 2,
+      },
+    });
+  } else if (isLine) {
+    // A fill layer draws nothing for line geometry, so footpaths, cables and
+    // routes painted no highlight at all - the "you are on" marker vanished.
+    map.addLayer({
+      id,
+      type: "line",
+      source: id,
+      paint: {
+        "line-color": "#fbbf24",
+        "line-width": 4,
+        "line-opacity": 0.95,
       },
     });
   } else {

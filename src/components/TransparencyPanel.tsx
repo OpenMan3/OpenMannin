@@ -164,7 +164,9 @@ export function TransparencyPanel() {
     setOfflineState("downloading");
     setOfflineProgress(0);
     try {
-      const manifest = await (await fetch("/data/manifest.json")).json();
+      const manifestRes = await fetch("/data/manifest.json");
+      if (!manifestRes.ok) throw new Error(`HTTP ${manifestRes.status} for /data/manifest.json`);
+      const manifest = await manifestRes.json();
       const tileUrls = new Set<string>();
       const files = new Set<string>();
       for (const def of Object.values(manifest?.layers ?? {})) {
@@ -179,14 +181,20 @@ export function TransparencyPanel() {
         }
       }
       const list = [...files, ...tileUrls];
-      let done = 0;
-      await Promise.all(
-        list.map(async (entry) => {
-          await fetch(entry, { cache: "reload" });
-          done += 1;
-          setOfflineProgress(Math.round((done / list.length) * 100));
-        }),
-      );
+      if (list.length > 0) {
+        let done = 0;
+        await Promise.all(
+          list.map(async (entry) => {
+            // A 404/500 used to count as downloaded: every response incremented
+            // `done`, so the panel reported "All offline data is cached" while
+            // the network was failing. Fail loudly and land in the error state.
+            const res = await fetch(entry, { cache: "reload" });
+            if (!res.ok) throw new Error(`HTTP ${res.status} for ${entry}`);
+            done += 1;
+            setOfflineProgress(Math.round((done / list.length) * 100));
+          }),
+        );
+      }
       setOfflineState("done");
       await refreshStorage();
     } catch {

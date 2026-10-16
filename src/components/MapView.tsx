@@ -380,7 +380,18 @@ export function MapView({
       };
     };
 
-    initMap().catch(console.error);
+    // The cleanup lives inside initMap (it closes over the built map), so the
+    // promise - not a synchronous return - is what this effect must hand back.
+    // Discarding it (the previous behaviour) meant React unmounted the page
+    // without ever running teardown: the MapLibre instance, WebGL context,
+    // live-feed timers and `openmannin:*` window listeners all survived.
+    const pending = initMap().catch((err) => {
+      console.error(err);
+      return null;
+    });
+    return () => {
+      void pending.then((cleanup) => cleanup?.());
+    };
     // Intentionally mount-only. Depending on nothing here means the map is
     // created once and torn down only on unmount; a re-render must not
     // re-run this effect's cleanup (map.remove()) and recreate the map.

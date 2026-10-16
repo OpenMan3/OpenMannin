@@ -218,3 +218,28 @@ test("roundabout legs are phrased and classified as such", () => {
   assert.equal(steps[2].maneuver, "roundabout-exit");
   assert.match(steps[2].instruction, /^Leave the roundabout/);
 });
+
+test("folding a route past MAX_LEGS preserves total distance", () => {
+  // A 20-segment zigzag: every segment turns 90 degrees, so each becomes its
+  // own leg (20 legs > MAX_LEGS = 16), and the last four legs fold into the
+  // final step. Regression: slice(MAX_LEGS - 1) re-included leg 15 and
+  // double-counted its distance into the folded step.
+  const coords = [[-4.48, 54.16]];
+  for (let i = 0; i < 20; i++) {
+    const [lon, lat] = coords[coords.length - 1];
+    coords.push(i % 2 === 0 ? [lon + 0.001, lat] : [lon, lat + 0.001]);
+  }
+
+  let expected = 0;
+  for (let i = 1; i < coords.length; i++) {
+    expected += haversineM(...coords[i - 1], ...coords[i]);
+  }
+
+  const steps = deriveSteps(coords);
+  assert.equal(steps.length, 16, "leg count is capped at MAX_LEGS");
+  const total = steps.reduce((m, s) => m + s.distanceM, 0);
+  assert.ok(
+    Math.abs(total - expected) / expected < 0.02,
+    `folded legs total ${total} m vs path ${expected} m`,
+  );
+});

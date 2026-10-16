@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { NavigationState } from "@/lib/navigation/host";
 import { bannerFor, dockFor, hasFix, type NavigationDock } from "@/lib/navigation/hud";
 import { ROUTE_MODES, type RouteMode } from "@/lib/navigation/profiles";
@@ -58,32 +58,78 @@ export function NavigationOverlay(props: Props) {
     minimized,
   } = props;
 
-  const topRef = useRef<HTMLDivElement | null>(null);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
   const topCb = useRef(onTopInset);
   const bottomCb = useRef(onBottomInset);
   useEffect(() => { topCb.current = onTopInset; }, [onTopInset]);
   useEffect(() => { bottomCb.current = onBottomInset; }, [onBottomInset]);
 
-  useEffect(() => {
-    const el = topRef.current;
-    if (!el) return;
-    const report = () => topCb.current?.(Math.max(0, Math.round(el.getBoundingClientRect().height)));
+  // Measure the live insets with callback refs. The banner (top) and the
+  // destination card (bottom) mount conditionally, so the old mount-only
+  // effects ran while both were absent and never re-ran: the map padding
+  // stayed at 0 and the route sat under the sheet on every session. Several
+  // bottom cards can overlap (a finished route renders both the arrived card
+  // and the idle preview), so each carries a keyed ref and the reported inset
+  // is the tallest mounted card.
+  const topRo = useRef<ResizeObserver | null>(null);
+  const topRef = useCallback((el: HTMLDivElement | null) => {
+    topRo.current?.disconnect();
+    topRo.current = null;
+    if (!el) {
+      topCb.current?.(0);
+      return;
+    }
+    const report = () =>
+      topCb.current?.(Math.max(0, Math.round(el.getBoundingClientRect().height)));
     report();
     const ro = new ResizeObserver(report);
     ro.observe(el);
-    return () => { ro.disconnect(); topCb.current?.(0); };
+    topRo.current = ro;
   }, []);
 
-  useEffect(() => {
-    const el = bottomRef.current;
-    if (!el) return;
-    const report = () => bottomCb.current?.(Math.max(0, Math.round(el.getBoundingClientRect().height)));
-    report();
-    const ro = new ResizeObserver(report);
-    ro.observe(el);
-    return () => { ro.disconnect(); bottomCb.current?.(0); };
+  const bottomEls = useRef(new Map<string, HTMLDivElement>());
+  const bottomRo = useRef<ResizeObserver | null>(null);
+  const reportBottom = useCallback(() => {
+    let h = 0;
+    bottomEls.current.forEach((el) => {
+      const rect = el.getBoundingClientRect();
+      if (rect.height > 0) h = Math.max(h, rect.height);
+    });
+    bottomCb.current?.(Math.max(0, Math.round(h)));
   }, []);
+  const bottomRefs = useMemo(() => {
+    const getRo = () => {
+      if (!bottomRo.current) {
+        bottomRo.current = new ResizeObserver(() => reportBottom());
+      }
+      return bottomRo.current;
+    };
+    const make = (role: string) => (el: HTMLDivElement | null) => {
+      const els = bottomEls.current;
+      const prev = els.get(role);
+      if (prev && prev !== el) getRo().unobserve(prev);
+      if (el) {
+        els.set(role, el);
+        getRo().observe(el);
+      } else {
+        els.delete(role);
+      }
+      reportBottom();
+    };
+    return {
+      preview: make("preview"),
+      compact: make("compact"),
+      dock: make("dock"),
+      arrived: make("arrived"),
+    };
+  }, [reportBottom]);
+
+  useEffect(
+    () => () => {
+      topRo.current?.disconnect();
+      bottomRo.current?.disconnect();
+    },
+    [],
+  );
 
   if (!state?.destination) return null;
 
@@ -161,7 +207,7 @@ export function NavigationOverlay(props: Props) {
       )}
 
       {!navig && (
-        <div ref={bottomRef} className="fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))]">
+        <div ref={bottomRefs.preview} className="fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))]">
           <div
             role="dialog"
             aria-label={`Directions to ${state.destination.title}`}
@@ -270,7 +316,7 @@ export function NavigationOverlay(props: Props) {
 
       {navig && !arrived && showCompact && routeShown && (
         <div
-          ref={bottomRef}
+          ref={bottomRefs.compact}
           className="fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 flex items-center gap-3 rounded-2xl border border-line bg-panel/95 px-3 py-2 shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(22rem,calc(100vw-2rem))]"
         >
           <div className="flex flex-1 items-center gap-3 min-w-0">
@@ -289,7 +335,7 @@ export function NavigationOverlay(props: Props) {
       )}
 
       {navig && dock && (
-        <div ref={showCompact ? undefined : bottomRef} className={[
+        <div ref={showCompact ? undefined : bottomRefs.dock} className={[
           "fixed z-20 w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-line bg-panel/95 p-3 shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur",
           showCompact ? "hidden" : "inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] sm:inset-x-auto sm:bottom-4 sm:right-4",
           stepsOpen ? "max-h-[45vh]" : "",
@@ -388,7 +434,7 @@ export function NavigationOverlay(props: Props) {
 
       {arrived && (
         <div
-          ref={bottomRef}
+          ref={bottomRefs.arrived}
           className="fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 rounded-2xl border border-ok/40 bg-panel shadow-[0_8px_24px_rgba(0,0,0,0.18)] sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))]"
         >
           <div className="flex items-center gap-3 border-b border-line bg-ok/10 px-4 py-3">

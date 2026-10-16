@@ -53,13 +53,36 @@ async function fetchLayerInWorker(file: string): Promise<FeatureCollection> {
   }
   const id = ++loaderSeq;
   return new Promise<FeatureCollection>((resolve, reject) => {
-    const onMessage = (ev: MessageEvent) => {
-      if (ev.data?.id !== id) return;
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
       worker.removeEventListener("message", onMessage);
-      if (ev.data.ok) resolve(ev.data.data as FeatureCollection);
-      else reject(new Error(ev.data.error ?? `worker failed for /data/${file}`));
+      worker.removeEventListener("error", onError);
+      if (timer !== null) clearTimeout(timer);
+      fn();
     };
+    // Function declarations so finish can remove the listeners regardless of
+    // order: a worker script that 404s or fails to parse raises `error`, not
+    // `message`, and without a listener - or a deadline - the promise never
+    // settled, pinning the layer on "Loading..." for the rest of the session.
+    function onMessage(ev: MessageEvent) {
+      if (ev.data?.id !== id) return;
+      if (ev.data.ok) finish(() => resolve(ev.data.data as FeatureCollection));
+      else finish(() => reject(new Error(ev.data.error ?? `worker failed for /data/${file}`)));
+    }
+    function onError(ev: ErrorEvent) {
+      finish(() =>
+        reject(ev.error ?? new Error(ev.message || `worker error for /data/${file}`)),
+      );
+    }
     worker.addEventListener("message", onMessage);
+    worker.addEventListener("error", onError);
+    timer = setTimeout(
+      () => finish(() => reject(new Error(`timed out loading /data/${file}`))),
+      30_000,
+    );
     worker.postMessage({ id, file });
   });
 }

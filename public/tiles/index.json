@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-15",
+  "generated": "2026-10-16",
   "layers": [
     {
       "id": "roads",
@@ -17,13 +17,13 @@
       "id": "overture-places",
       "tiles": 363,
       "bytes": 2015381,
-      "sourceBytes": 2110789
+      "sourceBytes": 2107766
     },
     {
       "id": "house-numbers",
       "tiles": 297,
       "bytes": 960045,
-      "sourceBytes": 1973280
+      "sourceBytes": 2167173
     },
     {
       "id": "power-lines",
@@ -35,7 +35,7 @@
       "id": "buildings",
       "tiles": 399,
       "bytes": 3463665,
-      "sourceBytes": 16058476
+      "sourceBytes": 17267601
     },
     {
       "id": "marine-habitats",

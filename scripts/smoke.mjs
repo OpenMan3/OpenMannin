@@ -105,6 +105,7 @@ const dom = await evaluate(`(() => ({
 // canvas cannot be read back with gl.readPixels() after compositing.
 const shot = await screenshot();
 const png = Buffer.from(shot, "base64");
+fs.mkdirSync("/tmp/opencode", { recursive: true });
 fs.writeFileSync("/tmp/opencode/smoke.png", png);
 const painted = analyse(decodePng(png));
 

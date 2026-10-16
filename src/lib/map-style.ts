@@ -3,15 +3,30 @@
  *
  * OpenFreeMap Liberty: keyless, CORS-open vector basemap on ODbL OpenStreetMap
  * data. Chosen from a five-style evaluation set (Liberty, bright, positron,
- * fiord, dark) for legibility; the others were stripped out. One host serves
- * the style JSON, vector tiles, sprites and glyphs.
+ * fiord, dark) for legibility; one host serves the style JSON, vector tiles,
+ * sprites and glyphs. The evaluation surfaced the "dark" style too, so the app
+ * ships two of the five: Liberty by day, OpenFreeMap "dark" at night, selected
+ * by the same resolved theme that darkens the chrome.
  *
  * The OpenStreetMap DATABASE (ODbL) underpins it.
+ *
+ * Runtime swaps: a theme change while the map is live must go through
+ * `map.setStyle(url, { diff: false })` — a straight setStyle without that hint
+ * can diff two unrelated styles. A style swap drops every source and layer we
+ * added, so the caller must let the existing `style.load` handler in MapView
+ * re-run its resync (static layers, cached feeds, terrain, nav markers) before
+ * the map looks right again.
  */
 
 import type { Map as MapLibreMap } from "maplibre-gl";
+import { DARK_STYLE_URL, LIGHT_STYLE_URL } from "./theme";
 
-export const LIBERTY_STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
+/**
+ * Kept for callers that only need the light style URL (e.g. WebGL tile-error
+ * attribution). Prefer `styleUrlForDark` / `createInitialStyle` for anything
+ * theme-aware.
+ */
+export const LIBERTY_STYLE_URL = LIGHT_STYLE_URL;
 export const LIBERTY_MAXZOOM = 17;
 
 /**
@@ -63,6 +78,21 @@ export function applyTerrain(map: MapLibreMap, enabled: boolean): void {
 export const INITIAL_CENTRE: [number, number] = [-4.4814, 54.1509];
 export const INITIAL_ZOOM = 10;
 
+/** The basemap URL for a resolved theme. */
+export function styleUrlForDark(dark: boolean): string {
+  return dark ? DARK_STYLE_URL : LIGHT_STYLE_URL;
+}
+
+/**
+ * The basemap to open the map with. Runs client-side during map construction,
+ * so it reads the `dark` class the bootstrap script already put on <html> and
+ * starts on the matching basemap — no bright flash of Liberty before the night
+ * style loads. On the server (or in any script without a document) it falls
+ * back to Liberty.
+ */
 export function createInitialStyle(): string {
-  return LIBERTY_STYLE_URL;
+  if (typeof document !== "undefined" && document.documentElement.classList.contains("dark")) {
+    return DARK_STYLE_URL;
+  }
+  return LIGHT_STYLE_URL;
 }

@@ -8,9 +8,18 @@
  * place instead of a thousand arbitrary `#hex` literals. Names are prefixed to
  * stay clear of Tailwind's own palette (no `blue`/`rose`/`line` collisions).
  *
- * The palette is a light, Google-Maps-flavoured surface: clean white
+ * The default palette is a light, Google-Maps-flavoured surface: clean white
  * panels, #1a73e8 Google-blue accents, and the familiar red pin and blue
- * GPS dot. Map data layers keep their own registry colours on top.
+ * GPS dot. The same token names are re-declared under `html.dark` further down
+ * with a night palette (near-black blue-grey page, dimmed borders, brightened
+ * semantics), so every utility that references a token recolours for free.
+ * The `dark` class is set before first paint by the bootstrap script in
+ * layout.tsx and toggled at runtime by ThemeToggle. Map data layers keep their
+ * own registry colours on top in both themes.
+ *
+ * Motion: a single `prefers-reduced-motion` block near the end neutralises
+ * transition and animation durations for users who ask for calm — opacity
+ * state changes still land, they just do not animate.
  */
 
 @theme {
@@ -46,6 +55,96 @@
   --shadow-floating: 0 4px 20px rgba(0, 0, 0, 0.15);
   --shadow-floating-lg: 0 8px 32px rgba(0, 0, 0, 0.18);
   --panel-gap: 1rem;          /* 16px gap from viewport edges */
+}
+
+/*
+ * Dark palette. Same token names, re-declared on the root once the bootstrap
+ * script (or ThemeToggle) puts `dark` on <html>. Because Tailwind v4 compiles
+ * every `bg-panel` / `text-ink` / `border-line` to `var(--color-*)`, overriding
+ * the variables here recolours the entire UI with no component edits.
+ *
+ * Two constraints shaped the values:
+ *  - The nav HUD banner, speed-limit chip and GPS/pin dots sit on the map with
+ *    hard-coded white/on-colour text (NavigationOverlay.tsx, ProgressHUD.tsx).
+ *    The semantic tones therefore stay dark enough to carry `text-white`, while
+ *    still being legible as text on the dark panels below.
+ *  - The accent is lightened so `text-accent` reads on dark, which means
+ *    `--color-accent-ink` flips to near-black so button labels stay readable.
+ */
+:root {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+
+  --color-page: #0e1116;
+  --color-panel: #171b21;
+  --color-raised: #1f242c;
+  --color-soft: #272d36;
+  --color-line: #333b45;
+  --color-line-soft: #232931;
+
+  --color-ink: #e6e8eb;
+  --color-ink-2: #b3b9c1;
+  --color-ink-3: #878e97;
+
+  /* Lightened from #1a73e8 so the accent reads on a near-black panel; the ink
+   * on top flips to dark so primary-button text keeps its contrast. */
+  --color-accent: #4184dd;
+  --color-accent-ink: #0b0e12;
+
+  --color-ok: #2fa350;
+  --color-warn: #c07d10;
+  --color-danger: #d94b41;
+  --color-info: #4184dd;
+  --color-pin: #d94b41;
+  --color-gps: #4184dd;
+  --color-gps-soft: #6ea8ff;
+
+  /* Floating shadows read as near-invisible on dark; deepen them so panels
+   * still lift off the map. */
+  --shadow-floating: 0 4px 20px rgba(0, 0, 0, 0.45);
+  --shadow-floating-lg: 0 8px 32px rgba(0, 0, 0, 0.55);
+}
+
+/*
+ * The speed-limit chips (NavigationOverlay.tsx and ProgressHUD.tsx) hard-code
+ * `bg-white text-ink`: a white disc with dark ink. Inverting just the `bg-white`
+ * utility inside dark mode turns them into a dark disc with light ink and a
+ * light ring — legible without editing either component. `bg-white/20` (the
+ * banner icon and the off-route pill) is a separate utility class and is left
+ * as translucent white, which still works over a coloured banner.
+ */
+html.dark .bg-white {
+  background-color: var(--color-panel);
+}
+
+/* Tailwind's own chrome on the map: invert the control glyphs and darken the
+ * control surface / expanded attribution so they match the app theme. */
+html.dark .maplibregl-ctrl-group {
+  background: var(--color-panel) !important;
+  border-color: var(--color-line);
+}
+html.dark .maplibregl-ctrl-group button + button {
+  border-top-color: var(--color-line-soft) !important;
+}
+html.dark .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1) brightness(1.6);
+}
+html.dark .maplibregl-ctrl-attrib[open] {
+  background: rgba(23, 27, 33, 0.95) !important;
+}
+
+/* Scrollbar greys are hard-coded light; swap them for the dark surface ramp. */
+html.dark .scroll-thin {
+  scrollbar-color: #3a434f transparent;
+}
+html.dark .scroll-thin::-webkit-scrollbar-thumb {
+  background: #3a434f;
+}
+html.dark .scroll-thin::-webkit-scrollbar-thumb:hover {
+  background: #4a5563;
 }
 
 /*
@@ -223,4 +322,23 @@ body {
 }
 .om-sheet-in {
   animation: om-sheet-in 180ms ease-out;
+}
+
+/*
+ * Reduced motion: the sheet slide-up, the pulsing "locating" dot and every
+ * hover/colour transition collapse to a single imperceptible frame. Only
+ * durations are touched — `opacity`/transform end states still apply, so
+ * state changes (a panel appearing, a button activating) remain visible, they
+ * just arrive instantly. `scroll-behavior` is forced back to auto too, so
+ * programmatic scrolls stop gliding.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

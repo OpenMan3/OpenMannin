@@ -20,7 +20,7 @@ export function attachMapInteractions(
   map: MapLibreMap,
   layersRef: { current: LayerDef[] },
   onPickRef: { current: (picked: { layer: LayerDef; properties: Record<string, unknown> | null; lon: number; lat: number; asOf?: string } | null) => void },
-  onViewportRef: { current: ((v: { lon: number; lat: number; zoom: number }) => void) | undefined },
+  onViewportRef: { current: ((v: { lon: number; lat: number; zoom: number; bounds?: { west: number; south: number; east: number; north: number } }) => void) | undefined },
   suppressClickUntilRef: { current: number },
   layerAsOfRef: { current: Map<string, string> },
 ): () => void {
@@ -57,7 +57,6 @@ export function attachMapInteractions(
     if (cursorFrame) return;
     cursorFrame = requestAnimationFrame(() => {
       cursorFrame = 0;
-      if (map !== map) return; // defensive
       try {
         const hits = map.queryRenderedFeatures(e.point);
         const ours = hits.some(
@@ -66,18 +65,32 @@ export function attachMapInteractions(
         map.getCanvas().style.cursor = ours ? "pointer" : "";
       } catch (err) {
         console.warn("[map] queryRenderedFeatures failed on mousemove:", err);
-        map.getCanvas().style.cursor = "";
+        // The catch itself runs after teardown too: a frame scheduled just
+        // before map.remove() would otherwise throw here on a dead canvas.
+        try {
+          map.getCanvas().style.cursor = "";
+        } catch {
+          /* map is gone; nothing left to restore */
+        }
       }
     });
   };
 
-  // Viewport change handler
+  // Viewport change handler. Bounds ride along so the offline-scope UI can
+  // offer a "current view" download without a second source of camera truth.
   const handleMoveEnd = () => {
     const c = map.getCenter();
+    const b = map.getBounds();
     onViewportRef.current?.({
       lon: c.lng,
       lat: c.lat,
       zoom: map.getZoom(),
+      bounds: {
+        west: b.getWest(),
+        south: b.getSouth(),
+        east: b.getEast(),
+        north: b.getNorth(),
+      },
     });
   };
 
@@ -138,6 +151,7 @@ export function attachMapInteractions(
     map.off("click", handleClick);
     map.off("mousemove", handleMouseMove);
     map.off("moveend", handleMoveEnd);
+    if (cursorFrame) cancelAnimationFrame(cursorFrame);
     window.removeEventListener("openmannin:fly-to", handleFlyTo);
     window.removeEventListener("openmannin:fit-layer", handleFitLayer);
     window.removeEventListener("openmannin:highlight-feature", handleHighlight);
@@ -154,9 +168,10 @@ export function attachMapInteractions(
  */
 export function attachWebGLHandlers(
   map: MapLibreMap,
-  styleUrl: string,
+  styleUrl: string | (() => string),
 ): () => void {
   let restoring = false;
+  const currentStyleUrl = () => (typeof styleUrl === "function" ? styleUrl() : styleUrl);
 
   const handleContextLost = () => {
     console.warn("[map] WebGL context lost; waiting for restore");
@@ -168,7 +183,10 @@ export function attachWebGLHandlers(
     console.warn("[map] WebGL context restored; reloading style");
     try {
       map.resize();
-      await map.setStyle(styleUrl, { diff: false });
+      // Resolve at restore time: a dark/light toggle changes which style is
+      // current, and restoring into the theme the page started in would flip
+      // the basemap back under the user.
+      await map.setStyle(currentStyleUrl(), { diff: false });
       // style.load event fires and MapView's handler re-adds everything
     } catch (err) {
       console.error("[map] style reload after context restore failed:", err);

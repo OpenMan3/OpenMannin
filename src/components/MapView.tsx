@@ -18,6 +18,7 @@ import { createNavigationIntegration } from "@/lib/map-navigation";
 import {
   createInitialStyle,
   applyTerrain,
+  styleUrlForDark,
   LIBERTY_MAXZOOM,
   INITIAL_CENTRE,
   INITIAL_ZOOM,
@@ -30,7 +31,6 @@ import {
   type FeedErrorSetter,
 } from "@/lib/map-live";
 import { attachMapInteractions, attachWebGLHandlers, setMapLibreWorkerUrl } from "@/lib/map-interactions";
-import { LIBERTY_STYLE_URL } from "@/lib/map-style";
 import { type NavigationState } from "@/lib/navigation/host";
 import { addProtocol, AttributionControl, Map as MapLibreMap } from "maplibre-gl";
 import { Protocol as PMTilesProtocol } from "pmtiles";
@@ -84,8 +84,8 @@ export function MapView({
    * one look identical.
    */
   onFeedErrors?: (errors: Record<string, string>) => void;
-  /** Reports the visible map centre and zoom after each move, for deep links. */
-  onViewport?: (v: { lon: number; lat: number; zoom: number }) => void;
+  /** Reports the visible map centre, zoom and bounds after each move, for deep links and offline scoping. */
+  onViewport?: (v: { lon: number; lat: number; zoom: number; bounds?: { west: number; south: number; east: number; north: number } }) => void;
   /** Navigation state (GPS dot, dropped destination, route), published by the host. */
   onNav?: (state: NavigationState) => void;
   /** Called when the MapLibre instance is created and ready. */
@@ -348,9 +348,25 @@ export function MapView({
       // Initialize navigation integration
       navIntegrationRef.current!.attach(map, onNavRef.current ?? (() => {}), suppressClickUntilRef.current);
 
-      // Attach interaction handlers
+      // Attach interaction handlers. The WebGL restore path re-resolves this
+      // getter so a restore after a theme toggle reloads the theme in use,
+      // not the one the page booted with.
+      let activeStyleUrl: string = initialStyle;
       const cleanupInteractions = attachMapInteractions(map, layersRef, onPickRef, onViewportRef, suppressClickUntilRef.current, layerAsOfRef);
-      const cleanupWebGL = attachWebGLHandlers(map, LIBERTY_STYLE_URL);
+      const cleanupWebGL = attachWebGLHandlers(map, () => activeStyleUrl);
+
+      // Dark/light basemap swap. ThemeToggle publishes the resolved theme;
+      // setStyle with diff:false rebuilds the whole style, and the style.load
+      // handler below re-adds terrain, data layers and nav markers.
+      const handleThemeChange = (e: Event) => {
+        const dark = ((e as CustomEvent).detail as { dark?: boolean } | null)?.dark;
+        if (typeof dark !== "boolean") return;
+        const next = styleUrlForDark(dark);
+        if (next === activeStyleUrl) return;
+        activeStyleUrl = next;
+        void map.setStyle(next, { diff: false });
+      };
+      window.addEventListener("openmannin:theme", handleThemeChange);
 
       // Rebuild everything a style swap tears down, from cached data.
       async function resyncAfterStyleChange(m: MapLibreMap) {
@@ -373,6 +389,7 @@ export function MapView({
         stopAllLivePolls(map);
         cleanupInteractions();
         cleanupWebGL();
+        window.removeEventListener("openmannin:theme", handleThemeChange);
         navIntegrationRef.current?.detach();
         map.remove();
         mapRef.current = null;

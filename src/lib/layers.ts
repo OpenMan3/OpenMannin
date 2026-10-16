@@ -252,7 +252,7 @@ export const LAYERS: LayerDef[] = [
   // TRANSPORT
   // ==========================================================================
   {
-    id: "bus-stops",
+id: "bus-stops",
     label: "Bus stops",
     group: "transport",
     category: "poi",
@@ -269,6 +269,29 @@ export const LAYERS: LayerDef[] = [
       "No official stop numbers or NaPTAN codes are shown; those identifiers come from government data that is not openly licensed and is not used here.",
       "Attribution required: (c) OpenStreetMap contributors, ODbL.",
     ],
+    // ↳ added bus-routes layer below (transport / route-alignment)
+  ],
+  {
+    id: "bus-routes",
+    label: "Bus routes",
+    group: "transport",
+    category: "route",
+    subcategory: "bus",
+    kind: "geojson",
+    file: "bus-routes.geojson",
+    color: "#1d4ed8",
+    defaultOn: false,
+    minZoom: 10,
+    description:
+      "OSM route relation alignments for bus services across the Isle of Man, extracted on 2026-10-16. One feature per relation; membership is partial — a route whose outbound and return are mapped separately appears as two features. Alignments are geometry only, NOT a timetable. VERIFY against iombusandrail.im before relying on them.",
+    caveats: [
+      "Membership is partial: one feature per OSM route relation; a service with separate outbound/return mappings appears as two features and its ref repeats.",
+      "Alignments are unverified geometry: a route may be missing, drawn along the wrong roads, or split. VERIFY against iombusandrail.im before relying on them. This is geometry, NOT a timetable.",
+      "Attribution required: (c) OpenStreetMap contributors, ODbL.",
+    ],
+    confidence: "C",
+    sourceId: "osmIOM",
+  },
     confidence: "C",
     sourceId: "osmIOM",
     featureCount: 732,
@@ -1302,7 +1325,7 @@ export const GAPS: Gap[] = [
     title: "Bus route alignments",
     wanted: "Current Bus Vannin route alignments as polylines.",
     whyUnavailable:
-      "The previous bus-routes layer was a 2015 government network and is removed. OSM bus route relations exist but only a fraction of stops are members, and the alignments were not extracted into a comparable layer.",
+      "The previous bus-routes layer was a 2015 government network and is removed. OSM bus route relations exist but only a fraction of stops are members, and the alignments were not extracted into a comparable layer. A new `bus-routes` layer now provides partial OSM-derived alignments (geometry only, not a timetable); VERIFY against iombusandrail.im before relying on them.",
     whatWeWouldNeed:
       "Bus Vannin / Public Transport to release current route alignments under the OGL, or a complete set of OSM route relations.",
     contact: "buses@gov.im",

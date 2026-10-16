@@ -580,6 +580,12 @@ function PageContent() {
               <VoiceButton muted={nav.voiceMuted} onToggle={setVoiceMuted} />
             )}
             <ThemeToggle />
+          </div>
+        )}
+
+        {/* Satellite pass pill — top-right, above the nav button stack. */}
+        {map && (
+          <div className="absolute right-4 top-4 z-20">
             <PassWidget />
           </div>
         )}

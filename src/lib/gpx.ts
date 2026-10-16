@@ -66,9 +66,6 @@ export function parseGpx(xml: string): GpxData | null {
 
   // Tokenise: find all opening/self-closing tags and their text content
   const tags: Array<{ name: string; attrs: Record<string, string>; children: string[] }> = [];
-  let lastTail = '';
-  let inCdata = false;
-
   xml.replace(CDATA_RE, (_, c) => {
     inCdata = true;
     lastTail = c;

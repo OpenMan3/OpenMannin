@@ -82,14 +82,6 @@ export function createMeasureState(): {
       }
       area = Math.abs(x1 - y1) / 2; // m² approx (scale: rough for IoM)
     }
-    const lastBearing =
-      p >= 2
-        ? (() => {
-            const a = points[p - 2];
-            const b = points[p - 1];
-            return (Math.atan2(b.lon - a.lon, b.lat - a.lat) * 180) / Math.PI;
-          })()
-        : null;
     return {
       totalM: total,
       segmentsM: segs,

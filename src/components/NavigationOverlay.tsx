@@ -1,6 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  clearRecent,
+  destKey,
+  formatCoordPair,
+  isSaved,
+  loadRecent,
+  loadSaved,
+  recordRecent,
+  relativeWhen,
+  saveDest,
+  unsaveDest,
+  type StoredDestination,
+} from "@/lib/destinations";
 import type { NavigationState } from "@/lib/navigation/host";
 import { bannerFor, dockFor, hasFix, type NavigationDock } from "@/lib/navigation/hud";
 import { ROUTE_MODES, type RouteMode } from "@/lib/navigation/profiles";
@@ -131,7 +144,44 @@ export function NavigationOverlay(props: Props) {
     [],
   );
 
-  if (!state?.destination) return null;
+  // ---- Saved & recent destinations ----------------------------------------
+  // Loaded once after mount: SSR renders this overlay too, so the first paint
+  // must not depend on storage being readable.
+  const [recent, setRecent] = useState<StoredDestination[]>([]);
+  const [saved, setSaved] = useState<StoredDestination[]>([]);
+  /** The "Recent & saved" section opens itself only when it has content. */
+  const [listsOpen, setListsOpen] = useState(false);
+
+  useEffect(() => {
+    const storedRecent = loadRecent();
+    const storedSaved = loadSaved();
+    setRecent(storedRecent);
+    setSaved(storedSaved);
+    if (storedRecent.length > 0 || storedSaved.length > 0) setListsOpen(true);
+  }, []);
+
+  // Hoisted so the recording effect can depend on it directly - the host
+  // republishes the whole state object on every GPS tick, not just the pin.
+  const destination = state?.destination;
+
+  // Record each destination as it is opened. The pin is compared against the
+  // one recorded last: republished state must not rewrite the list once a
+  // second while a route is being tracked.
+  const lastRecorded = useRef<{ lon: number; lat: number } | null>(null);
+  useEffect(() => {
+    if (!destination) {
+      lastRecorded.current = null; // a cleared pin: the next one is fresh activity
+      return;
+    }
+    const last = lastRecorded.current;
+    if (last && Math.abs(last.lon - destination.lon) < 1e-6 && Math.abs(last.lat - destination.lat) < 1e-6) {
+      return;
+    }
+    lastRecorded.current = { lon: destination.lon, lat: destination.lat };
+    setRecent(recordRecent(destination));
+  }, [destination]);
+
+  if (!destination) return null;
 
   const navig = state.navigating;
   const banner = bannerFor(state, navig);
@@ -143,6 +193,39 @@ export function NavigationOverlay(props: Props) {
 
   // Show mobile collapsed summary if requested
   const showCompact = minimized && routeShown && (!stepsOpen) && !busy && !failed && !arrived;
+
+  // ---- Recent & saved list -------------------------------------------------
+  // Recents lead (newest first); saved places that have aged out of the recent
+  // window follow, so a favourite older than the recent cap stays reachable.
+  const recentKeys = new Set(recent.map(destKey));
+  const rows = [...recent, ...saved.filter((d) => !recentKeys.has(destKey(d)))];
+  const savedKeys = new Set(saved.map(destKey));
+  const currentSaved = isSaved(destination);
+
+  const goToDestination = (d: StoredDestination) => {
+    // Re-record here as well as dispatching: the recording effect skips a pin
+    // that has not moved, so tapping the top row would otherwise leave the
+    // list unrefreshed.
+    setRecent(recordRecent(d));
+    window.dispatchEvent(
+      new CustomEvent("openmannin:set-destination", {
+        detail: { lon: d.lon, lat: d.lat, title: d.title, detail: d.detail ?? "" },
+      }),
+    );
+  };
+
+  const toggleSaved = (d: StoredDestination) => {
+    setSaved(savedKeys.has(destKey(d)) ? unsaveDest(d) : saveDest(d));
+  };
+
+  const toggleCurrentSaved = () => {
+    setSaved(currentSaved ? unsaveDest(destination) : saveDest(destination));
+  };
+
+  const clearRecents = () => {
+    clearRecent();
+    setRecent([]);
+  };
 
   return (
     <>
@@ -210,7 +293,7 @@ export function NavigationOverlay(props: Props) {
         <div ref={bottomRefs.preview} className="fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))]">
           <div
             role="dialog"
-            aria-label={`Directions to ${state.destination.title}`}
+            aria-label={`Directions to ${destination.title}`}
             className="card-floating overflow-hidden"
           >
             <div className="flex items-start justify-between gap-2 border-b border-line px-4 py-3">
@@ -219,14 +302,85 @@ export function NavigationOverlay(props: Props) {
                   <span className="inline-block h-2 w-2 rounded-full border border-white/80 bg-pin" aria-hidden="true" />
                   Destination
                 </div>
-                <div className="truncate text-sm font-semibold text-ink">{state.destination.title}</div>
-                {state.destination.detail && (
-                  <div className="truncate text-[11px] text-ink-3">{state.destination.detail}</div>
+                <div className="truncate text-sm font-semibold text-ink">{destination.title}</div>
+                {destination.detail && (
+                  <div className="truncate text-[11px] text-ink-3">{destination.detail}</div>
                 )}
               </div>
-              <button type="button" onClick={onClear} aria-label="Clear destination" className="btn-icon !h-8 !w-8">
-                <CloseIcon className="h-4 w-4" />
-              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={toggleCurrentSaved}
+                  aria-pressed={currentSaved}
+                  aria-label={currentSaved ? "Remove destination from saved" : "Save destination"}
+                  className="btn-icon !h-8 !w-8"
+                >
+                  <StarIcon className="h-4 w-4" filled={currentSaved} />
+                </button>
+                <button type="button" onClick={onClear} aria-label="Clear destination" className="btn-icon !h-8 !w-8">
+                  <CloseIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="border-t border-line-soft px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setListsOpen((open) => !open)}
+                  aria-expanded={listsOpen}
+                  className="label flex items-center gap-1 rounded px-1 py-0.5 hover:text-ink-2"
+                >
+                  <ChevronIcon className="h-3 w-3" open={listsOpen} />
+                  Recent &amp; saved
+                </button>
+                {recent.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearRecents}
+                    className="rounded px-1 py-0.5 text-[10px] font-medium text-ink-3 hover:text-ink"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {listsOpen && rows.length === 0 && (
+                <p className="mt-1 text-[11px] text-ink-3">No destinations yet.</p>
+              )}
+              {listsOpen && rows.length > 0 && (
+                <ul className="scroll-thin mt-1 max-h-40 divide-y divide-line-soft overflow-y-auto">
+                  {rows.map((d) => {
+                    const key = destKey(d);
+                    const marked = savedKeys.has(key);
+                    return (
+                      <li key={key} className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => goToDestination(d)}
+                          className="flex min-w-0 flex-1 items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-raised"
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[12px] font-medium text-ink">{d.title}</span>
+                            <span className="block truncate text-[10px] tabular-nums text-ink-3">
+                              {formatCoordPair(d.lon, d.lat)}
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-[10px] text-ink-3">{relativeWhen(d.at)}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleSaved(d)}
+                          aria-pressed={marked}
+                          aria-label={marked ? `Remove ${d.title} from saved` : `Save ${d.title}`}
+                          className="btn-icon !h-7 !w-7 !border-none !shadow-none"
+                        >
+                          <StarIcon className="h-3.5 w-3.5" filled={marked} />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
 
             <div className="flex gap-1.5 border-t border-line px-3 py-2">
@@ -443,7 +597,7 @@ export function NavigationOverlay(props: Props) {
             </span>
             <div className="min-w-0">
               <div className="text-[11px] font-semibold uppercase tracking-wide text-ok">You’ve arrived</div>
-              <div className="truncate text-sm font-semibold text-ink">{state.destination.title}</div>
+              <div className="truncate text-sm font-semibold text-ink">{destination.title}</div>
             </div>
             <button type="button" onClick={onClear} aria-label="Clear destination" className="btn-icon !h-8 !w-8 ml-auto">
               <CloseIcon className="h-4 w-4" />
@@ -466,4 +620,50 @@ export function NavigationOverlay(props: Props) {
 function draftLabel(_dock: NavigationDock | null, arrived: boolean) {
   if (arrived) return "Arrived";
   return "Route active";
+}
+
+/**
+ * Star for the saved state, defined here rather than in Icons.tsx because
+ * nothing outside this card uses it. `filled` swaps the outline for a solid
+ * glyph so the pressed state needs no colour of its own.
+ */
+function StarIcon({ className, filled }: { className?: string; filled?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={24}
+      height={24}
+      className={className}
+      aria-hidden="true"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      focusable="false"
+    >
+      <path d="M12 3.6L14.1 9.1L20 9.4L15.4 13.1L16.9 18.8L12 15.6L7.1 18.8L8.6 13.1L4 9.4L9.9 9.1Z" />
+    </svg>
+  );
+}
+
+/** Chevron for the "Recent & saved" toggle: up while open, down while shut. */
+function ChevronIcon({ className, open }: { className?: string; open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={24}
+      height={24}
+      className={className}
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      focusable="false"
+    >
+      <path d={open ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"} />
+    </svg>
+  );
 }

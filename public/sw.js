@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-globals */
-const VERSION = "openmannin-0.3.8";
+const VERSION = "openmannin-0.3.12";
 const SHELL_CACHE = VERSION + "-shell";
 const DATA_CACHE = VERSION + "-data";
 const TILES_CACHE = VERSION + "-tiles";
@@ -17,7 +17,7 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((k) => !k.startsWith("openmannin-"))
+          .filter((k) => k.startsWith("openmannin-") && !k.startsWith(VERSION))
           .map((k) => caches.delete(k))
       )
     )

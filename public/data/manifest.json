@@ -127,13 +127,13 @@
       "file": "parish-boundaries.geojson",
       "present": true,
       "features": 23,
-      "bytes": 478426,
-      "generated": "2026-10-15T02:07:28.085Z",
+      "bytes": 989480,
+      "generated": "2026-10-16T01:35:49.041Z",
       "bbox": [
         -4.794392,
         54.053869,
         -4.307835,
-        54.403689
+        54.417989
       ]
     },
     "bus-stops": {

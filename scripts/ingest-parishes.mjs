@@ -83,7 +83,15 @@ function reconstructRings(ways) {
       currentReversed = nextReversed;
     }
 
-    if (ring.length >= 3) rings.push(ring);
+    // Only emit genuinely closed rings; open chains are dangling ways that
+    // would be artificially closed into spokes, producing a mesh.
+    const lastRing = ring[ring.length - 1];
+    const lastGeom = lastRing.way.geometry;
+    const lastEnd = lastRing.reversed ? lastGeom[0] : lastGeom[lastGeom.length - 1];
+    const firstGeom = ring[0].way.geometry;
+    const firstStart = ring[0].reversed ? firstGeom[firstGeom.length - 1] : firstGeom[0];
+    const closed = key(lastEnd) === key(firstStart);
+    if (ring.length >= 3 && closed) rings.push(ring);
   }
 
   return rings;
@@ -95,6 +103,17 @@ function parseRelationXml(xml) {
   const tags = {};
   const tagMatches = xml.matchAll(/<tag k="([^"]+)" v="([^"]+)"\/>/g);
   for (const m of tagMatches) tags[m[1]] = m[2];
+
+  // Member roles tell outer vs inner boundaries for multipolygon relations.
+  const memberRole = new Map();
+  for (const m of xml.matchAll(/<member\s+([^>]*?)\/?>/g)) {
+    const attrs = m[1];
+    if (!/type="way"/.test(attrs)) continue;
+    const refM = attrs.match(/ref="(\d+)"/);
+    if (!refM) continue;
+    const roleM = attrs.match(/role="([^"]*)"/);
+    memberRole.set(Number(refM[1]), roleM ? roleM[1] : "");
+  }
 
   // Extract all nodes with coordinates - nodes have many attributes, use flexible regex
   // lat/lon can be negative, so include - in character class
@@ -110,7 +129,7 @@ function parseRelationXml(xml) {
     const wayBody = m[2];
     const ndRefs = [...wayBody.matchAll(/<nd ref="(\d+)"\/>/g)].map((nm) => Number(nm[1]));
     const geometry = ndRefs.map((ref) => nodes.get(ref)).filter(Boolean);
-    if (geometry.length >= 2) ways.push({ id: wayId, geometry });
+    if (geometry.length >= 2) ways.push({ id: wayId, geometry, role: memberRole.get(wayId) ?? "" });
   }
 
   return { tags, ways };
@@ -143,36 +162,40 @@ async function main() {
         continue;
       }
 
-      const rings = reconstructRings(ways);
-      if (rings.length === 0) {
-        console.log(`  ${name}: no rings reconstructed`);
-        continue;
-      }
+      // OSM multipolygon relations carry outer/inner roles on ways.
+      // Treat unlabelled (role "") as outer.
+      const outerWays = ways.filter((w) => w.role === "outer" || w.role === "");
+      const innerWays = ways.filter((w) => w.role === "inner");
+      const waySource = outerWays.length > 0 ? outerWays : ways;
 
-      const polygons = rings.map((ring) => {
-        const coords = ring.map(({ way, reversed }) => {
-          const geom = reversed
-            ? [...way.geometry].reverse()
-            : way.geometry;
-          return geom.map((p) => [Number(p.lon.toFixed(6)), Number(p.lat.toFixed(6))]);
-        });
-        for (const line of coords) {
-          const first = line[0];
-          const last = line[line.length - 1];
-          if (first[0] !== last[0] || first[1] !== last[1]) {
-            line.push([...first]);
+      const outerRingsRaw = reconstructRings(waySource);
+      const innerRingsRaw = innerWays.length > 0 ? reconstructRings(innerWays) : [];
+
+      // Each reconstructed ring is a list of ways; flatten them into one
+      // closed coordinate ring (deduping shared endpoints between segments).
+      const flattenRing = (ring) => {
+        const coords = [];
+        for (const { way, reversed } of ring) {
+          const geom = reversed ? [...way.geometry].reverse() : way.geometry;
+          const pts = geom.map((p) => [Number(p.lon.toFixed(6)), Number(p.lat.toFixed(6))]);
+          for (const pt of pts) {
+            // Drop duplicates of the last pushed point to avoid repeated vertices.
+            const last = coords[coords.length - 1];
+            if (!last || last[0] !== pt[0] || last[1] !== pt[1]) coords.push(pt);
           }
         }
+        // Close the ring if necessary.
+        if (coords.length > 0) {
+          const first = coords[0];
+          const last = coords[coords.length - 1];
+          if (first[0] !== last[0] || first[1] !== last[1]) coords.push([...first]);
+        }
         return coords;
-      });
+      };
 
-      polygons.sort((a, b) => b.length - a.length);
-      const exterior = polygons[0];
+      const outerFlat = outerRingsRaw.map(flattenRing).filter((r) => r.length >= 4);
+      const innerFlat = innerRingsRaw.map(flattenRing).filter((r) => r.length >= 4);
 
-      // Only include rings that are genuinely inside the exterior as holes.
-      // Smaller rings from the OSM relation reconstruction that fall outside
-      // the exterior are fragments, not holes - including them as holes creates
-      // triangular/hexagonal cutouts in the parish fill.
       const pointInRing = (pt, ring) => {
         let inside = false;
         for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -183,12 +206,54 @@ async function main() {
         return inside;
       };
 
-      const holes = polygons.slice(1).filter((ring) => pointInRing(ring[0], exterior));
+      // Sort outer rings by number of points descending so larger rings come first.
+      outerFlat.sort((a, b) => b.length - a.length);
+
+      // Group inner rings (holes) under whichever outer ring contains them.
+      const exteriors = outerFlat.map((ext) => {
+        const holes = innerFlat.filter((inner) => pointInRing(inner[0], ext));
+        return { exterior: ext, holes };
+      });
+
+      // If there were no role labels (inner empty) but multiple outer rings that
+      // nest by containment, reclassify using size + containment fallback.
+      if (innerWays.length === 0 && outerFlat.length > 1) {
+        const consumed = new Set();
+        const rebuilt = [];
+        for (let i = 0; i < outerFlat.length; i++) {
+          if (consumed.has(i)) continue;
+          const holes = [];
+          for (let j = i + 1; j < outerFlat.length; j++) {
+            if (consumed.has(j)) continue;
+            if (pointInRing(outerFlat[j][0], outerFlat[i])) {
+              holes.push(outerFlat[j]);
+              consumed.add(j);
+            }
+          }
+          rebuilt.push({ exterior: outerFlat[i], holes });
+          consumed.add(i);
+        }
+        exteriors.length = 0;
+        exteriors.push(...rebuilt);
+      }
+
+      // Containment checks can nest; if a ring is inside a hole of another exterior,
+      // promote it as its own exterior. Handle via second pass: already done above
+      // since outer-first due to sort by size.
 
       const geometry =
-        holes.length === 0
-          ? { type: "Polygon", coordinates: [exterior] }
-          : { type: "Polygon", coordinates: [exterior, ...holes] };
+        exteriors.length === 1
+          ? exteriors[0].holes.length === 0
+            ? { type: "Polygon", coordinates: [exteriors[0].exterior] }
+            : { type: "Polygon", coordinates: [exteriors[0].exterior, ...exteriors[0].holes] }
+          : {
+              type: "MultiPolygon",
+              coordinates: exteriors.map((e) =>
+                e.holes.length === 0
+                  ? [e.exterior]
+                  : [e.exterior, ...e.holes],
+              ),
+            };
 
       features.push({
         type: "Feature",
@@ -201,7 +266,7 @@ async function main() {
           source: "osm",
         },
       });
-      console.log(`  ${name}: ${ways.length} ways, ${rings.length} rings`);
+      console.log(`  ${name}: ${ways.length} ways, ${outerRingsRaw.length} rings, ${innerRingsRaw.length} holes-raw`);
     } catch (err) {
       console.log(`  ${id}: FAILED (${err.message.slice(0, 60)})`);
     }

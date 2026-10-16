@@ -320,6 +320,14 @@ function compute(req: Request): unknown {
         passCount: r.passes.length,
         bestElevationDeg: Math.max(...r.passes.map((p) => p.maxElev)),
         nextPass: describePass(r.passes[0], now),
+        // Machine-readable twins of the human sentence above, so consumers can
+        // count down or sort without re-parsing prose. `nextPass` stays the
+        // popup's rendering; these stay flat for the same reason every other
+        // property here does - FeaturePopup stringifies anything nested.
+        nextRiseIso: r.passes[0].rise,
+        nextSetIso: r.passes[0].set,
+        nextMaxElevDeg: r.passes[0].maxElev,
+        nextDurationS: r.passes[0].durationS,
         passes: r.passes
           .map((p) => `${passClock(p.rise, now)}-${p.set.slice(11, 16)}Z ${p.maxElev}deg ${p.durationS}s`)
           .join(" | "),

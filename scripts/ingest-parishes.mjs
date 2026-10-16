@@ -168,11 +168,26 @@ async function main() {
 
       polygons.sort((a, b) => b.length - a.length);
       const exterior = polygons[0];
-      const holes = polygons.slice(1);
+
+      // Only include rings that are genuinely inside the exterior as holes.
+      // Smaller rings from the OSM relation reconstruction that fall outside
+      // the exterior are fragments, not holes - including them as holes creates
+      // triangular/hexagonal cutouts in the parish fill.
+      const pointInRing = (pt, ring) => {
+        let inside = false;
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+          const [xi, yi] = ring[i];
+          const [xj, yj] = ring[j];
+          if ((yi > pt[1]) !== (yj > pt[1]) && (pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi)) inside = !inside;
+        }
+        return inside;
+      };
+
+      const holes = polygons.slice(1).filter((ring) => pointInRing(ring[0], exterior));
 
       const geometry =
         holes.length === 0
-          ? { type: "Polygon", coordinates: exterior }
+          ? { type: "Polygon", coordinates: [exterior] }
           : { type: "Polygon", coordinates: [exterior, ...holes] };
 
       features.push({

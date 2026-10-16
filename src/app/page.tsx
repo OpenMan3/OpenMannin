@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { GAPS, LAYERS } from "@/lib/layers";
 import type { PickedFeature } from "@/components/MapView";
 import dynamic from "next/dynamic";
@@ -20,6 +20,17 @@ import { LocateButton } from "@/components/LocateButton";
 import { FollowModeButton } from "@/components/FollowModeButton";
 import { VoiceButton } from "@/components/VoiceButton";
 import { NavigationOverlay } from "@/components/NavigationOverlay";
+import { PassWidget } from "@/components/PassWidget";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { loadLayer } from "@/lib/layer-data";
+import { resolveFeatureLabel } from "@/lib/feature-label";
+import {
+  formatPickParam,
+  formatToParam,
+  nearestFeatureProperties,
+  parsePickParam,
+  parseToParam,
+} from "@/lib/deep-link";
 
 
 
@@ -171,9 +182,15 @@ function PageContent() {
     [manifest],
   );
 
-  // The visible map centre + zoom, reported by MapView after each move. Used to
-  // keep the URL in sync so a map state can be shared as a link.
-  const [viewport, setViewport] = useState<{ lon: number; lat: number; zoom: number } | null>(null);
+  // The visible map centre + zoom (+ bounds), reported by MapView after each
+  // move. Used to keep the URL in sync so a map state can be shared as a link,
+  // and by the offline scope picker for the "current view" option.
+  const [viewport, setViewport] = useState<{
+    lon: number;
+    lat: number;
+    zoom: number;
+    bounds?: { west: number; south: number; east: number; north: number };
+  } | null>(null);
 
   // Restore the remember-the-sized sidebar width, once.
   useEffect(() => {
@@ -225,8 +242,14 @@ function PageContent() {
   );
 
   // Deep links: ?layers=roads,postcodes&z=15&lon=-4.5&lat=54.2
+  //            &to=lon,lat,title[,detail]&pick=layerId:lon:lat[:label]
   // Read once on mount to restore the shared state; the map's own initial
-  // viewport is read by MapView directly from the URL.
+  // viewport is read by MapView directly from the URL. The destination and
+  // pick are parked in refs: their restore effects wait for the nav host and
+  // the map to exist, which happens well after mount.
+  const pendingToRef = useRef<ReturnType<typeof parseToParam>>(null);
+  const pendingPickRef = useRef<ReturnType<typeof parsePickParam>>(null);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const p = new URLSearchParams(window.location.search);
@@ -238,10 +261,93 @@ function PageContent() {
         .filter((id) => LAYERS.some((l) => l.id === id));
       if (ids.length > 0) setEnabled(new Set(ids));
     }
+    pendingToRef.current = parseToParam(p.get("to"));
+    pendingPickRef.current = parsePickParam(p.get("pick"));
   }, []);
+
+  // ?to= — drop the shared destination once the nav host is listening. The
+  // host's set-destination handler flies the camera and routes by itself.
+  useEffect(() => {
+    const dest = pendingToRef.current;
+    if (!dest || !nav) return;
+    pendingToRef.current = null;
+    window.dispatchEvent(
+      new CustomEvent("openmannin:set-destination", {
+        detail: { lon: dest.lon, lat: dest.lat, title: dest.title, detail: dest.detail ?? "" },
+      }),
+    );
+  }, [nav]);
+
+  // ?pick= — reopen the feature popup once the map exists. The clicked
+  // position alone is not enough for a popup (it needs the feature's
+  // properties), so the layer file is reloaded and the nearest geometry is
+  // resolved client-side; if that cannot load (offline first paint), the
+  // label carried in the URL keeps the popup meaningful.
+  useEffect(() => {
+    const pk = pendingPickRef.current;
+    if (!pk || !map) return;
+    pendingPickRef.current = null;
+    const layer = LAYERS.find((l) => l.id === pk.layerId);
+    if (!layer) return;
+    const asOf = manifest?.layers?.[layer.id]?.generated;
+    const fallback = (): PickedFeature => ({
+      layer,
+      properties: pk.label ? { name: pk.label } : null,
+      lon: pk.lon,
+      lat: pk.lat,
+      asOf,
+    });
+    window.dispatchEvent(
+      new CustomEvent("openmannin:fly-to", { detail: { lon: pk.lon, lat: pk.lat, zoom: 16 } }),
+    );
+    if (!layer.file) {
+      setPicked(fallback());
+      return;
+    }
+    let cancelled = false;
+    void loadLayer(layer.file)
+      .then((fc) => {
+        if (cancelled) return;
+        setPicked({
+          layer,
+          properties:
+            nearestFeatureProperties(fc, pk.lon, pk.lat) ??
+            (pk.label ? { name: pk.label } : null),
+          lon: pk.lon,
+          lat: pk.lat,
+          asOf,
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setPicked(fallback());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [map, manifest]);
 
   // Write the current state back to the URL (debounced) so the address bar
   // always reflects what is on screen and can be copied as a shareable link.
+  // Destination and pick are derived as strings so this effect keys off
+  // values: the nav state object republishes on every GPS fix, and depending
+  // on it would reset the debounce timer a second and never write.
+  const destParam = nav?.destination
+    ? formatToParam({
+        lon: nav.destination.lon,
+        lat: nav.destination.lat,
+        title: nav.destination.title,
+        detail: nav.destination.detail || undefined,
+      })
+    : null;
+  const pickParam = picked
+    ? formatPickParam({
+        layerId: picked.layer.id,
+        lon: picked.lon,
+        lat: picked.lat,
+        label: resolveFeatureLabel(picked.properties) || undefined,
+      })
+    : null;
+
   useEffect(() => {
     if (!viewport) return;
     const t = setTimeout(() => {
@@ -250,13 +356,15 @@ function PageContent() {
         .join(",");
       const p = new URLSearchParams();
       if (layers) p.set("layers", layers);
+      if (destParam) p.set("to", destParam);
+      if (pickParam) p.set("pick", pickParam);
       p.set("z", viewport.zoom.toFixed(1));
       p.set("lon", viewport.lon.toFixed(5));
       p.set("lat", viewport.lat.toFixed(5));
       window.history.replaceState(null, "", `${window.location.pathname}?${p.toString()}`);
     }, 500);
     return () => clearTimeout(t);
-  }, [enabled, viewport]);
+  }, [enabled, viewport, destParam, pickParam]);
 
   const centreOn = useCallback((lon: number, lat: number) => {
     window.dispatchEvent(
@@ -424,7 +532,7 @@ function PageContent() {
                   />
                 )}
                 {tab === "gaps" && <GapsPanel gaps={GAPS} />}
-                {tab === "sources" && <TransparencyPanel />}
+                {tab === "sources" && <TransparencyPanel viewport={viewport?.bounds ?? null} />}
               </div>
 
         {/* desktop resize handle */}
@@ -471,6 +579,8 @@ function PageContent() {
             {nav && nav.navigating && (
               <VoiceButton muted={nav.voiceMuted} onToggle={setVoiceMuted} />
             )}
+            <ThemeToggle />
+            <PassWidget />
           </div>
         )}
 

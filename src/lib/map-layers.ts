@@ -37,6 +37,10 @@ const BUILDING_VISUAL: Record<string, { fill: number; line: number; lineColor?: 
   // rather than a faint smudge - the registry colour is light enough to vanish
   // against the basemap as a line.
   buildings: { fill: 0.28, line: 1.4, lineColor: "#6b7280" },
+  // Parish boundaries cover large areas; a very light fill vanishes against the
+  // basemap so only the dark outlines are visible, looking like a mesh of
+  // unconnected lines. Raise the fill so each parish reads as a filled region.
+  "parish-boundaries": { fill: 0.5, line: 1.2, lineColor: "#6366f1" },
 };
 
 const POINT_STYLE: Record<string, { radius: number; stroke: string; strokeWidth: number }> = {

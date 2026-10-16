@@ -284,7 +284,7 @@
       "file": "seamarks.geojson",
       "present": true,
       "features": 101,
-      "bytes": 50191,
+      "bytes": 30307,
       "generated": "2026-10-15T01:37:29.149Z",
       "bbox": [
         -5.12208,
@@ -560,7 +560,7 @@
       "file": "buildings.geojson",
       "present": true,
       "features": 32794,
-      "bytes": 17267601,
+      "bytes": 16879829,
       "generated": "2026-10-15T16:39:28.357Z",
       "bbox": [
         -4.83761,

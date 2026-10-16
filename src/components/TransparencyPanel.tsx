@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 /**
  * Data sources & transparency.
@@ -19,6 +19,16 @@ import { useEffect, useState } from "react";
 import { SOURCES } from "@/lib/sources";
 import { LICENCES } from "@/lib/licences";
 import { LAYERS } from "@/lib/layers";
+import {
+  collectTargets,
+  formatBytes,
+  parseManifest,
+  scopeLayers,
+  totalBytes,
+  type OfflineManifest,
+  type OfflineScope,
+} from "@/lib/offline-scope";
+import { summarizeHealth, type HealthSummary } from "@/lib/health-summary";
 import { CommunityFeed } from "./CommunityFeed";
 import { LicenceBadge } from "./LicenceBadge";
 
@@ -66,13 +76,107 @@ const LIBRARIES: { name: string; licence: string; url: string; licenceUrl: strin
   },
 ];
 
-export function TransparencyPanel() {
+/**
+ * Remembered layer selection for the "Choose layers…" scope. The `om:` prefix
+ * keeps every key this app writes in one namespace, and the value stays a plain
+ * array of layer ids so it can be read straight out of devtools.
+ */
+const SELECTION_KEY = "om:offline.layers";
+
+/** Scope choices. "Current view" renders disabled until a viewport is passed in. */
+const SCOPE_OPTIONS: { id: OfflineScope; label: string }[] = [
+  { id: "all", label: "Everything" },
+  { id: "selected", label: "Choose layers…" },
+  { id: "viewport", label: "Current view" },
+];
+
+/**
+ * The stored selection, or null when nothing was ever stored - which the panel
+ * reads as "every layer ticked", so the first-time reader is not faced with an
+ * empty download they did not ask for.
+ */
+function loadSelection(): string[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = localStorage.getItem(SELECTION_KEY);
+    if (!stored) return null;
+    const parsed: unknown = JSON.parse(stored);
+    if (Array.isArray(parsed)) return parsed.filter((v): v is string => typeof v === "string");
+  } catch {
+    /* a corrupt selection falls back to "everything ticked" */
+  }
+  return null;
+}
+
+function saveSelection(ids: readonly string[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(SELECTION_KEY, JSON.stringify([...ids]));
+  } catch {
+    /* private-mode storage must not break the download */
+  }
+}
+
+/** Fetch the build manifest; `ok` is the only trustable signal because a static host answers 404s with the app shell. */
+async function fetchManifest(): Promise<OfflineManifest> {
+  const res = await fetch("/data/manifest.json");
+  if (!res.ok) throw new Error(`HTTP ${res.status} for /data/manifest.json`);
+  return parseManifest(await res.json());
+}
+
+export function TransparencyPanel({
+  viewport = null,
+}: {
+  /**
+   * The map's current footprint in degrees, when the parent can supply it.
+   * Enables the "Current view" offline scope; without it that option is
+   * rendered disabled instead of quietly downloading everything.
+   */
+  viewport?: { west: number; south: number; east: number; north: number } | null;
+}) {
   const liveLayers = LAYERS.filter((l) => l.kind === "live");
   const [offlineState, setOfflineState] = useState<"idle" | "downloading" | "done" | "error">("idle");
   const [offlineProgress, setOfflineProgress] = useState(0);
   const [isOnline, setIsOnline] = useState<boolean>(typeof navigator === "undefined" ? true : navigator.onLine);
   const [storageUsage, setStorageUsage] = useState<number | null>(null);
   const [storageQuota, setStorageQuota] = useState<number | null>(null);
+  /** Fetched once on mount and shared by the probe, the scope list and the download. */
+  const [manifest, setManifest] = useState<OfflineManifest | null>(null);
+  const [scope, setScope] = useState<OfflineScope>("all");
+  /** null = nothing stored yet, read as "every layer ticked". */
+  const [storedSelection, setStoredSelection] = useState<string[] | null>(() => loadSelection());
+  /** Raw /health.json, or null when it never answered - the badge stays hidden. */
+  const [healthReport, setHealthReport] = useState<unknown>(null);
+
+  // Labels live in the registry (src/lib/layers.ts); the manifest only carries
+  // ids, and a checkbox list of raw ids is unreadable.
+  const manifestLayers = useMemo(() => {
+    if (!manifest) return [];
+    const labels = new Map(LAYERS.map((l) => [l.id, l.label]));
+    return manifest.layers.map((entry) => ({
+      ...entry,
+      label: entry.label ?? labels.get(entry.id) ?? entry.id,
+    }));
+  }, [manifest]);
+
+  const effectiveSelection = useMemo(
+    () => storedSelection ?? manifestLayers.map((l) => l.id),
+    [storedSelection, manifestLayers],
+  );
+  const selectedSet = useMemo(() => new Set(effectiveSelection), [effectiveSelection]);
+
+  const scopedLayers = useMemo(
+    () => scopeLayers(manifestLayers, scope, { selected: effectiveSelection, viewport }),
+    [manifestLayers, scope, effectiveSelection, viewport],
+  );
+
+  const healthSummary: HealthSummary | null = useMemo(
+    () =>
+      healthReport === null
+        ? null
+        : summarizeHealth(healthReport, { manifestGenerated: manifest?.generated ?? null }),
+    [healthReport, manifest],
+  );
 
   useEffect(() => {
     const onOnline = () => setIsOnline(true);
@@ -97,23 +201,14 @@ export function TransparencyPanel() {
     }
   };
 
-  const checkOfflineReady = async () => {
+  /**
+   * Whole-app readiness probe: has every layer's GeoJSON and PMTiles archive
+   * already landed in the service worker's caches? It deliberately ignores the
+   * chosen scope - "Offline data ready" has always meant everything is there.
+   */
+  const checkOfflineReady = async (m: OfflineManifest) => {
     try {
       if (!("caches" in window)) return;
-      const manifest = await (await fetch("/data/manifest.json")).json();
-      const tileUrls = new Set<string>();
-      const files = new Set<string>();
-      for (const def of Object.values(manifest?.layers ?? {})) {
-        if (def && typeof def === "object") {
-          const d = def as { file?: unknown; pmtiles?: unknown };
-          if (typeof d.pmtiles === "string") {
-            tileUrls.add(new URL(d.pmtiles, window.location.origin).toString());
-          }
-          if (typeof d.file === "string") {
-            files.add(d.file);
-          }
-        }
-      }
       const keys = await caches.keys();
       const dataCacheKey = keys.find((k) => k.includes("-data"));
       const tilesCacheKey = keys.find((k) => k.includes("-tiles"));
@@ -121,18 +216,14 @@ export function TransparencyPanel() {
       const dataCache = dataCacheKey ? await caches.open(dataCacheKey) : null;
       const tilesCache = tilesCacheKey ? await caches.open(tilesCacheKey) : null;
       let ready = true;
-      for (const file of files) {
-        if (!dataCache || !(await dataCache.match(`/data/${file}`))) {
+      for (const url of collectTargets(m.layers, window.location.origin)) {
+        // GeoJSON is cached under /data and PMTiles under /tiles; the pathname
+        // is what decides which of the two caches to look in.
+        const { pathname } = new URL(url);
+        const cache = pathname.startsWith("/data/") ? dataCache : tilesCache;
+        if (!cache || !(await cache.match(url))) {
           ready = false;
           break;
-        }
-      }
-      if (ready && tileUrls.size > 0) {
-        for (const u of tileUrls) {
-          if (!tilesCache || !(await tilesCache.match(u))) {
-            ready = false;
-            break;
-          }
         }
       }
       setOfflineState(ready ? "done" : "idle");
@@ -143,7 +234,49 @@ export function TransparencyPanel() {
 
   useEffect(() => {
     void refreshStorage();
-    void checkOfflineReady();
+  }, []);
+
+  // The manifest is fetched exactly once and shared: the readiness probe, the
+  // scope list and the download all read these bytes instead of each re-hitting
+  // /data/manifest.json. A failure here is survivable - the download re-fetches
+  // on demand, so a retry after a bad first load is still a real attempt.
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const m = await fetchManifest();
+        if (cancelled) return;
+        setManifest(m);
+        await checkOfflineReady(m);
+      } catch {
+        /* the panel renders without a manifest; only the scope list needs it */
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // The health badge is optional by design: a host that does not ship
+  // health.json, or answers with anything unparseable, gets no line at all
+  // rather than an error state dressed up as a status.
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch("/health.json");
+        if (!res.ok) return;
+        const data: unknown = await res.json();
+        if (!cancelled) setHealthReport(data);
+      } catch {
+        /* silent: no badge beats a broken badge */
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const clearOfflineData = async () => {
@@ -164,23 +297,16 @@ export function TransparencyPanel() {
     setOfflineState("downloading");
     setOfflineProgress(0);
     try {
-      const manifestRes = await fetch("/data/manifest.json");
-      if (!manifestRes.ok) throw new Error(`HTTP ${manifestRes.status} for /data/manifest.json`);
-      const manifest = await manifestRes.json();
-      const tileUrls = new Set<string>();
-      const files = new Set<string>();
-      for (const def of Object.values(manifest?.layers ?? {})) {
-        if (def && typeof def === "object") {
-          const d = def as { file?: unknown; pmtiles?: unknown };
-          if (typeof d.pmtiles === "string") {
-            tileUrls.add(new URL(d.pmtiles, window.location.origin).toString());
-          }
-          if (typeof d.file === "string") {
-            files.add(d.file);
-          }
-        }
+      let m = manifest;
+      if (!m) {
+        m = await fetchManifest();
+        setManifest(m);
       }
-      const list = [...files, ...tileUrls];
+      // No stored selection means "everything ticked" - the same default the
+      // checkbox list shows - so an untouched choice downloads the full app.
+      const selected = storedSelection ?? m.layers.map((l) => l.id);
+      const scoped = scopeLayers(m.layers, scope, { selected, viewport });
+      const list = collectTargets(scoped, window.location.origin);
       if (list.length > 0) {
         let done = 0;
         await Promise.all(
@@ -202,8 +328,45 @@ export function TransparencyPanel() {
     }
   };
 
+  const persistSelection = (ids: string[]) => {
+    setStoredSelection(ids);
+    saveSelection(ids);
+  };
+
+  const toggleLayer = (id: string) => {
+    const next = new Set(effectiveSelection);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    persistSelection([...next]);
+  };
+
+  const scopeDescription =
+    scope === "selected"
+      ? "Cache only the layers you tick below. Your choice stays on this device."
+      : scope === "viewport"
+        ? "Cache only the layers whose data reaches the map view you are looking at."
+        : "Cache all map data bundles locally for offline use.";
+
   return (
     <div className="scroll-thin h-full overflow-y-auto md:pb-16">
+      {/* Freshness strip: quiet when the build is provably healthy, amber when it
+          is stale or warned, red when it is broken. Absent entirely when
+          health.json did not answer. */}
+      {healthSummary && (
+        <p
+          className={`border-b border-line-soft px-3 py-2 text-[11px] ${
+            healthSummary.tone === "danger"
+              ? "text-danger"
+              : healthSummary.tone === "warn"
+                ? "text-warn"
+                : "text-ink-3"
+          }`}
+          title={healthSummary.title}
+          aria-live="polite"
+        >
+          {healthSummary.text}
+        </p>
+      )}
       <div className="border-b border-line px-3 py-2.5">
         <h2 className="text-sm font-semibold text-ink">Data sources &amp; transparency</h2>
         <p className="mt-1 text-[12px] leading-snug text-ink-3">
@@ -222,16 +385,102 @@ export function TransparencyPanel() {
             </span>
           )}
         </div>
-        <p className="mb-2 text-[12px] leading-snug text-ink-3">
-          Cache all map data bundles locally for offline use.
-        </p>
+        {/* Scope: what to fetch. The filtering rules live in src/lib/offline-scope.ts. */}
+        <div role="radiogroup" aria-label="Offline download scope" className="mb-2 flex flex-wrap gap-1.5">
+          {SCOPE_OPTIONS.map((opt) => {
+            const unavailable = opt.id === "viewport" && viewport === null;
+            const active = scope === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                disabled={unavailable}
+                title={unavailable ? "Available once this panel knows the map viewport" : undefined}
+                onClick={() => setScope(opt.id)}
+                className={`chip cursor-pointer border transition-colors ${
+                  active
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-line-soft text-ink-3 hover:bg-raised"
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <p className="mb-2 text-[12px] leading-snug text-ink-3">{scopeDescription}</p>
+
+        {manifest && scope !== "selected" && (
+          <p className="mb-2 text-[11px] text-ink-3">
+            {scope === "viewport" && scopedLayers.length === 0
+              ? "No layers reach the current view"
+              : `${scopedLayers.length} layer${scopedLayers.length === 1 ? "" : "s"} · ${formatBytes(totalBytes(scopedLayers))}`}
+          </p>
+        )}
+
+        {scope === "selected" &&
+          (manifest ? (
+            <div className="mb-2">
+              <div className="mb-1 flex items-center justify-between gap-2 text-[11px] text-ink-3">
+                <span>
+                  {effectiveSelection.length} of {manifestLayers.length} selected ·{" "}
+                  {formatBytes(totalBytes(scopedLayers))}
+                </span>
+                <span className="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    className="link"
+                    onClick={() => persistSelection(manifestLayers.map((l) => l.id))}
+                  >
+                    All
+                  </button>
+                  <button type="button" className="link" onClick={() => persistSelection([])}>
+                    None
+                  </button>
+                </span>
+              </div>
+              <div className="scroll-thin max-h-44 overflow-y-auto rounded-md border border-line-soft">
+                {manifestLayers.map((entry) => (
+                  <label
+                    key={entry.id}
+                    className="flex cursor-pointer items-center gap-2 border-b border-line-soft px-2.5 py-1.5 last:border-b-0 hover:bg-raised"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSet.has(entry.id)}
+                      onChange={() => toggleLayer(entry.id)}
+                      className="h-4 w-4 shrink-0 accent-accent"
+                    />
+                    <span className="min-w-0 flex-1 truncate text-[12px] text-ink">
+                      {entry.label ?? entry.id}
+                    </span>
+                    <span className="shrink-0 font-mono text-[10px] text-ink-3">
+                      {formatBytes(entry.bytes)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="mb-2 text-[11px] text-ink-3">Layer list unavailable</p>
+          ))}
+
         {offlineState === "downloading" && (
           <div className="mb-2 h-1.5 w-full overflow-hidden rounded bg-soft" aria-live="polite" aria-label="Offline download progress">
             <div className="h-full bg-accent transition-all" style={{ width: `${offlineProgress}%` }} />
           </div>
         )}
         {offlineState === "done" && (
-          <p className="mb-2 text-[11px] text-ink-3" aria-live="polite">All offline data is cached</p>
+          <p className="mb-2 text-[11px] text-ink-3" aria-live="polite">
+            {scope === "all"
+              ? "All offline data is cached"
+              : scope === "selected"
+                ? "Selected offline data is cached"
+                : "Data for this view is cached"}
+          </p>
         )}
         {offlineState === "error" && (
           <p className="mb-2 text-[11px] text-ink-3" aria-live="polite">Download failed</p>
@@ -240,7 +489,8 @@ export function TransparencyPanel() {
           <button
             type="button"
             onClick={() => void downloadOfflineData()}
-            disabled={offlineState === "downloading"}
+            disabled={offlineState === "downloading" || (manifest !== null && scopedLayers.length === 0)}
+            title={manifest !== null && scopedLayers.length === 0 ? "Nothing in this scope to download" : undefined}
             className="btn flex-1 text-xs"
           >
             {offlineState === "downloading"

@@ -300,6 +300,19 @@ export function MapView({
 
       map.addControl(new (await import("maplibre-gl")).NavigationControl({ visualizePitch: false, showZoom: false }), "top-right");
 
+      // Third-party basemap styles occasionally reference a sprite image their
+      // own sprite does not contain — OpenFreeMap's "dark" style paints its
+      // wood landcover with `fill-pattern: "wood-pattern"`, an image absent
+      // from the served sprite. Without a resolver MapLibre logs an "Image
+      // could not be loaded" warning for every unresolved reference. Register
+      // one that adds a transparent pixel: the console stays clean and the
+      // layer renders exactly as it did when the image was simply missing.
+      map.setMissingStyleImageResolver((id) => {
+        if (!map.hasImage(id)) {
+          map.addImage(id, { width: 1, height: 1, data: new Uint8Array(4) });
+        }
+      });
+
       // Error handler
       map.on("error", (e) => {
         const tt = e as unknown as {

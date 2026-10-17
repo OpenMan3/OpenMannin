@@ -585,7 +585,7 @@ function PageContent() {
 
         {/* Satellite pass pill — top-right, above the nav button stack. */}
         {map && (
-          <div className="absolute right-4 top-4 z-20">
+          <div className="absolute right-12 top-4 z-20">
             <PassWidget />
           </div>
         )}

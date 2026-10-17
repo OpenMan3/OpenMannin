@@ -19,6 +19,8 @@ import { TransparencyPanel } from "@/components/TransparencyPanel";
 import { LocateButton } from "@/components/LocateButton";
 import { FollowModeButton } from "@/components/FollowModeButton";
 import { VoiceButton } from "@/components/VoiceButton";
+import { MeasureControl } from "@/components/MeasureControl";
+import { MeasurePanel } from "@/components/MeasurePanel";
 import { NavigationOverlay } from "@/components/NavigationOverlay";
 import { PassWidget } from "@/components/PassWidget";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -45,6 +47,7 @@ import {
 import type { NavigationState, FollowMode } from "@/lib/navigation/host";
 import type { RouteMode } from "@/lib/navigation/profiles";
 import type { LayerDef } from "@/lib/types";
+import { createMeasureState, type MeasurePoint } from "@/lib/measure";
 import { releaseWakeLock, requestWakeLock } from "@/lib/screen-wake-lock";
 import type { Map } from "maplibre-gl";
 
@@ -104,6 +107,13 @@ function PageContent() {
   const [feedErrors, setFeedErrors] = useState<Record<string, string>>({});
   // MapLibre instance, set when MapView is ready.
   const [map, setMap] = useState<Map | null>(null);
+  // Measure tool: whether clicks add vertices, and the immutable point array
+  // the map draws and the panel summarises. `measureRef` owns the collection
+  // logic; the array is a fresh copy per change so React (and MapView's effect)
+  // see a new reference.
+  const [measureActive, setMeasureActive] = useState(false);
+  const measureRef = useRef(createMeasureState());
+  const [measurePoints, setMeasurePoints] = useState<MeasurePoint[]>([]);
   // The layer whose detail drawer is open, if any.
   const [detail, setDetail] = useState<LayerDef | null>(null);
   // Per-layer metadata from the build manifest (data "as of" date and bounds),
@@ -438,6 +448,35 @@ function PageContent() {
     [ensureEnabled, centreOn],
   );
 
+  // The measure panel needs a new array reference each change; the collection
+  // maths lives in the state machine, so this only mirrors its points out.
+  const syncMeasurePoints = useCallback(() => {
+    setMeasurePoints([...measureRef.current.points]);
+  }, []);
+  const measureAdd = useCallback(
+    (point: MeasurePoint) => {
+      measureRef.current.add(point.lon, point.lat);
+      syncMeasurePoints();
+    },
+    [syncMeasurePoints],
+  );
+  const measureUndo = useCallback(() => {
+    measureRef.current.undo();
+    syncMeasurePoints();
+  }, [syncMeasurePoints]);
+  const measureClear = useCallback(() => {
+    measureRef.current.clear();
+    syncMeasurePoints();
+    setMeasureActive(false);
+  }, [syncMeasurePoints]);
+  const toggleMeasure = useCallback(() => {
+    setMeasureActive((v) => !v);
+    // The feature popup would sit under the drawing; drop it as we arm.
+    setPicked(null);
+  }, []);
+
+  const measureSummary = measureRef.current.summary();
+
   return (
     <main className="flex h-dvh w-full overflow-hidden bg-page font-sans text-ink">
       {/* ---- drawer backdrop (mobile) ---- */}
@@ -565,9 +604,24 @@ function PageContent() {
           insetTop={navTopInset}
           mobileBottomInset={64}
           terrain3d={terrain3d}
+          measureMode={measureActive}
+          measurePoints={measurePoints}
+          onMeasurePoint={measureAdd}
         />
 
         <FeaturePopup picked={picked} onClose={() => setPicked(null)} onLocate={centreOn} />
+
+        {/* Measure readout — top-centre, clear of the control stack and pills. */}
+        {map && (measureActive || measurePoints.length > 0) && (
+          <MeasurePanel
+            summary={measureSummary}
+            active={measureActive}
+            onUndo={measureUndo}
+            onClear={measureClear}
+            onStop={() => setMeasureActive(false)}
+            className="absolute left-1/2 top-4 z-20 -translate-x-1/2"
+          />
+        )}
 
         {/* Map overlays (always visible when map is ready) */}
         {map && (
@@ -579,6 +633,7 @@ function PageContent() {
             {nav && nav.navigating && (
               <VoiceButton muted={nav.voiceMuted} onToggle={setVoiceMuted} />
             )}
+            <MeasureControl active={measureActive} onToggle={toggleMeasure} />
             <ThemeToggle />
           </div>
         )}

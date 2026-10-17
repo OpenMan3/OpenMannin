@@ -8,6 +8,7 @@
 
 import type { Map as MapLibreMap, MapMouseEvent } from "maplibre-gl";
 import type { LayerDef, Feature } from "@/lib/types";
+import type { MeasurePoint } from "@/lib/measure";
 import { layerByMapLayerId } from "./map-layers";
 import { highlightFeature, clearHighlight } from "./map-live";
 
@@ -23,6 +24,8 @@ export function attachMapInteractions(
   onViewportRef: { current: ((v: { lon: number; lat: number; zoom: number; bounds?: { west: number; south: number; east: number; north: number } }) => void) | undefined },
   suppressClickUntilRef: { current: number },
   layerAsOfRef: { current: Map<string, string> },
+  measureModeRef: { current: boolean },
+  onMeasureRef: { current: ((point: MeasurePoint) => void) | undefined },
 ): () => void {
   // Click handler
   const handleClick = (e: MapMouseEvent) => {
@@ -30,6 +33,13 @@ export function attachMapInteractions(
     // (or a real one if the finger lingered). Swallow it so the pin drop
     // does not immediately clear the feature popup.
     if (Date.now() < suppressClickUntilRef.current) return;
+
+    // While measuring, a click is a vertex, never a feature pick: the popup
+    // would otherwise cover the line the user is drawing.
+    if (measureModeRef.current) {
+      onMeasureRef.current?.({ lon: e.lngLat.lng, lat: e.lngLat.lat });
+      return;
+    }
 
     try {
       const hits = map.queryRenderedFeatures(e.point);
@@ -57,6 +67,12 @@ export function attachMapInteractions(
     if (cursorFrame) return;
     cursorFrame = requestAnimationFrame(() => {
       cursorFrame = 0;
+      // In measure mode the cursor is a crosshair everywhere, regardless of
+      // what is under it — a pointer would imply "click to inspect".
+      if (measureModeRef.current) {
+        map.getCanvas().style.cursor = "crosshair";
+        return;
+      }
       try {
         const hits = map.queryRenderedFeatures(e.point);
         const ours = hits.some(

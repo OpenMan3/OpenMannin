@@ -127,7 +127,10 @@ test("t returns Manx for a known key when the language is gv", () => {
 
 test("CATALOG entries are complete and unique", () => {
   const entries = Object.entries(CATALOG);
-  assert.ok(entries.length >= 40, `expected >= 40 keys, got ${entries.length}`);
+  // A sanity floor, not a target: it catches a wholesale accidental wipe of the
+  // catalog. It is deliberately below the current key count so retiring a single
+  // string (e.g. the unused GPX `app.import`) does not require editing the test.
+  assert.ok(entries.length >= 35, `expected >= 35 keys, got ${entries.length}`);
 
   const seen = new Set();
   for (const [key, value] of entries) {

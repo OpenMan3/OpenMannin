@@ -177,6 +177,15 @@ export function CrosshairIcon(props: IconProps) {
   ));
 }
 
+export function RulerIcon(props: IconProps) {
+  return base(props, (
+    <>
+      <path d="M3.5 16.5l13-13 4 4-13 13z" />
+      <path d="M7.5 13.5l1.8 1.8M10.5 10.5l1.8 1.8M13.5 7.5l1.8 1.8" />
+    </>
+  ));
+}
+
 export function SunIcon(props: IconProps) {
   return base(props, (
     <>

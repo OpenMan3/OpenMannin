@@ -69,46 +69,6 @@ export function createMeasureState(): MeasureState {
     points.length = 0;
   };
 
-  const summary = (): MeasureSummary => {
-    const p = points.length;
-
-    let total = 0;
-    const segs: number[] = [];
-    for (let i = 0; i < p - 1; i++) {
-      const d = haversineM(points[i].lon, points[i].lat, points[i + 1].lon, points[i + 1].lat);
-      total += d;
-      segs.push(d);
-    }
-
-    let area: number | null = null;
-    if (p >= 3) {
-      const refLat = points.reduce((sum, pt) => sum + pt.lat, 0) / p;
-      let acc = 0;
-      for (let i = 0; i < p; i++) {
-        const a = toMetres(points[i], refLat);
-        const b = toMetres(points[(i + 1) % p], refLat);
-        acc += a.x * b.y - b.x * a.y;
-      }
-      area = Math.abs(acc) / 2;
-    }
-
-    let bearingDeg: number | null = null;
-    if (p >= 2) {
-      const a = points[p - 2];
-      const b = points[p - 1];
-      const deg = (Math.atan2(b.lon - a.lon, b.lat - a.lat) * 180) / Math.PI;
-      bearingDeg = (deg + 360) % 360;
-    }
-
-    return {
-      totalM: total,
-      segmentsM: segs,
-      areaM2: area,
-      bearingDeg,
-      pointCount: p,
-    };
-  };
-
   return {
     points,
     get pointCount() {
@@ -117,8 +77,50 @@ export function createMeasureState(): MeasureState {
     add,
     undo,
     clear,
-    summary,
+    summary: () => summarizeMeasure(points),
   };
+}
+
+/**
+ * Summarise a point list: total and per-segment distance, enclosed area (with
+ * 3+ points) and the bearing of the final segment.
+ *
+ * Kept separate from `createMeasureState` so a React layer holding its own
+ * immutable point array can summarise it without re-deriving the maths (or
+ * calling into the mutable state machine just to read a number).
+ */
+export function summarizeMeasure(points: MeasurePoint[]): MeasureSummary {
+  const p = points.length;
+
+  let totalM = 0;
+  const segmentsM: number[] = [];
+  for (let i = 0; i < p - 1; i++) {
+    const d = haversineM(points[i].lon, points[i].lat, points[i + 1].lon, points[i + 1].lat);
+    totalM += d;
+    segmentsM.push(d);
+  }
+
+  let areaM2: number | null = null;
+  if (p >= 3) {
+    const refLat = points.reduce((sum, pt) => sum + pt.lat, 0) / p;
+    let acc = 0;
+    for (let i = 0; i < p; i++) {
+      const a = toMetres(points[i], refLat);
+      const b = toMetres(points[(i + 1) % p], refLat);
+      acc += a.x * b.y - b.x * a.y;
+    }
+    areaM2 = Math.abs(acc) / 2;
+  }
+
+  let bearingDeg: number | null = null;
+  if (p >= 2) {
+    const a = points[p - 2];
+    const b = points[p - 1];
+    const deg = (Math.atan2(b.lon - a.lon, b.lat - a.lat) * 180) / Math.PI;
+    bearingDeg = (deg + 360) % 360;
+  }
+
+  return { totalM, segmentsM, areaM2, bearingDeg, pointCount: p };
 }
 
 /** haversine distance in metres between two WGS-84 points. */

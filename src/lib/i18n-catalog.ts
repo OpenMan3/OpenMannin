@@ -24,7 +24,6 @@ export const CATALOG: Record<string, { en: string; gv: string }> = {
   "app.clear": { en: "Clear", gv: "Glan" },
   "app.close": { en: "Close", gv: "Dooney" },
   "app.undo": { en: "Undo", gv: "Cur ergooyl" },
-  "app.import": { en: "Import", gv: "Cur stiagh" },
   "app.download": { en: "Download", gv: "Lughtaghey sheese" },
   "app.save": { en: "Save", gv: "Sauail" },
   "app.saved": { en: "Saved", gv: "Sauailt" },

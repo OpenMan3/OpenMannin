@@ -24,6 +24,8 @@ import {
   INITIAL_ZOOM,
 } from "@/lib/map-style";
 import { syncStaticLayers } from "@/lib/map-layers";
+import { syncMeasure } from "@/lib/map-measure";
+import type { MeasurePoint } from "@/lib/measure";
 import {
   startLivePolls,
   stopAllLivePolls,
@@ -71,6 +73,9 @@ export function MapView({
   insetTop = 0,
   mobileBottomInset = 0,
   terrain3d = false,
+  measureMode = false,
+  measurePoints,
+  onMeasurePoint,
 }: {
   layers: LayerDef[];
   enabled: Set<string>;
@@ -105,6 +110,12 @@ export function MapView({
   mobileBottomInset?: number;
   /** Whether 3D terrain is on. Re-applied after a basemap style swap. */
   terrain3d?: boolean;
+  /** True while the measure tool is armed: clicks add vertices, not pops. */
+  measureMode?: boolean;
+  /** Collected measurement vertices, painted as a dashed line with dots. */
+  measurePoints?: MeasurePoint[];
+  /** Called with each new vertex while `measureMode` is on. */
+  onMeasurePoint?: (point: MeasurePoint) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -140,6 +151,10 @@ export function MapView({
   const layerAsOfRef = useRef<Map<string, string>>(new Map());
   /** Latest terrain flag, so the mount-time load handler reads the current value. */
   const terrain3dRef = useRef(terrain3d);
+  /** Latest measure state, read by the click handler and the style-load resync. */
+  const measureModeRef = useRef(measureMode);
+  const measurePointsRef = useRef<MeasurePoint[]>(measurePoints ?? []);
+  const onMeasureRef = useRef(onMeasurePoint);
 
   useEffect(() => {
     enabledRef.current = enabled;
@@ -149,7 +164,21 @@ export function MapView({
     onNavRef.current = onNav;
     missingRef.current = missing;
     terrain3dRef.current = terrain3d;
-  }, [enabled, layers, onPick, onViewport, onNav, missing, terrain3d]);
+    measureModeRef.current = measureMode;
+    measurePointsRef.current = measurePoints ?? [];
+    onMeasureRef.current = onMeasurePoint;
+  }, [
+    enabled,
+    layers,
+    onPick,
+    onViewport,
+    onNav,
+    missing,
+    terrain3d,
+    measureMode,
+    measurePoints,
+    onMeasurePoint,
+  ]);
 
   // Report a single layer's load outcome. Updates the ref immediately as well
   // as the state, so a sync that finishes while this is in flight sees it.
@@ -199,6 +228,26 @@ export function MapView({
       onAsOf: reportAsOf,
     });
   }, [enabled, missing, layers, reportMissing, reportAsOf]);
+
+  // Repaint the measurement whenever its points change. `syncMeasure` is
+  // idempotent, so a fresh style (which already re-added it) is a cheap setData.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    syncMeasure(map, measurePoints ?? []);
+  }, [measurePoints]);
+
+  // Leaving measure mode must clear the crosshair even if the pointer never
+  // moves again; otherwise the "armed" cursor would linger over a disarmed map.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || measureMode) return;
+    try {
+      map.getCanvas().style.cursor = "";
+    } catch {
+      /* map is gone; nothing to reset */
+    }
+  }, [measureMode]);
 
   // Live feed polls - start/retire as enabled layers change. No cleanup here:
   // startLivePolls retires the pollers it no longer wants, and the mount
@@ -342,6 +391,9 @@ export function MapView({
           onAsOf: reportAsOf,
         });
         startLivePolls(enabledRef, layersRef, mapRef, setFeedError);
+        // A measurement may already exist (e.g. from a previous session's
+        // state when the map mounts late); repaint it above the data layers.
+        syncMeasure(map, measurePointsRef.current);
         // Notify parent that the map is ready
         onMapReady?.(map);
         // E2E hook: the verify/smoke scripts inspect layer order through this
@@ -365,7 +417,16 @@ export function MapView({
       // getter so a restore after a theme toggle reloads the theme in use,
       // not the one the page booted with.
       let activeStyleUrl: string = initialStyle;
-      const cleanupInteractions = attachMapInteractions(map, layersRef, onPickRef, onViewportRef, suppressClickUntilRef.current, layerAsOfRef);
+      const cleanupInteractions = attachMapInteractions(
+        map,
+        layersRef,
+        onPickRef,
+        onViewportRef,
+        suppressClickUntilRef.current,
+        layerAsOfRef,
+        measureModeRef,
+        onMeasureRef,
+      );
       const cleanupWebGL = attachWebGLHandlers(map, () => activeStyleUrl);
 
       // Dark/light basemap swap. ThemeToggle publishes the resolved theme;
@@ -394,6 +455,7 @@ export function MapView({
           onAsOf: reportAsOf,
         });
         await resyncLiveLayers(m, layersRef.current, enabledRef.current);
+        syncMeasure(m, measurePointsRef.current);
         navIntegrationRef.current?.rehydrate(m);
       }
 

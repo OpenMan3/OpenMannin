@@ -94,7 +94,7 @@ export function FeaturePopup({
       role="dialog"
       aria-label={`${layer.label}: ${featureLabel(properties)}`}
       tabIndex={-1}
-      className="om-sheet-in fixed inset-x-4 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 max-h-[62vh] overflow-hidden rounded-3xl bg-panel shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur focus:outline-none sm:inset-x-auto sm:bottom-auto sm:left-4 sm:top-4 sm:max-h-none sm:w-[min(24rem,calc(100vw-2rem))]"
+      className="om-sheet-in fixed inset-x-4 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 max-h-[62vh] overflow-hidden rounded-3xl bg-panel shadow-[0_8px_32px_rgba(0,0,0,0.18)] backdrop-blur focus:outline-none sm:inset-x-auto sm:bottom-auto sm:left-4 sm:top-4 sm:max-h-none sm:w-[min(24rem,calc(100vw-2rem))]"
     >
       <div className="flex items-start justify-between gap-2 border-b border-line px-4 py-3">
         <div className="min-w-0">

@@ -280,14 +280,25 @@ body {
 
 /*
  * On small screens the sidebar drawer and the bottom tab bar sit over the map,
- * so MapLibre's own corner chrome must duck clear of them.
+ * so MapLibre's own corner chrome must duck clear of them. The compass shares
+ * the top row with the satellite-pass pill (which sits at right-12), leaving
+ * the space below free for the floating button stack to start at 56px instead
+ * of squeezing under a compass parked mid-column. The expanded attribution is
+ * kept to a small top-left card so it never reaches the satellite pill.
  */
 @media (max-width: 767px) {
   .maplibregl-ctrl-top-right {
-    top: 66px;
+    top: 4px;
   }
   .maplibregl-ctrl-bottom-right {
     bottom: 74px;
+  }
+  .maplibregl-ctrl-attrib[open] {
+    width: min(38vw, 12rem) !important;
+    max-height: 45vh;
+    overflow-y: auto !important;
+    font-size: 0.625rem;
+    padding: 0.2rem 0.4rem;
   }
 }
 

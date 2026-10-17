@@ -625,7 +625,7 @@ function PageContent() {
 
         {/* Map overlays (always visible when map is ready) */}
         {map && (
-          <div className="absolute right-4 top-[120px] z-20 flex flex-col items-end gap-2 md:top-[80px]">
+          <div className="absolute right-4 top-[56px] z-20 flex flex-col items-end gap-2 md:top-[80px]">
             {nav && <LocateButton state={nav} onToggle={toggleLocate} />}
             {nav && nav.locationStatus === "active" && (
               <FollowModeButton followMode={nav.followMode} onToggle={setFollowMode} />

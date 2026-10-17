@@ -152,7 +152,7 @@ export function DestinationSheet({
     return (
       <div
         ref={insetRef}
-        className="om-sheet-in fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 p-0 sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))]"
+        className="om-sheet-in fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-30 p-0 sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))]"
       >
         <div role="dialog" aria-label={`Directions to ${destination.title}`} className="card-floating overflow-hidden">
           <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">

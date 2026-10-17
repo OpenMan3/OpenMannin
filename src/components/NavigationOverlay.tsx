@@ -290,7 +290,7 @@ export function NavigationOverlay(props: Props) {
       )}
 
       {!navig && (
-        <div ref={bottomRefs.preview} className="fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))]">
+        <div ref={bottomRefs.preview} className="fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-30 sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))]">
           <div
             role="dialog"
             aria-label={`Directions to ${destination.title}`}
@@ -471,7 +471,7 @@ export function NavigationOverlay(props: Props) {
       {navig && !arrived && showCompact && routeShown && (
         <div
           ref={bottomRefs.compact}
-          className="fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 flex items-center gap-3 rounded-2xl border border-line bg-panel/95 px-3 py-2 shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(22rem,calc(100vw-2rem))]"
+          className="fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-30 flex items-center gap-3 rounded-2xl border border-line bg-panel/95 px-3 py-2 shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(22rem,calc(100vw-2rem))]"
         >
           <div className="flex flex-1 items-center gap-3 min-w-0">
             <div className="min-w-0 flex-1">
@@ -490,7 +490,7 @@ export function NavigationOverlay(props: Props) {
 
       {navig && dock && (
         <div ref={showCompact ? undefined : bottomRefs.dock} className={[
-          "fixed z-20 w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-line bg-panel/95 p-3 shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur",
+          "fixed z-30 w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-line bg-panel/95 p-3 shadow-[0_4px_20px_rgba(0,0,0,0.15)] backdrop-blur",
           showCompact ? "hidden" : "inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] sm:inset-x-auto sm:bottom-4 sm:right-4",
           stepsOpen ? "max-h-[45vh]" : "",
         ].join(" ")}>
@@ -589,7 +589,7 @@ export function NavigationOverlay(props: Props) {
       {arrived && (
         <div
           ref={bottomRefs.arrived}
-          className="fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-20 rounded-2xl border border-ok/40 bg-panel shadow-[0_8px_24px_rgba(0,0,0,0.18)] sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))]"
+          className="fixed inset-x-4 bottom-[calc(3rem+env(safe-area-inset-bottom))] z-30 rounded-2xl border border-ok/40 bg-panel shadow-[0_8px_24px_rgba(0,0,0,0.18)] sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-[min(28rem,calc(100vw-2rem))]"
         >
           <div className="flex items-center gap-3 border-b border-line bg-ok/10 px-4 py-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ok/20 text-ok">

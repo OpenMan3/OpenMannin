@@ -22,45 +22,56 @@
  *
  * BEARING
  * --------
- * The bearing from the last point to the cursor is computed using atan2.
+ * The bearing of the final segment is computed using atan2.
  */
 
 export type MeasurePoint = { lon: number; lat: number };
 
-/** Create a fresh measure state. */
-export function createMeasureState(): {
-  points: MeasurePoint[];
+export interface MeasureSummary {
+  totalM: number;
+  segmentsM: number[];
+  areaM2: number | null;
+  bearingDeg: number | null;
+  pointCount: number;
+}
+
+export interface MeasureState {
+  readonly points: MeasurePoint[];
+  readonly pointCount: number;
   add: (lon: number, lat: number) => void;
   undo: () => MeasurePoint | null;
   clear: () => void;
-  summary: {
-    totalM: number;
-    segmentsM: number[];
-    areaM2: number | null;
-    bearingDeg: number | null;
-    pointCount: number;
+  summary: () => MeasureSummary;
+}
+
+const R = 6371e3;
+const TO_RAD = Math.PI / 180;
+
+/** Project a point to local metres using a reference latitude. */
+function toMetres(point: MeasurePoint, refLat: number): { x: number; y: number } {
+  return {
+    x: point.lon * TO_RAD * R * Math.cos(refLat * TO_RAD),
+    y: point.lat * TO_RAD * R,
   };
-} {
+}
+
+/** Create a fresh measure state. */
+export function createMeasureState(): MeasureState {
   const points: MeasurePoint[] = [];
+
   const add = (lon: number, lat: number) => {
     points.push({ lon, lat });
   };
-  const undo = () => {
-    if (points.length === 0) return null;
-    const last = points.pop();
-    return last;
-  };
+
+  const undo = () => points.pop() ?? null;
+
   const clear = () => {
     points.length = 0;
   };
-  const summary = (): {
-    totalM: number;
-    segmentsM: number[];
-    areaM2: number | null;
-    bearingDeg: number | null;
-    pointCount: number;
-  } => {
+
+  const summary = (): MeasureSummary => {
     const p = points.length;
+
     let total = 0;
     const segs: number[] = [];
     for (let i = 0; i < p - 1; i++) {
@@ -68,38 +79,54 @@ export function createMeasureState(): {
       total += d;
       segs.push(d);
     }
+
     let area: number | null = null;
     if (p >= 3) {
-      // planar shoelace on equirectangular proj
-      let x1 = 0,
-        y1 = 0;
+      const refLat = points.reduce((sum, pt) => sum + pt.lat, 0) / p;
+      let acc = 0;
       for (let i = 0; i < p; i++) {
-        const lon = points[i].lon, lat = points[i].lat;
-        const x = lon * Math.cos((points[(i + 1) % p].lat + points[i].lat) / 2);
-        const y = lat;
-        x1 += x * y;
-        y1 += y * x;
+        const a = toMetres(points[i], refLat);
+        const b = toMetres(points[(i + 1) % p], refLat);
+        acc += a.x * b.y - b.x * a.y;
       }
-      area = Math.abs(x1 - y1) / 2; // m² approx (scale: rough for IoM)
+      area = Math.abs(acc) / 2;
     }
+
+    let bearingDeg: number | null = null;
+    if (p >= 2) {
+      const a = points[p - 2];
+      const b = points[p - 1];
+      const deg = (Math.atan2(b.lon - a.lon, b.lat - a.lat) * 180) / Math.PI;
+      bearingDeg = (deg + 360) % 360;
+    }
+
     return {
       totalM: total,
       segmentsM: segs,
       areaM2: area,
-      bearingDeg: bearingDeg,
+      bearingDeg,
       pointCount: p,
     };
   };
-  return { points, add, undo, clear, summary };
+
+  return {
+    points,
+    get pointCount() {
+      return points.length;
+    },
+    add,
+    undo,
+    clear,
+    summary,
+  };
 }
 
 /** haversine distance in metres between two WGS-84 points. */
-function haversineM(lon1: number, lat1: number, lon2: number, lat2: number): number {
-  const R = 6371e3;
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+export function haversineM(lon1: number, lat1: number, lon2: number, lat2: number): number {
+  const φ1 = lat1 * TO_RAD;
+  const φ2 = lat2 * TO_RAD;
+  const Δφ = (lat2 - lat1) * TO_RAD;
+  const Δλ = (lon2 - lon1) * TO_RAD;
   const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;

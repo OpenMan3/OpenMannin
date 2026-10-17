@@ -1,6 +1,6 @@
 /** Quick sanity: createMeasureState round-trip. */
-import { createMeasureState, haversineM } from './measure.ts';
-import { assert } from './lib/vendor/vendor.ts';
+import { createMeasureState, haversineM } from '../../src/lib/measure.ts';
+import { strict as assert } from 'node:assert';
 
 const s = createMeasureState();
 assert(s.pointCount === 0, 'start empty');

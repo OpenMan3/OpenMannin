@@ -9,10 +9,10 @@
  *
  * PARSING STRATEGY
  * ----------------
- * Regex-based tag extraction, attribute-order-independent, namespace-tolerant.
- * We tokenise the XML into (tag, attributes) pairs and rebuild the data
- * structure from the tokens. This avoids any DOM dependency and works in
- * plain Node.
+ * Regex-based block extraction, attribute-order-independent and
+ * namespace-tolerant. We locate each container element (gpx, trk, trkseg,
+ * rte, wpt, rtept, trkpt) and its body, then read coordinates from the
+ * opening tag's attributes and text children from the body.
  *
  * HANDLED ELEMENTS
  * ----------------
@@ -25,8 +25,7 @@
  */
 
 const CDATA_RE = /<!\[CDATA\[([\s\S]*?)\]\]>/g;
-const TAG_RE = /<(\/?gpx|wpt|rtept|trk|trkseg|trkpt|name|desc|cmt|sym|type|ele|time)[^>]*(?:\/>|>[\s\S]*?<\/\1>|>[\s\S]*?$)/gi;
-const ATTR_RE = /([\w\-:.]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g;
+const ATTR_RE = /([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g;
 
 export interface GpxPoint {
   lat: number;
@@ -58,86 +57,114 @@ export interface GpxData {
   waypoints: GpxPoint[];
 }
 
+interface GpxBlock {
+  /** The opening tag, including any attributes. */
+  tag: string;
+  /** Everything between the opening and closing tags (empty when self-closing). */
+  body: string;
+}
+
+/** Read every attribute on an opening tag into a plain object. */
+function parseAttrs(tag: string): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  for (const m of tag.matchAll(ATTR_RE)) {
+    attrs[m[1]] = m[2] ?? m[3] ?? m[4] ?? "";
+  }
+  return attrs;
+}
+
+/** Unwrap CDATA sections and trim surrounding whitespace. */
+function decodeText(raw: string): string {
+  return raw.replace(CDATA_RE, "$1").trim();
+}
+
+/** First non-empty text child with any of the given names. */
+function findText(block: string, names: string[]): string | null {
+  for (const name of names) {
+    const m = block.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}\\s*>`, "i"));
+    if (m) return decodeText(m[1]);
+  }
+  return null;
+}
+
+/** Every `<name ...>` element (self-closing or paired), in document order. */
+function findBlocks(xml: string, name: string): GpxBlock[] {
+  const blocks: GpxBlock[] = [];
+  const re = new RegExp(`<${name}(\\s[^>]*?)?(?:/>|>([\\s\\S]*?)</${name}\\s*>)`, "gi");
+  for (const m of xml.matchAll(re)) {
+    blocks.push({ tag: `<${name}${m[1] ?? ""}>`, body: m[2] ?? "" });
+  }
+  return blocks;
+}
+
+/** Build a point from a `<...pt>`/`<wpt>` opening tag and its body. */
+function toPoint(block: GpxBlock): GpxPoint | null {
+  const attrs = parseAttrs(block.tag);
+  const lat = Number.parseFloat(attrs.lat ?? "");
+  const lon = Number.parseFloat(attrs.lon ?? "");
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+  const point: GpxPoint = { lat, lon };
+  const ele = findText(block.body, ["ele"]);
+  if (ele !== null && ele !== "") {
+    const n = Number.parseFloat(ele);
+    if (Number.isFinite(n)) point.ele = n;
+  }
+  point.time = findText(block.body, ["time"]);
+  point.name = findText(block.body, ["name"]);
+  return point;
+}
+
 /** Parse GPX XML string. Returns null for non-gpx/empty/garbage input. */
 export function parseGpx(xml: string): GpxData | null {
   if (!xml || xml.length < 3) return null;
-  const t = xml.trim().toLowerCase();
-  if (!t.startsWith('<gpx') && !t.startsWith('<gpx:')) return null;
+  const trimmed = xml.trim();
+  const lower = trimmed.toLowerCase();
+  if (!lower.startsWith("<gpx") && !lower.startsWith("<gpx:")) return null;
 
-  // Tokenise: find all opening/self-closing tags and their text content
-  const tags: Array<{ name: string; attrs: Record<string, string>; children: string[] }> = [];
-  xml.replace(CDATA_RE, (_, c) => {
-    inCdata = true;
-    lastTail = c;
-    return '';
-  });
+  const rootTag = rootTagOf(trimmed);
+  const rootAttrs = parseAttrs(rootTag);
 
-  let m: RegExpExecArray | null;
-  while ((m = TAG_RE.exec(xml)) !== null) {
-    const full = m[0];
-    const tagName = m[1].toLowerCase();
-    // extract attributes from the tag string
-    const attrs: Record<string, string> = {};
-    const attrMatch = full.match(ATTR_RE);
-    if (attrMatch) {
-      for (const a of attrMatch) {
-        const key = a.replace(/=$/, '').trim();
-        // get the value - try double-quoted first, then single, then unquoted
-        const valMatch = full.match(new RegExp(`${key}\\s*=\\s*("[^"]*"|'[^']*'|[^\\s>]+)`));
-        if (valMatch && valMatch[1]) {
-          const raw = valMatch[1];
-          attrs[key] = raw.replace(/^["']|["']$/g, '');
-        }
-      }
-    }
-    // collect text child content (everything between this tag and the next closing tag)
-    // For simplicity, we capture text that appears between tags by scanning ahead;
-    // a full parser would use an XML reader, but this suffices for typical GPX.
-    tags.push({ name: tagName, attrs, children: [] });
-  }
-
-  // Reconstruct the data structure from tags (simplified but functional)
   const data: GpxData = {
-    version: null,
-    creator: undefined,
+    version: rootAttrs.version ?? null,
+    creator: rootAttrs.creator ?? null,
     tracks: [],
     routes: [],
     waypoints: [],
   };
 
-  // Very simple approach: scan for wpt, trk, rte elements and extract coords+attrs
-  const extractPoint = (tagName: string) => {
-    const t = tags.find((t) => t.name === tagName);
-    if (!t) return null;
-    const attrs = t.attrs;
-    const lon = parseFloat(attrs.lon ?? attrs['lon:'] ?? '');
-    const lat = parseFloat(attrs.lat ?? attrs['lat:'] ?? '');
-    if (isNaN(lon) || isNaN(lat)) return null;
-    const point: GpxPoint = { lat, lon };
-    // extract children text content
-    const childTag = tags.find((t) => t.name === 'name' || t.name === 'ele' || t.name === 'time');
-    if (childTag) {
-      // find the child's content: it's the text between <child> and </child>
-      // For simplicity, look for a sibling tag with the same name later in the list
-      const sib = tags.find(
-        (t) => t.name === childTag.name && t !== childTag,
-      );
-      if (sib) {
-        point[childTag.name as keyof GpxPoint] = sib.children[0] || null;
-      }
+  for (const block of findBlocks(trimmed, "wpt")) {
+    const point = toPoint(block);
+    if (point) data.waypoints.push(point);
+  }
+
+  for (const { body } of findBlocks(trimmed, "rte")) {
+    const route: GpxRoute = { name: findText(body, ["name"]), points: [] };
+    for (const pt of findBlocks(body, "rtept")) {
+      const point = toPoint(pt);
+      if (point) route.points.push(point);
     }
-    return point;
-  };
+    data.routes.push(route);
+  }
 
-  // This is a highly simplified parser; for a production app one would use
-  // an actual XML parser. The goal here is a functional dependency-free
-  // version that passes the test suite.
-  data.waypoints = (tags.filter((t) => t.name === 'wpt' || t.name === 'wpt:')).map(extractPoint).filter(
-    (p): p is GpxPoint => p !== null,
-  );
-
-  // Tracks and routes: similarly minimal extraction
-  // ... (omitted for brevity; tests cover the essential round-trip)
+  for (const { body } of findBlocks(trimmed, "trk")) {
+    const track: GpxTrack = { name: findText(body, ["name"]), segments: [] };
+    for (const seg of findBlocks(body, "trkseg")) {
+      const segment: GpxTrackSegment = { points: [] };
+      for (const pt of findBlocks(seg.body, "trkpt")) {
+        const point = toPoint(pt);
+        if (point) segment.points.push(point);
+      }
+      track.segments.push(segment);
+    }
+    data.tracks.push(track);
+  }
 
   return data;
+}
+
+/** The `<gpx ...>` opening tag's markup, with namespace prefixes tolerated. */
+function rootTagOf(xml: string): string {
+  const m = xml.match(/<gpx(?::[\w-]+)?\b[^>]*>/i);
+  return m ? m[0] : "";
 }

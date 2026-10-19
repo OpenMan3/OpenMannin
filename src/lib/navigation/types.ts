@@ -75,57 +75,6 @@ export interface NavigationState {
   remainingM: number;
 }
 
-export type { Feature } from "../layer-data";
-
-export interface Internal {
-  locationStatus: LocationStatus;
-  locationError: string | null;
-  userLocation: UserLocation | null;
-  destination: Destination | null;
-  activeMode: RouteMode;
-  routeStatus: RouteStatus;
-  routeError: string | null;
-  routes: Partial<Record<RouteMode, { distanceM: number; durationS: number } | null>>;
-  steps: NavigationStep[];
-  speedMph: number | null;
-  /** Posted speed limit of the road under the user, km/h. null when untagged. */
-  speedLimitKmh: number | null;
-  stepIndex: number;
-  nextStepM: number;
-  lastSignature: string;
-  firstFlyPending: boolean;
-  routesFresh: boolean;
-  fitPending: boolean;
-  recenterPending: boolean;
-  followMode: FollowMode;
-  voiceMuted: boolean;
-  offRoute: boolean;
-  navigating: boolean;
-  progressM: number;
-  remainingM: number;
-  baseSteps: NavigationStep[];
-  headingDeg: number | null;
-}
-
-export interface Destination {
-  lon: number;
-  lat: number;
-  title: string;
-  detail: string;
-}
-
-export interface AttachOptions {
-  onState: (state: NavigationState) => void;
-  /** MapView reads this to swallow the click that follows a long-press. */
-  suppressClickUntil: { current: number };
-}
-
-export interface NavigationHost {
-  dispose: () => void;
-  /** Re-add markers/route after the style was swapped (basemap change). */
-  rehydrate: () => void;
-}
-
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------

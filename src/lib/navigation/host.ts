@@ -26,7 +26,13 @@ import type { Map, GeoJSONSource, ExpressionSpecification } from "maplibre-gl";
 import { loadLayer } from "../layer-data";
 import { featureCentre } from "../feature-index";
 import { resolveFeatureLabel } from "../feature-label";
-import { computeRoutes, type RouteLeg, type RouteMap } from "./client";
+import {
+  assembleRouteOptions,
+  computeRoutes,
+  resolveOptionIndex,
+  type RouteLeg,
+  type RouteMap,
+} from "./client";
 import { ROUTE_MODES, type RouteMode } from "./profiles";
 import { deriveSteps, type NavigationStep, bearingDeg, haversineM, pointAtDistance } from "./steps";
 import { easeInOutCubic, isPlausibleTransition, lerpAngle, lerpPoint } from "./motion";
@@ -1262,13 +1268,9 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     state.routes = { ...reply.routes };
     // Fold the extras in behind the fastest route so option 0 is always the
     // primary and the UI can enumerate them uniformly.
-    state.routeOptions = {};
+    state.routeOptions = assembleRouteOptions(reply.routes, reply.alternatives);
     state.selectedOption = {};
-    for (const mode of ROUTE_MODES) {
-      const primary = state.routes[mode];
-      state.routeOptions[mode] = primary ? [primary, ...(reply.alternatives[mode] ?? [])] : [];
-      state.selectedOption[mode] = 0;
-    }
+    for (const mode of ROUTE_MODES) state.selectedOption[mode] = 0;
     state.routesFresh = true;
     // The status must reflect the mode actually being shown, not just
     // driving/walking: a cycling-only route is a route, and a null active mode
@@ -1325,10 +1327,11 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
    */
   const selectOption = (mode: RouteMode, index: number) => {
     const options = state.routeOptions[mode];
-    if (!options || index < 0 || index >= options.length) return;
-    if ((state.selectedOption[mode] ?? 0) === index) return;
-    state.selectedOption[mode] = index;
-    const route = options[index];
+    if (!options) return;
+    const next = resolveOptionIndex(options.length, state.selectedOption[mode] ?? 0, index);
+    if (next === null) return;
+    state.selectedOption[mode] = next;
+    const route = options[next];
     state.routes[mode] = route;
     if (mode !== state.activeMode) {
       publish();

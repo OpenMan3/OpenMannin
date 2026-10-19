@@ -11,8 +11,8 @@
  * the first request.
  */
 
-import type { RouteMode } from "./profiles";
-import { ROUTE_MODES } from "./profiles";
+import type { RouteMode } from "./profiles.ts";
+import { ROUTE_MODES } from "./profiles.ts";
 
 export { ROUTE_MODES };
 
@@ -123,6 +123,38 @@ function getWorker(): Promise<Worker> {
   })();
 
   return workerPromise;
+}
+
+/**
+ * Fold the worker's fastest route per mode and its extras into one option list
+ * per mode, fastest first. A mode with no primary (no route) yields an empty
+ * list rather than a list of bare alternatives.
+ */
+export function assembleRouteOptions(
+  routes: RouteMap,
+  alternatives: RouteAlternatives,
+): Partial<Record<RouteMode, RouteLeg[]>> {
+  const out: Partial<Record<RouteMode, RouteLeg[]>> = {};
+  for (const mode of ROUTE_MODES) {
+    const primary = routes[mode];
+    out[mode] = primary ? [primary, ...(alternatives[mode] ?? [])] : [];
+  }
+  return out;
+}
+
+/**
+ * Resolve which route option a selection should switch to: the new index, or
+ * null when the request is out of range or a no-op (the same option again).
+ * Pure, so the guard the UI depends on is unit-testable.
+ */
+export function resolveOptionIndex(
+  count: number,
+  current: number,
+  requested: number,
+): number | null {
+  if (!Number.isInteger(requested) || requested < 0 || requested >= count) return null;
+  if (requested === current) return null;
+  return requested;
 }
 
 let seq = 0;

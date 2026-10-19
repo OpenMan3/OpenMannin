@@ -425,6 +425,9 @@ export function NavigationOverlay(props: Props) {
               })}
             </div>
 
+            {/* Alternatives are a planning aid, shown only in the pre-drive
+                preview: switching routes mid-drive is rare and the dock is
+                space-constrained, so the chips live here and not in the HUD. */}
             {!busy && !failed && state.routeOptions.length > 1 && (
               <div className="flex flex-wrap gap-1.5 border-t border-line px-3 py-2">
                 {state.routeOptions.map((opt, i) => {

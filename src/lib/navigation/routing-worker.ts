@@ -78,7 +78,10 @@ self.addEventListener("message", (e: MessageEvent) => {
         if (!profile) continue;
         // Option 0 is the fastest; the rest are edge-penalty reruns. Only the
         // extras travel as alternatives, so the primary is never duplicated on
-        // the wire.
+        // the wire. Extras are computed for every requested mode (not just the
+        // active one) because the host re-uses these options when the reader
+        // switches mode without re-routing; the graph is in memory, so a few
+        // extra A* runs are milliseconds in this worker.
         const options = routeAlternatives(graph, req.start, req.dest, profile);
         routes[mode] = options[0] ?? null;
         alternatives[mode] = options.slice(1);

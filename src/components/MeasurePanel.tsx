@@ -13,6 +13,7 @@
 import type { MeasureSummary } from "@/lib/measure";
 import { formatDistance } from "@/lib/units";
 import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/use-lang";
 import { CloseIcon, RulerIcon } from "./Icons";
 
 const M2_PER_ACRE = 4046.8564224;
@@ -49,12 +50,13 @@ export function MeasurePanel({
   onStop: () => void;
   className?: string;
 }) {
+  useLang();
   const { pointCount, totalM, areaM2 } = summary;
   const empty = pointCount === 0;
 
   return (
     <div className={className}>
-      <div className="card-floating w-[min(22rem,calc(100vw-2rem))] overflow-hidden border border-line-soft">
+      <div className="card-floating mx-auto w-[min(22rem,calc(100vw-2rem))] overflow-hidden border border-line-soft">
         <div className="flex items-center gap-2 border-b border-line-soft px-3 py-2">
           <RulerIcon className="h-4 w-4 shrink-0 text-ink-2" />
           <span className="label flex-1">{t("measure.measure")}</span>
@@ -71,9 +73,7 @@ export function MeasurePanel({
 
         {empty ? (
           <p className="px-3 py-3 text-[12px] leading-snug text-ink-3">
-            {active
-              ? "Tap the map to drop points."
-              : "Press the ruler to start measuring."}
+            {active ? t("measure.tapToDrop") : t("measure.pressRuler")}
           </p>
         ) : (
           <div className="flex items-end gap-5 px-3 py-2">

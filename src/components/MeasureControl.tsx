@@ -12,6 +12,7 @@
 
 import { RulerIcon } from "./Icons";
 import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/use-lang";
 
 export function MeasureControl({
   active,
@@ -22,6 +23,7 @@ export function MeasureControl({
   onToggle: () => void;
   className?: string;
 }) {
+  useLang();
   const label = t("measure.measure");
   return (
     <button

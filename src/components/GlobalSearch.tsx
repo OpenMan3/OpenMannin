@@ -11,6 +11,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { loadSearchIndex, searchIndex, type SearchIndex, type SearchResult } from "@/lib/search-index";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/use-lang";
 import { SearchIcon } from "./Icons";
 
 export function GlobalSearch({
@@ -18,6 +20,7 @@ export function GlobalSearch({
 }: {
   onSelect: (layerId: string, lon: number, lat: number) => void;
 }) {
+  useLang();
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState<SearchIndex | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -99,23 +102,44 @@ export function GlobalSearch({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          placeholder="Search all layers…"
-          aria-label="Search across all layers"
+          placeholder={t("search.placeholder")}
+          aria-label={t("search.aria")}
+          role="combobox"
+          aria-expanded={showResults}
+          aria-controls="om-search-listbox"
+          aria-autocomplete="list"
+          aria-activedescendant={
+            showResults && results[active] ? `om-search-option-${active}` : undefined
+          }
           className="w-full rounded-full bg-panel py-3 pl-11 pr-4 text-[13px] text-ink placeholder:text-ink-3 shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-shadow focus:outline-none focus:ring-2 focus:ring-accent/30"
         />
       </div>
 
       {showResults && (
-        <div className="scroll-thin absolute z-30 mt-2 w-full overflow-hidden rounded-2xl bg-panel shadow-[0_8px_32px_rgba(0,0,0,0.18)]">
-          {error && <p className="p-3 text-[12px] text-danger">Search index failed: {error}</p>}
-          {!error && !index && <p className="p-3 text-[12px] text-ink-3">Loading index…</p>}
+        <div
+          id="om-search-listbox"
+          role="listbox"
+          aria-label="Search results"
+          className="scroll-thin absolute z-30 mt-2 w-full overflow-hidden rounded-2xl bg-panel shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
+        >
+          {error && (
+            <p className="p-3 text-[12px] text-danger">
+              {t("search.failed")}: {error}
+            </p>
+          )}
+          {!error && !index && (
+            <p className="p-3 text-[12px] text-ink-3">{t("search.loading")}</p>
+          )}
           {!error && index && results.length === 0 && (
-            <p className="p-3 text-[12px] text-ink-3">No matches.</p>
+            <p className="p-3 text-[12px] text-ink-3">{t("search.noMatches")}</p>
           )}
           {results.map((r, i) => (
             <button
               key={`${r.layerId}-${r.label}-${i}`}
+              id={`om-search-option-${i}`}
               type="button"
+              role="option"
+              aria-selected={i === active}
               onMouseEnter={() => setActive(i)}
               onClick={() => choose(r)}
               className={`flex w-full items-baseline justify-between gap-2 px-4 py-2.5 text-left text-[12px] ${

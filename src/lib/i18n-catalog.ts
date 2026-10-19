@@ -35,6 +35,13 @@ export const CATALOG: Record<string, { en: string; gv: string }> = {
   "tab.browse": { en: "Browse", gv: "Scrutaghey" },
   "tab.gaps": { en: "Gaps", gv: "Baarnyn" },
   "tab.sources": { en: "Sources", gv: "Bunyn" },
+  "nav.primary": { en: "Primary sections", gv: "Rheynnyn ard" },
+
+  "search.placeholder": { en: "Search all layers…", gv: "Ronsaghey dy chooilley choodee…" },
+  "search.aria": { en: "Search across all layers", gv: "Ronsaghey harrish dy chooilley choodee" },
+  "search.noMatches": { en: "No matches.", gv: "Gyn coardail." },
+  "search.loading": { en: "Loading index…", gv: "Lughtaghey rolley…" },
+  "search.failed": { en: "Search index failed", gv: "Haink marran er rolley ronsaghey" },
 
   "action.navigate": { en: "Navigate", gv: "Stiurey" },
   "action.follow": { en: "Follow", gv: "Eiyr" },
@@ -53,6 +60,13 @@ export const CATALOG: Record<string, { en: string; gv: string }> = {
   "measure.distance": { en: "Distance", gv: "Odys" },
   "measure.area": { en: "Area", gv: "Eaghtyr" },
   "measure.points": { en: "Points", gv: "Poyntyn" },
+  "measure.tapToDrop": { en: "Tap the map to drop points.", gv: "Cur poyntyn er y chaslys." },
+  "measure.pressRuler": { en: "Press the ruler to start measuring.", gv: "Cur er y rial dy hoshiaghey towsaghey." },
+
+  "elevation.title": { en: "Elevation", gv: "Yrjid" },
+  "elevation.loading": { en: "Loading elevation…", gv: "Lughtaghey yrjid…" },
+  "elevation.offline": { en: "Elevation needs a connection.", gv: "Ta yrjid feme kiangley." },
+  "elevation.unavailable": { en: "Elevation profile unavailable.", gv: "Cha nel yrjid ry-gheddyn." },
 
   "status.loading": { en: "Loading", gv: "Lughtaghey" },
   "status.error": { en: "Error", gv: "Marran" },

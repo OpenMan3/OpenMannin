@@ -331,13 +331,17 @@ export function toAnchorPoint(geom) {
   if (!xs.length) return null;
   xs.sort((a, b) => a - b);
   ys.sort((a, b) => a - b);
-  const mid = Math.floor(xs.length / 2);
+  // True median per axis: for an odd count the middle element, for an even
+  // count the mean of the two central ones. (The old `mid - 1` picked the
+  // element *below* the median and read x and y from the same index even
+  // though the two arrays are sorted independently.)
+  const median = (sorted) => {
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  };
   return {
     type: "Point",
-    coordinates: [
-      Number(xs[mid === 0 ? 0 : mid - 1].toFixed(5)),
-      Number(ys[mid === 0 ? 0 : mid - 1].toFixed(5)),
-    ],
+    coordinates: [Number(median(xs).toFixed(5)), Number(median(ys).toFixed(5))],
   };
 }
 

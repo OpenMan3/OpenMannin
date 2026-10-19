@@ -286,12 +286,23 @@ export async function syncStaticLayers(
     }
   }
 
-  // Remove orphaned sources/layers (exist on map but not in enabled registry)
-  const registryIds = new Set(layers.filter((l) => l.kind !== "live").map((l) => `om-${l.id}`));
+  // Remove true orphans: an `om-` source that is neither expected this pass nor
+  // one of the dynamic overlays (navigation markers `om-nav-*`, the measure
+  // tool `om-measure`) or a live feed. Disabled static layers are already
+  // removed in the loop above; this catches a source left behind when a layer
+  // is deleted from the registry, which the old `registryIds.has(...)` guard
+  // (built from the same registry) could never do.
+  const liveIds = new Set(layers.filter((l) => l.kind === "live").map((l) => `om-${l.id}`));
   const style = map.getStyle();
   for (const sourceId of Object.keys(style.sources)) {
-    if (sourceId.startsWith("om-") && !expectedSourceIds.has(sourceId) && registryIds.has(sourceId)) {
-      removeLayer(map, sourceId.slice(3)); // remove "om-" prefix
-    }
+    if (!sourceId.startsWith("om-")) continue;
+    if (expectedSourceIds.has(sourceId) || liveIds.has(sourceId)) continue;
+    if (
+      sourceId === "om-measure" ||
+      sourceId === "om-coverage" ||
+      sourceId.startsWith("om-nav-")
+    )
+      continue;
+    removeLayer(map, sourceId.slice(3)); // remove "om-" prefix
   }
 }

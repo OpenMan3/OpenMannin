@@ -22,55 +22,12 @@
  * with backoff and a failure is reported rather than written as an empty file.
  */
 
-import { UA, get, writeJSON, sleep, roundCoords } from "./lib/fetch.mjs";
+import { writeJSON, roundCoords, sleep } from "./lib/fetch.mjs";
+// The mirror rotation, identifying User-Agent and empty-answer handling all
+// live in the shared helper so every OSM ingest behaves the same way.
+import { overpass } from "./lib/overpass.mjs";
 
-// Overpass mirrors in preference order. overpass-api.de is the canonical
-// instance but is chronically overloaded (and occasionally down for days, as
-// the 504s through the middle of this project show); kumi.systems is a public
-// mirror; the mail.ru instance is the only one that has been continuously
-// reliable from here. Each query tries them in turn rather than trusting one.
-const OVERPASS = [
-  "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
-  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-];
 const BBOX = "54.02,-4.85,54.45,-4.30"; // south, west, north, east
-
-async function overpass(query, label) {
-  let lastErr = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    for (const ep of OVERPASS) {
-      try {
-        const res = await get(ep, {
-          method: "POST",
-          // Overpass answers HTTP 406 to any browser-shaped User-Agent, which is
-          // what the shared get() helper sends by default (it exists to get past
-          // the F5 WAF on gov.im). Overpass wants a plain identifying string
-          // instead, so override it rather than lie about being a browser here.
-          headers: {
-            "User-Agent": UA,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({ data: query }).toString(),
-          timeoutMs: 180_000,
-          retries: 0,
-        });
-        const json = await res.json();
-        // An empty answer is as useless as an error: a seamark-free Isle of
-        // Man does not exist. Count zero as a mirror failure and move on.
-        if ((json.elements ?? []).length > 0) return json;
-        lastErr = new Error(`empty response for ${label} from ${ep}`);
-        console.log(`  ${label}: empty response from ${ep}, trying next mirror`);
-      } catch (err) {
-        lastErr = err;
-        console.log(`  ${label}: ${ep} failed (${err.message.slice(0, 80)}), trying next mirror`);
-      }
-    }
-    console.log(`  ${label}: attempt ${attempt + 1} exhausted all mirrors, retrying`);
-    await sleep(5000 * (attempt + 1));
-  }
-  throw lastErr;
-}
 
 /**
  * Significance ordering for labels.

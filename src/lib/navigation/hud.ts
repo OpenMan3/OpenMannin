@@ -121,7 +121,7 @@ export function bannerFor(state: NavigationState | null, navigating: boolean): N
       case "loading":
         tone = "neutral";
         primary = "Planning";
-        instruction = instruction || "Working out the route on the island's road network…";
+        instruction = "Working out the route on the island's road network…";
         break;
       case "arrived":
         tone = "ok";
@@ -136,9 +136,9 @@ export function bannerFor(state: NavigationState | null, navigating: boolean): N
             : "Off route—recalc when convenient";
           instruction = fullInstruction;
         } else if (step?.maneuver === "depart") {
-          primary = fullInstruction.replace(/\s+on\s+.+$/i, "") || "Head out";
+          primary = fullInstruction.replace(/\s+on(?:to)?\s+.+$/i, "") || "Head out";
         } else {
-          primary = fullInstruction.replace(/\s+on\s+.+$/i, "") || "Continue";
+          primary = fullInstruction.replace(/\s+on(?:to)?\s+.+$/i, "") || "Continue";
         }
         break;
     }
@@ -171,7 +171,14 @@ export function dockFor(state: NavigationState | null): NavigationDock | null {
   return {
     distanceLabel: formatDistance(state.remainingM || (route?.distanceM ?? 0)),
     timeLabel: formatDuration(route?.durationS ?? 0),
-    etaLabel: state.remainingM <= 0 ? "Arrived" : `${Math.round(mins ?? 0) || 0} min`,
+    etaLabel:
+      state.remainingM <= 0
+        ? "Arrived"
+        : mins === null
+          ? "— min"
+          : mins < 1
+            ? "<1 min"
+            : `${Math.round(mins)} min`,
     modeLabel,
     speedLabel,
     remainingMinutes: mins,

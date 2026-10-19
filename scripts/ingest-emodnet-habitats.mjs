@@ -48,10 +48,12 @@ async function fetchLayer(typeName) {
   return fc;
 }
 
-function makeFeature(sourceId, geometry, props) {
+// The point and polygon layers can share an upstream id, so namespace the
+// geometry kind into the feature id to keep them distinct in the merged layer.
+function makeFeature(prefix, sourceId, geometry, props) {
   return {
     type: "Feature",
-    id: sourceId,
+    id: `${prefix}:${sourceId}`,
     geometry: roundCoords(geometry, 5),
     properties: {
       habitat: props.bio_detail ?? null,
@@ -76,7 +78,7 @@ async function main() {
       f.geometry.coordinates[0] >= BBOX[0] && f.geometry.coordinates[0] <= BBOX[2] &&
       f.geometry.coordinates[1] >= BBOX[1] && f.geometry.coordinates[1] <= BBOX[3],
   );
-  for (const f of pointOnly) features.push(makeFeature(f.id, f.geometry, f.properties));
+  for (const f of pointOnly) features.push(makeFeature("pt", f.id, f.geometry, f.properties));
   console.log(`  point records kept:  ${pointOnly.length}`);
 
   let keptPolys = 0;
@@ -87,7 +89,7 @@ async function main() {
       dropped += 1;
       continue;
     }
-    features.push(makeFeature(f.id, clipped, f.properties));
+    features.push(makeFeature("poly", f.id, clipped, f.properties));
     keptPolys += 1;
   }
   console.log(`  bed extents kept:    ${keptPolys} (${dropped} clipped away entirely)`);

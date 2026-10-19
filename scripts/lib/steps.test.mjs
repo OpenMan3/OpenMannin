@@ -243,3 +243,22 @@ test("folding a route past MAX_LEGS preserves total distance", () => {
     `folded legs total ${total} m vs path ${expected} m`,
   );
 });
+
+test("a dropped sub-8 m leg still contributes its distance to the next leg", () => {
+  // ~65 m east, a ~5.5 m jog north (below MIN_LEG_M, so no phantom step), then
+  // ~65 m east. Its distance must not vanish: step totals drive stepIndex and
+  // the maneuver marker, both of which desync if the route is under-counted.
+  const coords = [
+    [-4.48, 54.16],
+    [-4.479, 54.16],
+    [-4.479, 54.16005],
+    [-4.478, 54.16005],
+  ];
+  let expected = 0;
+  for (let i = 1; i < coords.length; i++) expected += haversineM(...coords[i - 1], ...coords[i]);
+
+  const steps = deriveSteps(coords);
+  const total = steps.reduce((m, s) => m + s.distanceM, 0);
+  assert.ok(Math.abs(total - expected) < 0.5, `steps total ${total} m vs path ${expected} m`);
+  assert.equal(steps.length, 2, "the tiny jog does not surface as its own step");
+});

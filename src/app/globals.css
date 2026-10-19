@@ -32,7 +32,9 @@
 
   --color-ink: #202124;
   --color-ink-2: #5f6368;
-  --color-ink-3: #80868b;
+  /* Darkened from #80868b, which sat at ~3.3:1 on the raised surface — below
+   * the 4.5:1 WCAG AA floor for the 10–11px secondary text that uses it. */
+  --color-ink-3: #666b70;
 
   --color-accent: #1a73e8;
   --color-accent-ink: #ffffff;
@@ -65,7 +67,7 @@
  *
  * Two constraints shaped the values:
  *  - The nav HUD banner, speed-limit chip and GPS/pin dots sit on the map with
- *    hard-coded white/on-colour text (NavigationOverlay.tsx, ProgressHUD.tsx).
+ *    hard-coded white/on-colour text (NavigationOverlay.tsx).
  *    The semantic tones therefore stay dark enough to carry `text-white`, while
  *    still being legible as text on the dark panels below.
  *  - The accent is lightened so `text-accent` reads on dark, which means
@@ -109,7 +111,7 @@ html.dark {
 }
 
 /*
- * The speed-limit chips (NavigationOverlay.tsx and ProgressHUD.tsx) hard-code
+ * The speed-limit chips (NavigationOverlay.tsx) hard-code
  * `bg-white text-ink`: a white disc with dark ink. Inverting just the `bg-white`
  * utility inside dark mode turns them into a dark disc with light ink and a
  * light ring — legible without editing either component. `bg-white/20` (the

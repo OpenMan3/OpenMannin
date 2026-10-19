@@ -111,6 +111,26 @@ test("dockFor formats remaining distance and ETA", () => {
   assert.equal(dock?.offRoute, false);
 });
 
+test("dockFor does not claim 0 min when no ETA can be computed", () => {
+  const dock = dockFor(state({ speedMph: null, remainingM: 500, routes: { driving: { distanceM: 0, durationS: 0 } } }));
+  assert.equal(dock?.etaLabel, "— min");
+});
+
+test("bannerFor shortens a turn to its verb and phrases loading honestly", () => {
+  const turn = bannerFor(
+    state({
+      navigating: true,
+      steps: [{ instruction: "Turn left onto Main Road for 300 yd", distanceM: 300, bearing: 270, maneuver: "left", side: "left" }],
+      stepIndex: 0,
+    }),
+    true,
+  );
+  assert.equal(turn?.primary, "Turn left", "the street and distance tail are stripped for the big line");
+  const loading = bannerFor(state({ routeStatus: "loading" }), true);
+  assert.equal(loading?.primary, "Planning");
+  assert.match(loading?.instruction ?? "", /Working out the route/);
+});
+
 test("stepsTeaser respects open state", () => {
   assert.deepEqual(stepsTeaser(state(), false), []);
   assert.equal(stepsTeaser(state(), true).length, 2);

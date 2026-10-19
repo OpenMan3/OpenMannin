@@ -150,6 +150,14 @@ for (const l of LAYERS) {
         }
       }
     }
+    // A PMTiles-backed layer must actually ship its archive. The map prefers
+    // the archive and the manifest records the name, but nothing else checks
+    // the file exists: verify-tiles.mjs only exercises requests the browser
+    // happens to make, so a missing archive could go unnoticed.
+    if (l.pmtiles) {
+      const tp = path.join(ROOT, "public", l.pmtiles);
+      if (!fs.existsSync(tp)) fail(l, `pmtiles archive missing: ${l.pmtiles}`);
+    }
   } else if (l.kind === "live" && !l.file) {
     // live layers are fed by an API route, so no static file is expected.
   }

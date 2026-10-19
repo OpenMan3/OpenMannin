@@ -230,9 +230,12 @@ export function formatCoordPair(lon: number, lat: number): string {
  * Pure: the caller passes `now`, so tests need not mock the clock.
  */
 export function relativeWhen(at: number, now: number = Date.now()): string {
+  // An unreadable stamp must not masquerade as "just now": that would make a
+  // corrupt record look fresher than it is. Fall back to blank.
+  if (!Number.isFinite(at) || !Number.isFinite(now)) return "";
   const elapsed = now - at;
   // A stamp ahead of `now` (clock skew) clamps to "just now", never "-1 min".
-  if (!Number.isFinite(elapsed) || elapsed < 60_000) return "just now";
+  if (elapsed < 60_000) return "just now";
   if (elapsed < 3_600_000) return `${Math.floor(elapsed / 60_000)} min ago`;
   if (elapsed < 86_400_000) return `${Math.floor(elapsed / 3_600_000)} hr ago`;
   if (calendarDaysApart(at, now) <= 1) return "yesterday";

@@ -10,7 +10,8 @@
  */
 
 export interface SearchIndex {
-  generated: string;
+  /** Optional: the builder deliberately omits a volatile timestamp. */
+  generated?: string;
   layers: { id: string; label: string }[];
   entries: [number, string, number, number][];
 }
@@ -61,28 +62,28 @@ export function searchIndex(index: SearchIndex, query: string, limit = 30): Sear
   if (q.length < 2) return [];
 
   const boundary = new RegExp(`(^|\\W)${escapeRegExp(q)}`);
-  const scored: { score: number; seq: number; result: SearchResult }[] = [];
+  // Three score buckets, filled in iteration (seq) order. Because bucket 0
+  // (prefix matches) outranks everything, once it holds `limit` entries no
+  // later match can enter the result, so the scan can stop. This avoids
+  // sorting every match on each keystroke, which for a two-letter query over
+  // the whole index was thousands of comparisons.
+  const buckets: SearchResult[][] = [[], [], []];
   const seen = new Set<string>();
 
-  index.entries.forEach((entry, seq) => {
-    const [li, label, lon, lat] = entry;
+  for (const [li, label, lon, lat] of index.entries) {
+    if (buckets[0].length >= limit) break;
     const lower = label.toLowerCase();
-    if (!lower.includes(q)) return;
+    if (!lower.includes(q)) continue;
 
     const layer = index.layers[li];
-    if (!layer) return;
+    if (!layer) continue;
     const key = `${layer.id}\u0000${lower}`;
-    if (seen.has(key)) return;
+    if (seen.has(key)) continue;
     seen.add(key);
 
     const score = lower.startsWith(q) ? 0 : boundary.test(lower) ? 1 : 2;
-    scored.push({
-      score,
-      seq,
-      result: { layerId: layer.id, layerLabel: layer.label, label, lon, lat },
-    });
-  });
+    buckets[score].push({ layerId: layer.id, layerLabel: layer.label, label, lon, lat });
+  }
 
-  scored.sort((a, b) => a.score - b.score || a.seq - b.seq);
-  return scored.slice(0, limit).map((s) => s.result);
+  return [...buckets[0], ...buckets[1], ...buckets[2]].slice(0, limit);
 }

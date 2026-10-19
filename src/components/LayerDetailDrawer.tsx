@@ -50,11 +50,19 @@ export function LayerDetailDrawer({
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const restoreRef = useRef<HTMLElement | null>(null);
+  // Keep the latest onClose in a ref so the effect can key on `layer` alone
+  // instead of re-running (and re-stealing focus) on every parent render.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
     if (!layer) return;
+    // Remember what opened the drawer so focus returns there on close rather
+    // than to the document body.
+    restoreRef.current = document.activeElement as HTMLElement | null;
     closeBtnRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { e.stopPropagation(); onClose(); return; }
+      if (e.key === "Escape") { e.stopPropagation(); onCloseRef.current(); return; }
       if (e.key === "Tab" && rootRef.current) {
         const focusables = rootRef.current.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
         if (focusables.length === 0) return;
@@ -65,8 +73,11 @@ export function LayerDetailDrawer({
       }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [layer, onClose]);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      restoreRef.current?.focus?.();
+    };
+  }, [layer]);
 
   if (!layer) return null;
 

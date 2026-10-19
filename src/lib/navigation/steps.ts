@@ -224,6 +224,12 @@ export function deriveSteps(
   let nameLen = -1;
   let roundM = 0;
 
+  // Distance of legs too short to display. Dropping it outright would make the
+  // sum of step distances drift below the route's real length, which desyncs
+  // stepIndex and the maneuver marker, so it is carried into the next
+  // (or final) displayed leg instead of vanishing.
+  let carryM = 0;
+
   const reset = () => {
     sumX = 0;
     sumY = 0;
@@ -236,7 +242,10 @@ export function deriveSteps(
   const closeLeg = () => {
     const bearing = normalizeDeg(Math.atan2(sumY, sumX) * DEG);
     if (distanceM >= MIN_LEG_M) {
-      legs.push({ bearing, distanceM, name, roundabout: roundM > distanceM / 2 });
+      legs.push({ bearing, distanceM: distanceM + carryM, name, roundabout: roundM > distanceM / 2 });
+      carryM = 0;
+    } else {
+      carryM += distanceM;
     }
   };
 
@@ -264,6 +273,12 @@ export function deriveSteps(
     prevBearing = seg.bearing;
   }
   closeLeg();
+  // A dropped trailing leg's distance still belongs to the route: hand it to
+  // the last real leg so the totals stay honest.
+  if (carryM > 0 && legs.length > 0) {
+    legs[legs.length - 1].distanceM += carryM;
+    carryM = 0;
+  }
 
   if (legs.length === 0) {
     // Everything folded into one leg (e.g. a single straight connector).

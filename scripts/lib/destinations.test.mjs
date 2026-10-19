@@ -261,4 +261,7 @@ test("relativeWhen steps through minutes, hours, yesterday and dates", () => {
   assert.equal(relativeWhen(new Date(2026, 0, 5, 9, 30, 0).getTime(), now), "5 Jan 2026");
   // A stamp ahead of the clock (skew) reads as "just now", never a negative.
   assert.equal(relativeWhen(now + 600_000, now), "just now");
+  // An unreadable stamp is not "just now" - that would flatter a corrupt row.
+  assert.equal(relativeWhen(NaN, now), "");
+  assert.equal(relativeWhen(now, NaN), "");
 });

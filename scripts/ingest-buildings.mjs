@@ -52,15 +52,6 @@ function canonicalOsmId(v) {
   return `${type}/${m[2]}`;
 }
 
-function firstPoint(geom) {
-  let c = geom?.coordinates;
-  for (let d = 0; d < 6 && Array.isArray(c); d++) {
-    if (typeof c[0] === "number" && typeof c[1] === "number") return [c[0], c[1]];
-    c = c[0];
-  }
-  return null;
-}
-
 /** Pull a purpose token from an OSM tag bag: the first meaningful kind tag. */
 const PURPOSE_KEYS = ["amenity", "shop", "office", "craft", "tourism", "religion", "historic", "leisure", "emergency", "healthcare", "military", "government", "aeroway", "industrial", "power", "building"];
 const PURPOSE_SKIP = new Set(["yes", "building", "house", "residential", "apartments", "hut", "shed", "roof", "service", "ruins", "static", null]);
@@ -114,22 +105,6 @@ function mergeOsmTags(osm, core) {
   core.enrichedBy = "osm-overpass";
   return core;
 }
-
-async function loadToponyms() {
-  try {
-    const g = JSON.parse(require("node:fs").readFileSync("public/data/toponyms.geojson", "utf8"));
-    const pts = [];
-    for (const f of g.features ?? []) {
-      const c = firstPoint(f.geometry);
-      if (f.properties?.name && c) pts.push({ name: String(f.properties.name), lon: c[0], lat: c[1] });
-    }
-    return pts;
-  } catch {
-    return [];
-  }
-}
-// We'll import fs via node:fs at runtime instead to avoid ESM dependency foot-gun:
-// (loadToponyms filled later)
 
 async function findOsmMatches(featuresWithGeom) {
   // Single Overpass call with all `nwr["building"]` on the island, tags + center only.

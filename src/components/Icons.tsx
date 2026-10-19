@@ -76,17 +76,6 @@ export function TerrainIcon(props: IconProps) {
   ));
 }
 
-export function AnchorIcon(props: IconProps) {
-  return base(props, (
-    <>
-      <circle cx="12" cy="5" r="2.2" />
-      <path d="M12 7.2V20" />
-      <path d="M8 10.5h8" />
-      <path d="M5 14a7 7 0 0 0 14 0" />
-    </>
-  ));
-}
-
 export function ListIcon(props: IconProps) {
   return base(props, (
     <>
@@ -101,14 +90,6 @@ export function AlertIcon(props: IconProps) {
     <>
       <path d="M12 4l9 16H3l9-16z" />
       <path d="M12 10v4M12 17.4h.01" />
-    </>
-  ));
-}
-
-export function ActivityIcon(props: IconProps) {
-  return base(props, (
-    <>
-      <path d="M3 12h4l2.5-7 5 14 2.5-7H21" />
     </>
   ));
 }
@@ -158,15 +139,6 @@ export function BikeIcon(props: IconProps) {
   ));
 }
 
-export function MapPinIcon(props: IconProps) {
-  return base(props, (
-    <>
-      <path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z" />
-      <circle cx="12" cy="10" r="2.6" />
-    </>
-  ));
-}
-
 export function CrosshairIcon(props: IconProps) {
   return base(props, (
     <>
@@ -182,23 +154,6 @@ export function RulerIcon(props: IconProps) {
     <>
       <path d="M3.5 16.5l13-13 4 4-13 13z" />
       <path d="M7.5 13.5l1.8 1.8M10.5 10.5l1.8 1.8M13.5 7.5l1.8 1.8" />
-    </>
-  ));
-}
-
-export function SunIcon(props: IconProps) {
-  return base(props, (
-    <>
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-    </>
-  ));
-}
-
-export function MoonIcon(props: IconProps) {
-  return base(props, (
-    <>
-      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
     </>
   ));
 }

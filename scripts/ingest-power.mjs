@@ -29,7 +29,8 @@
  */
 
 import fs from "node:fs";
-import { get, writeJSON, roundCoords } from "./lib/fetch.mjs";
+import { writeJSON, roundCoords } from "./lib/fetch.mjs";
+import { overpass as overpassQuery } from "./lib/overpass.mjs";
 import { kmBetween, bearing, compassLabel } from "./lib/coord.mjs";
 
 const OUT = "public/data/power.geojson";
@@ -37,12 +38,6 @@ const MEA_CH6 = "https://www.gov.im/media/1363407/ch-61-cables-pipelines.pdf";
 const OSM = "https://www.openstreetmap.org/";
 const BBOX = "54.02,-4.85,54.45,-4.30";
 const MEA_EDITION = "October 2018";
-
-const OVERPASS = [
-  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass-api.de/api/interpreter",
-];
 
 /** MMEA generation capacities, keyed by the name OSM uses for the site. */
 const CAPACITY = {
@@ -177,27 +172,21 @@ function nearestPlace(lon, lat, toponyms) {
 }
 
 async function overpass() {
-  for (const ep of OVERPASS) {
-    try {
-      const res = await get(ep, { method: "POST", body: new URLSearchParams({ data: QUERY }) });
-      const json = await res.json();
-      const els = (json.elements ?? []).filter((e) => e.tags && (e.geometry || (e.lat && e.lon)));
-      if (els.length) return { els, endpoint: ep };
-      console.warn(`  ! ${new URL(ep).host} returned nothing`);
-    } catch (e) {
-      console.warn(`  ! ${new URL(ep).host} failed: ${e.message}`);
-    }
-    await new Promise((r) => setTimeout(r, 3000));
-  }
-  throw new Error("all Overpass endpoints failed");
+  // Use the shared helper: it rotates mirrors, retries, applies the plain
+  // identifying User-Agent Overpass requires (the browser-shaped UA in get()
+  // draws HTTP 406) and treats an empty answer as a failure.
+  const json = await overpassQuery(QUERY, "iom-power");
+  const els = (json.elements ?? []).filter((e) => e.tags && (e.geometry || (e.lat && e.lon)));
+  if (!els.length) throw new Error("iom-power: no power elements with geometry returned");
+  return { els };
 }
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 function main() {
   overpass()
-    .then(async ({ els, endpoint }) => {
-      console.log(`  fetched ${els.length} elements from ${new URL(endpoint).host}`);
+    .then(async ({ els }) => {
+      console.log(`  fetched ${els.length} power elements`);
 
       const features = [];
       const counts = { substation: 0, "substation (unnamed)": 0, plant: 0, solar: 0, wind: 0, other: 0 };

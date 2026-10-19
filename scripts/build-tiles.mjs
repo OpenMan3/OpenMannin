@@ -67,7 +67,7 @@ for (const id of LAYERS_TO_TILE) {
 
   const geojson = JSON.parse(fs.readFileSync(file, "utf8"));
   const [minLon, minLat, maxLon, maxLat] = info.bbox ?? [-4.9, 54.0, -4.2, 54.45];
-  const minZoom = MIN_ZOOM_OVERRIDE ?? MIN_ZOOM_OVERRIDES[id] ?? Math.max(0, Math.min(12, info.minzoom ?? 8));
+  const minZoom = MIN_ZOOM_OVERRIDE ?? MIN_ZOOM_OVERRIDES[id] ?? Math.max(0, Math.min(12, info.minZoom ?? 8));
 
   const layerMaxZoom = ZOOM_OVERRIDES[id] ?? MAX_ZOOM;
   const index = new geojsonvt(geojson, {

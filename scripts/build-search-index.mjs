@@ -42,8 +42,10 @@ function build() {
     let fc;
     try {
       fc = JSON.parse(fs.readFileSync(path.join(DATA, layer.file), "utf8"));
-    } catch {
-      return;
+    } catch (e) {
+      // A corrupt layer must fail the build, not silently shrink the index:
+      // swallowing it here would make search quietly lose a whole layer.
+      throw new Error(`build-search-index: ${layer.file} is not valid JSON (${e.message})`);
     }
     for (const f of fc.features ?? []) {
       const props = f.properties ?? null;

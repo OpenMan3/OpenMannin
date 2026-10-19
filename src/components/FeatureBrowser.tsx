@@ -88,7 +88,11 @@ export function FeatureBrowser({
     return entries.filter((e) => e.search.includes(q));
   }, [entries, query]);
 
-  const selected = list.length > 0 ? list[Math.min(pos, list.length - 1)] : null;
+  // `pos` is lifted to the page and can outlive a list that shrank under it
+  // (a layer reload, a filter applied elsewhere). Clamp once and use it for the
+  // selection, the stepper and the "N / M" readout so they cannot disagree.
+  const activeIndex = list.length > 0 ? Math.min(pos, list.length - 1) : 0;
+  const selected = list.length > 0 ? list[activeIndex] : null;
 
   // Window the list to the visible rows (plus overscan) so a layer of 860
   // ruins mounts ~20 nodes, not 860, and the filter box stays responsive.
@@ -185,7 +189,7 @@ export function FeatureBrowser({
 
   const step = (delta: number) => {
     if (list.length === 0) return;
-    const next = (pos + delta + list.length) % list.length;
+    const next = (activeIndex + delta + list.length) % list.length;
     onPosChange(next);
     reveal(next);
     goTo(list[next]);
@@ -277,7 +281,7 @@ export function FeatureBrowser({
                 {" · "}
               </span>
             )}
-            {loading ? "Loading…" : selected ? `${pos + 1} / ${list.length}` : "—"}
+            {loading ? "Loading…" : selected ? `${activeIndex + 1} / ${list.length}` : "—"}
           </div>
 
           <ul

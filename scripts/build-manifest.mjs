@@ -62,6 +62,9 @@ for (const l of LAYERS) {
     bytes: stat.size,
     generated,
     bbox,
+    // The tile builder needs the registry's minZoom; it cannot read the TS
+    // registry itself, so record it here rather than let it guess a default.
+    minZoom: l.minZoom,
     ...(l.pmtiles ? { pmtiles: l.pmtiles } : {}),
   };
   if (features > 0) ok++;

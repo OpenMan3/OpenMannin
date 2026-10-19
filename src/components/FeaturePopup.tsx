@@ -58,24 +58,35 @@ export function FeaturePopup({
 }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [copied, setCopied] = useState(false);
+  const restoreRef = useRef<HTMLElement | null>(null);
+  // Read onClose through a ref so the effect keys on `picked` alone: an inline
+  // onClose from the page would otherwise re-run the effect (and bounce focus)
+  // on every render.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   // Hooks first: the early return below would otherwise make the hook count
   // depend on whether something is picked, which is a rules-of-hooks violation
   // the moment two clicks alternate.
   useEffect(() => {
     if (!picked) return;
+    // Return focus to whatever opened the card when it closes.
+    restoreRef.current = document.activeElement as HTMLElement | null;
     setCopied(false);
     rootRef.current?.focus();
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
       }
     };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [picked, onClose]);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      restoreRef.current?.focus?.();
+    };
+  }, [picked]);
 
   if (!picked) return null;
 

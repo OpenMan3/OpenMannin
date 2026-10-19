@@ -16,6 +16,7 @@ import { TERRAIN_TILES } from "./map-style.ts";
 import {
   decodeTerrarium,
   lonLatToTileFloat,
+  sampleGridBilinear,
   sampleLine,
   type ElevationPoint,
 } from "./elevation.ts";
@@ -101,23 +102,6 @@ async function loadTile(
   return grid;
 }
 
-/** Bilinear sample of a tile grid. `fx`/`fy` are positions within the tile (0..1). */
-function sampleGrid(grid: TileGrid, fx: number, fy: number): number {
-  const x = fx * TILE - 0.5;
-  const y = fy * TILE - 0.5;
-  const x0 = Math.floor(x);
-  const y0 = Math.floor(y);
-  const tx = x - x0;
-  const ty = y - y0;
-  const clamp = (v: number) => Math.min(TILE - 1, Math.max(0, v));
-  const at = (xi: number, yi: number) => grid[clamp(yi) * TILE + clamp(xi)];
-  const a = at(x0, y0);
-  const b = at(x0 + 1, y0);
-  const c = at(x0, y0 + 1);
-  const d = at(x0 + 1, y0 + 1);
-  return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
-}
-
 export interface FetchProfileOptions {
   signal?: AbortSignal;
   maxSamples?: number;
@@ -144,7 +128,7 @@ export async function fetchElevationProfile(
     const ty = Math.floor(y);
     const grid = await loadTile(zoom, tx, ty, opts.signal);
     if (!grid) throw new Error("dem tile unavailable");
-    out.push({ distM: s.distM, eleM: sampleGrid(grid, x - tx, y - ty) });
+    out.push({ distM: s.distM, eleM: sampleGridBilinear(grid, TILE, x - tx, y - ty) });
   }
   return out;
 }

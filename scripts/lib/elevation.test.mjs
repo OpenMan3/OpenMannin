@@ -5,6 +5,7 @@ import {
   tilesPerAxis,
   lonLatToTileFloat,
   sampleLine,
+  sampleGridBilinear,
   profileStats,
 } from "../../src/lib/elevation.ts";
 
@@ -63,6 +64,21 @@ test("sampleLine handles a zero-length line without dividing by zero", () => {
   );
   assert.ok(pts.length >= 2);
   assert.ok(pts.every((p) => p.distM === 0 && p.lon === 5 && p.lat === 5));
+});
+
+test("sampleGridBilinear hits the corners and averages at the centre", () => {
+  // A 2x2 grid: row 0 = [0, 1], row 1 = [2, 3].
+  const grid = [0, 1, 2, 3];
+  assert.equal(sampleGridBilinear(grid, 2, 0, 0), 0, "top-left corner");
+  assert.equal(sampleGridBilinear(grid, 2, 1, 1), 3, "bottom-right corner");
+  assert.equal(sampleGridBilinear(grid, 2, 0.5, 0.5), 1.5, "centre is the mean");
+});
+
+test("sampleGridBilinear clamps reads outside the grid instead of wrapping", () => {
+  const grid = [0, 1, 2, 3];
+  // Reading just past the top-left must not reach the far side of the tile.
+  assert.equal(sampleGridBilinear(grid, 2, 0, 0), 0);
+  assert.equal(sampleGridBilinear(grid, 2, -0.5, -0.5), 0);
 });
 
 test("profileStats reports range and accumulated climb/descent", () => {

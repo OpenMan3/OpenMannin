@@ -103,6 +103,34 @@ export function sampleLine(
   return out;
 }
 
+/**
+ * Bilinear sample of a square grid. `fx`/`fy` are positions within the tile in
+ * 0..1; `size` is the grid's side. Samples are shifted by half a pixel so the
+ * corners of the grid map to their pixels, and reads outside are clamped to the
+ * edge rather than wrapped. Pure, so the browser sampler's arithmetic is
+ * unit-testable without a canvas.
+ */
+export function sampleGridBilinear(
+  grid: ArrayLike<number>,
+  size: number,
+  fx: number,
+  fy: number,
+): number {
+  const x = fx * size - 0.5;
+  const y = fy * size - 0.5;
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const tx = x - x0;
+  const ty = y - y0;
+  const clamp = (v: number) => Math.min(size - 1, Math.max(0, v));
+  const at = (xi: number, yi: number) => grid[clamp(yi) * size + clamp(xi)];
+  const a = at(x0, y0);
+  const b = at(x0 + 1, y0);
+  const c = at(x0, y0 + 1);
+  const d = at(x0 + 1, y0 + 1);
+  return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
+}
+
 /** Min/max height and total climb/descent over a decoded profile. */
 export function profileStats(points: readonly ElevationPoint[]): ProfileStats {
   if (points.length === 0) return { minM: 0, maxM: 0, ascentM: 0, descentM: 0 };

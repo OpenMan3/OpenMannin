@@ -25,6 +25,8 @@ import {
 } from "@/lib/map-style";
 import { syncStaticLayers } from "@/lib/map-layers";
 import { syncMeasure } from "@/lib/map-measure";
+import { syncCoverage } from "@/lib/map-coverage";
+import type { CoverageFeatureCollection } from "@/lib/offline-coverage";
 import type { MeasurePoint } from "@/lib/measure";
 import {
   startLivePolls,
@@ -120,6 +122,14 @@ export function MapView({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const readyRef = useRef(false);
+  /**
+   * Bumped by every mount of the map-creation effect. The initialisation is
+   * async (it awaits the worker URL), so under StrictMode's mount→unmount→mount
+   * a stale run can still be in flight when the fresh one begins; each run
+   * records its generation and abandons the map if it is no longer the latest,
+   * so the container never ends up with two live instances.
+   */
+  const initGenRef = useRef(0);
   const [missing, setMissing] = useState<Set<string>>(new Set());
   const [feedErrors, setFeedErrors] = useState<Record<string, string>>({});
 
@@ -155,6 +165,8 @@ export function MapView({
   const measureModeRef = useRef(measureMode);
   const measurePointsRef = useRef<MeasurePoint[]>(measurePoints ?? []);
   const onMeasureRef = useRef(onMeasurePoint);
+  /** Latest offline-coverage layer set, reapplied on load and after a style swap. */
+  const coverageRef = useRef<CoverageFeatureCollection | null>(null);
 
   useEffect(() => {
     enabledRef.current = enabled;
@@ -283,6 +295,7 @@ export function MapView({
   // ---- create the map once -------------------------------------------------
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
+    const gen = ++initGenRef.current;
 
     const initMap = async () => {
       // Defence-in-depth for the tile pipeline: validate protobuf responses
@@ -311,6 +324,9 @@ export function MapView({
 
       // Set MapLibre worker URL before creating the map
       await setMapLibreWorkerUrl();
+      // A later mount superseded this run while we awaited; creating the map now
+      // would leave a second instance attached to the same container.
+      if (gen !== initGenRef.current) return undefined;
       ensurePmtilesProtocol();
 
       const initialStyle = createInitialStyle();
@@ -394,6 +410,9 @@ export function MapView({
         // A measurement may already exist (e.g. from a previous session's
         // state when the map mounts late); repaint it above the data layers.
         syncMeasure(map, measurePointsRef.current);
+        // Likewise an offline-coverage overlay the panel asked for before the
+        // map finished loading.
+        syncCoverage(map, coverageRef.current);
         // Notify parent that the map is ready
         onMapReady?.(map);
         // E2E hook: the verify/smoke scripts inspect layer order through this
@@ -442,6 +461,17 @@ export function MapView({
       };
       window.addEventListener("openmannin:theme", handleThemeChange);
 
+      // The transparency panel toggles an offline-coverage overlay by firing
+      // this event; the payload is a FeatureCollection of cached-layer bboxes,
+      // or null to clear it.
+      const handleCoverage = (e: Event) => {
+        const detail =
+          ((e as CustomEvent).detail as CoverageFeatureCollection | null) ?? null;
+        coverageRef.current = detail;
+        syncCoverage(map, detail);
+      };
+      window.addEventListener("openmannin:coverage", handleCoverage);
+
       // Rebuild everything a style swap tears down, from cached data.
       async function resyncAfterStyleChange(m: MapLibreMap) {
         // A style swap drops the DEM source too; restore terrain before the
@@ -456,6 +486,7 @@ export function MapView({
         });
         await resyncLiveLayers(m, layersRef.current, enabledRef.current);
         syncMeasure(m, measurePointsRef.current);
+        syncCoverage(m, coverageRef.current);
         navIntegrationRef.current?.rehydrate(m);
       }
 
@@ -465,6 +496,7 @@ export function MapView({
         cleanupInteractions();
         cleanupWebGL();
         window.removeEventListener("openmannin:theme", handleThemeChange);
+        window.removeEventListener("openmannin:coverage", handleCoverage);
         navIntegrationRef.current?.detach();
         map.remove();
         mapRef.current = null;

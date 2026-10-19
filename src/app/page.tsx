@@ -24,7 +24,11 @@ import { MeasurePanel } from "@/components/MeasurePanel";
 import { NavigationOverlay } from "@/components/NavigationOverlay";
 import { PassWidget } from "@/components/PassWidget";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { I18nToggle } from "@/components/I18nToggle";
+import { ElevationProfile } from "@/components/ElevationProfile";
 import { loadLayer } from "@/lib/layer-data";
+import { t } from "@/lib/i18n";
+import { useLang } from "@/lib/use-lang";
 import { resolveFeatureLabel } from "@/lib/feature-label";
 import {
   formatPickParam,
@@ -33,8 +37,6 @@ import {
   parsePickParam,
   parseToParam,
 } from "@/lib/deep-link";
-
-
 
 import {
   AlertIcon,
@@ -53,11 +55,11 @@ import type { Map } from "maplibre-gl";
 
 type Tab = "layers" | "browse" | "gaps" | "sources";
 
-const TABS: { id: Tab; label: string; Icon: (p: { className?: string }) => React.JSX.Element }[] = [
-  { id: "layers", label: "Layers", Icon: LayersIcon },
-  { id: "browse", label: "Browse", Icon: ListIcon },
-  { id: "gaps", label: "Gaps", Icon: AlertIcon },
-  { id: "sources", label: "Sources", Icon: ShieldIcon },
+const TABS: { id: Tab; labelKey: string; Icon: (p: { className?: string }) => React.JSX.Element }[] = [
+  { id: "layers", labelKey: "tab.layers", Icon: LayersIcon },
+  { id: "browse", labelKey: "tab.browse", Icon: ListIcon },
+  { id: "gaps", labelKey: "tab.gaps", Icon: AlertIcon },
+  { id: "sources", labelKey: "tab.sources", Icon: ShieldIcon },
 ];
 
 const ASIDE_MIN = 272;
@@ -67,11 +69,17 @@ const ASIDE_KEY = "om:asideWidth";
 /** Persisted 3D-terrain preference. */
 const TERRAIN_KEY = "om:terrain3d";
 
+/** The registry's curated default-on set: the initial state and the "Context" preset. */
+const contextLayers = () => new Set(LAYERS.filter((l) => l.defaultOn).map((l) => l.id));
+
 export default function Page() {
   return <PageContent />;
 }
 
 function PageContent() {
+  // Re-render the page chrome (tab bar and its aria-labels) when the language
+  // changes; t() reads the stored locale, this gives React the subscription.
+  useLang();
   const [tab, setTab] = useState<Tab>("layers");
   const [picked, setPicked] = useState<PickedFeature | null>(null);
   /** 3D terrain + camera pitch, remembered between visits. */
@@ -91,6 +99,10 @@ function PageContent() {
   // Navigation state (GPS dot, dropped pin, route), published by the map's
   // navigation host. Null until the map mounts and reports its initial state.
   const [nav, setNav] = useState<NavigationState | null>(null);
+  /** Active route geometry, published by the nav host for the elevation profile. */
+  const [routeGeometry, setRouteGeometry] = useState<
+    { coordinates: [number, number][]; distanceM: number } | null
+  >(null);
   // Whether the turn-by-turn step list inside the destination sheet is open.
   // Lifted so the map pad (and thus the visible route) tracks its height.
   const [stepsOpen, setStepsOpen] = useState(false);
@@ -126,9 +138,7 @@ function PageContent() {
   // Start from the registry's curated defaults: only a small amount of
   // lightweight context (toponyms + parishes) is on; the rest is off by
   // default so new users are not overwhelmed. Others remain one toggle away.
-  const [enabled, setEnabled] = useState<Set<string>>(
-    () => new Set(LAYERS.filter((l) => l.defaultOn).map((l) => l.id)),
-  );
+  const [enabled, setEnabled] = useState<Set<string>>(contextLayers);
 
   // FeatureBrowser state lifted to survive tab switches and drawer close.
   const [browseLayerId, setBrowseLayerId] = useState("");
@@ -360,6 +370,10 @@ function PageContent() {
 
   useEffect(() => {
     if (!viewport) return;
+    // Hold off until any deep-linked destination or pick has been consumed:
+    // otherwise this fires before the restore effects run and rewrites the URL
+    // without `to`/`pick`, dropping the very state it was shared to restore.
+    if (pendingToRef.current || pendingPickRef.current) return;
     const t = setTimeout(() => {
       const layers = LAYERS.filter((l) => enabled.has(l.id))
         .map((l) => l.id)
@@ -375,6 +389,19 @@ function PageContent() {
     }, 500);
     return () => clearTimeout(t);
   }, [enabled, viewport, destParam, pickParam]);
+
+  // The nav host publishes the active route geometry on its own event (it is
+  // not part of the throttled NavigationState); the elevation profile draws it.
+  useEffect(() => {
+    const onGeometry = (e: Event) => {
+      const detail = (e as CustomEvent).detail as
+        | { coordinates: [number, number][]; distanceM: number }
+        | null;
+      setRouteGeometry(detail && detail.coordinates.length > 1 ? detail : null);
+    };
+    window.addEventListener("openmannin:route-geometry", onGeometry);
+    return () => window.removeEventListener("openmannin:route-geometry", onGeometry);
+  }, []);
 
   const centreOn = useCallback((lon: number, lat: number) => {
     window.dispatchEvent(
@@ -420,7 +447,9 @@ function PageContent() {
 
   // Keep the display awake while following a route. The browser drops the lock
   // when the tab is hidden, so re-request it the moment it is visible again.
-  const routeActive = !!nav?.destination && !!nav?.userLocation && nav.routeStatus === "ready";
+  // The status is deliberately not checked: "loading"/"recalculating" are
+  // exactly the moments a driver must not lose the screen.
+  const routeActive = !!nav?.destination && !!nav?.userLocation;
   useEffect(() => {
     const active = navigating && routeActive;
     if (active) {
@@ -532,7 +561,7 @@ function PageContent() {
               <div className="min-h-0 flex-1 relative" inert={!(panelOpen || mobileOpen)}>
                 {tab === "layers" && (
                   <div className="flex gap-2 border-b border-line px-3 py-2" role="group" aria-label="Layer display presets">
-                    <button type="button" className="btn flex-1 text-xs" onClick={() => setEnabled(new Set(LAYERS.filter((l) => l.defaultOn).map((l) => l.id)))} aria-label="Show context layers">
+                    <button type="button" className="btn flex-1 text-xs" onClick={() => setEnabled(contextLayers())} aria-label="Show context layers">
                       Context
                     </button>
                     <button type="button" className="btn flex-1 text-xs" onClick={() => setAll(true)} aria-label="Show all layers">
@@ -611,7 +640,9 @@ function PageContent() {
 
         <FeaturePopup picked={picked} onClose={() => setPicked(null)} onLocate={centreOn} />
 
-        {/* Measure readout — top-centre, clear of the control stack and pills. */}
+        {/* Measure readout. Top-centre on desktop, where it clears the control
+            stack and the pass pill; on mobile that strip is shared with the
+            pass pill, so it docks above the tab bar instead. */}
         {map && (measureActive || measurePoints.length > 0) && (
           <MeasurePanel
             summary={measureSummary}
@@ -619,8 +650,20 @@ function PageContent() {
             onUndo={measureUndo}
             onClear={measureClear}
             onStop={() => setMeasureActive(false)}
-            className="absolute left-1/2 top-4 z-20 -translate-x-1/2"
+            className="absolute inset-x-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-4 sm:-translate-x-1/2"
           />
+        )}
+
+        {/* Elevation profile for the active route (online-only; degrades to a
+            quiet note). Bottom-left on desktop, lifted above the nav card on
+            mobile so it never sits under it. */}
+        {map && routeGeometry && (
+          <div className="absolute left-4 bottom-[calc(7rem+env(safe-area-inset-bottom))] z-20 sm:bottom-4">
+            <ElevationProfile
+              coords={routeGeometry.coordinates}
+              distanceM={routeGeometry.distanceM}
+            />
+          </div>
         )}
 
         {/* Map overlays (always visible when map is ready) */}
@@ -634,6 +677,7 @@ function PageContent() {
               <VoiceButton muted={nav.voiceMuted} onToggle={setVoiceMuted} />
             )}
             <MeasureControl active={measureActive} onToggle={toggleMeasure} />
+            <I18nToggle />
             <ThemeToggle />
           </div>
         )}
@@ -674,37 +718,39 @@ function PageContent() {
 
 {/* ---- unified bottom tab bar (always visible) ---- */}
       <nav
-        aria-label="Primary sections"
+        aria-label={t("nav.primary")}
         className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 rounded-full border border-line bg-page/90 backdrop-blur-xl shadow-lg px-3 py-2 md:px-4 md:py-2"
       >
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => {
-              if (tab === t.id) {
-                setPanelOpen((v) => !v);
-                setMobileOpen((v) => {
-                  if (typeof window === 'undefined') return v;
-                  return window.innerWidth < 768 ? !v : false;
-                });
-              } else {
-                setTab(t.id);
-                setPanelOpen(true);
-                setMobileOpen(true);
-              }
-            }}
-            aria-current={tab === t.id ? "page" : undefined}
-            className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-              tab === t.id
-                ? "bg-accent text-accent-ink shadow-md"
-                : "text-ink-3 hover:bg-raised hover:text-ink"
-            }`}
-          >
-            <t.Icon className="h-5 w-5 shrink-0" />
-            <span className="hidden sm:inline">{t.label}</span>
-          </button>
-        ))}
+        {TABS.map((tb) => {
+          const label = t(tb.labelKey);
+          return (
+            <button
+              key={tb.id}
+              type="button"
+              onClick={() => {
+                if (tab === tb.id) {
+                  setPanelOpen((v) => !v);
+                  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+                  setMobileOpen((v) => (isMobile ? !v : false));
+                } else {
+                  setTab(tb.id);
+                  setPanelOpen(true);
+                  setMobileOpen(true);
+                }
+              }}
+              aria-current={tab === tb.id ? "page" : undefined}
+              aria-label={label}
+              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                tab === tb.id
+                  ? "bg-accent text-accent-ink shadow-md"
+                  : "text-ink-3 hover:bg-raised hover:text-ink"
+              }`}
+            >
+              <tb.Icon className="h-5 w-5 shrink-0" />
+              <span className="hidden sm:inline">{label}</span>
+            </button>
+          );
+        })}
       </nav>
     </main>
   );

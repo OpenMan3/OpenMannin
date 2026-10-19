@@ -28,6 +28,7 @@ import {
   type OfflineManifest,
   type OfflineScope,
 } from "@/lib/offline-scope";
+import { coverageFeatureCollection, summarizeCoverage } from "@/lib/offline-coverage";
 import { summarizeHealth, type HealthSummary } from "@/lib/health-summary";
 import { CommunityFeed } from "./CommunityFeed";
 import { LicenceBadge } from "./LicenceBadge";
@@ -82,6 +83,10 @@ const LIBRARIES: { name: string; licence: string; url: string; licenceUrl: strin
  * array of layer ids so it can be read straight out of devtools.
  */
 const SELECTION_KEY = "om:offline.layers";
+
+/** Parallel downloads while caching for offline use. Keeps the connection pool
+ * and peak memory bounded regardless of how many bundles are selected. */
+const OFFLINE_CONCURRENCY = 4;
 
 /** Scope choices. "Current view" renders disabled until a viewport is passed in. */
 const SCOPE_OPTIONS: { id: OfflineScope; label: string }[] = [
@@ -147,6 +152,10 @@ export function TransparencyPanel({
   const [storedSelection, setStoredSelection] = useState<string[] | null>(() => loadSelection());
   /** Raw /health.json, or null when it never answered - the badge stays hidden. */
   const [healthReport, setHealthReport] = useState<unknown>(null);
+  /** Ids of layers whose data is present in the service worker's caches. */
+  const [cachedIds, setCachedIds] = useState<Set<string> | null>(null);
+  /** Whether the coverage boxes are currently drawn on the map. */
+  const [coverageOn, setCoverageOn] = useState(false);
 
   // Labels live in the registry (src/lib/layers.ts); the manifest only carries
   // ids, and a checkbox list of raw ids is unreadable.
@@ -168,6 +177,11 @@ export function TransparencyPanel({
   const scopedLayers = useMemo(
     () => scopeLayers(manifestLayers, scope, { selected: effectiveSelection, viewport }),
     [manifestLayers, scope, effectiveSelection, viewport],
+  );
+
+  const coverage = useMemo(
+    () => summarizeCoverage(manifestLayers, cachedIds ?? new Set()),
+    [manifestLayers, cachedIds],
   );
 
   const healthSummary: HealthSummary | null = useMemo(
@@ -202,31 +216,45 @@ export function TransparencyPanel({
   };
 
   /**
-   * Whole-app readiness probe: has every layer's GeoJSON and PMTiles archive
-   * already landed in the service worker's caches? It deliberately ignores the
-   * chosen scope - "Offline data ready" has always meant everything is there.
+   * Per-layer cache probe: for each manifest layer, are its GeoJSON and PMTiles
+   * targets already in the service worker's caches? This feeds the coverage
+   * readout and the "show on map" overlay, and it also decides "Offline data
+   * ready" - which has always meant every layer is present, not just the scope.
    */
-  const checkOfflineReady = async (m: OfflineManifest) => {
+  const probeCaches = async (m: OfflineManifest) => {
     try {
-      if (!("caches" in window)) return;
+      if (!("caches" in window)) {
+        setCachedIds(null);
+        return;
+      }
       const keys = await caches.keys();
       const dataCacheKey = keys.find((k) => k.includes("-data"));
       const tilesCacheKey = keys.find((k) => k.includes("-tiles"));
-      if (!dataCacheKey && !tilesCacheKey) return;
+      if (!dataCacheKey && !tilesCacheKey) {
+        setCachedIds(new Set());
+        return;
+      }
       const dataCache = dataCacheKey ? await caches.open(dataCacheKey) : null;
       const tilesCache = tilesCacheKey ? await caches.open(tilesCacheKey) : null;
-      let ready = true;
-      for (const url of collectTargets(m.layers, window.location.origin)) {
-        // GeoJSON is cached under /data and PMTiles under /tiles; the pathname
-        // is what decides which of the two caches to look in.
-        const { pathname } = new URL(url);
-        const cache = pathname.startsWith("/data/") ? dataCache : tilesCache;
-        if (!cache || !(await cache.match(url))) {
-          ready = false;
-          break;
+      const cached = new Set<string>();
+      for (const layer of m.layers) {
+        const targets = collectTargets([layer], window.location.origin);
+        if (targets.length === 0) continue;
+        let present = true;
+        for (const url of targets) {
+          // GeoJSON is cached under /data and PMTiles under /tiles; the
+          // pathname decides which of the two caches to look in.
+          const { pathname } = new URL(url);
+          const cache = pathname.startsWith("/data/") ? dataCache : tilesCache;
+          if (!cache || !(await cache.match(url))) {
+            present = false;
+            break;
+          }
         }
+        if (present) cached.add(layer.id);
       }
-      setOfflineState(ready ? "done" : "idle");
+      setCachedIds(cached);
+      setOfflineState(cached.size === m.layers.length && m.layers.length > 0 ? "done" : "idle");
     } catch {
       /* readiness probe is best-effort */
     }
@@ -247,7 +275,7 @@ export function TransparencyPanel({
         const m = await fetchManifest();
         if (cancelled) return;
         setManifest(m);
-        await checkOfflineReady(m);
+        await probeCaches(m);
       } catch {
         /* the panel renders without a manifest; only the scope list needs it */
       }
@@ -308,21 +336,40 @@ export function TransparencyPanel({
       const scoped = scopeLayers(m.layers, scope, { selected, viewport });
       const list = collectTargets(scoped, window.location.origin);
       if (list.length > 0) {
+        // Bounded concurrency: fetching every bundle at once floods the
+        // connection pool (and holds every response in memory), so run a fixed
+        // number of workers pulling from a shared queue instead.
         let done = 0;
-        await Promise.all(
-          list.map(async (entry) => {
-            // A 404/500 used to count as downloaded: every response incremented
-            // `done`, so the panel reported "All offline data is cached" while
-            // the network was failing. Fail loudly and land in the error state.
-            const res = await fetch(entry, { cache: "reload" });
-            if (!res.ok) throw new Error(`HTTP ${res.status} for ${entry}`);
+        let failed = false;
+        const queue = [...list];
+        const worker = async () => {
+          while (!failed) {
+            const entry = queue.shift();
+            if (!entry) return;
+            try {
+              // A 404/500 used to count as downloaded: every response
+              // incremented `done`, so the panel reported "All offline data is
+              // cached" while the network was failing. Fail loudly instead.
+              const res = await fetch(entry, { cache: "reload" });
+              if (!res.ok) throw new Error(`HTTP ${res.status} for ${entry}`);
+            } catch (err) {
+              // Signal the sibling workers to stop so none throws after the
+              // first rejection is already handled.
+              failed = true;
+              throw err;
+            }
             done += 1;
             setOfflineProgress(Math.round((done / list.length) * 100));
-          }),
+          }
+        };
+        await Promise.all(
+          Array.from({ length: Math.min(OFFLINE_CONCURRENCY, list.length) }, worker),
         );
       }
       setOfflineState("done");
       await refreshStorage();
+      // Re-probe so the coverage readout and overlay reflect what just landed.
+      await probeCaches(m);
     } catch {
       setOfflineState("error");
     }
@@ -339,6 +386,21 @@ export function TransparencyPanel({
     else next.add(id);
     persistSelection([...next]);
   };
+
+  // Draw (or clear) the coverage boxes whenever the toggle or the cached set
+  // changes. The cleanup clears the overlay on unmount so a closed panel does
+  // not leave stale boxes on the map.
+  useEffect(() => {
+    if (!coverageOn) return;
+    window.dispatchEvent(
+      new CustomEvent("openmannin:coverage", {
+        detail: coverageFeatureCollection(manifestLayers, cachedIds ?? new Set(), 0.0005),
+      }),
+    );
+    return () => {
+      window.dispatchEvent(new CustomEvent("openmannin:coverage", { detail: null }));
+    };
+  }, [coverageOn, manifestLayers, cachedIds]);
 
   const scopeDescription =
     scope === "selected"
@@ -457,6 +519,14 @@ export function TransparencyPanel({
                     <span className="min-w-0 flex-1 truncate text-[12px] text-ink">
                       {entry.label ?? entry.id}
                     </span>
+                    {cachedIds?.has(entry.id) && (
+                      <span
+                        className="h-1.5 w-1.5 shrink-0 rounded-full bg-ok"
+                        title="Cached for offline use"
+                        aria-label="Cached for offline use"
+                        role="img"
+                      />
+                    )}
                     <span className="shrink-0 font-mono text-[10px] text-ink-3">
                       {formatBytes(entry.bytes)}
                     </span>
@@ -484,6 +554,22 @@ export function TransparencyPanel({
         )}
         {offlineState === "error" && (
           <p className="mb-2 text-[11px] text-ink-3" aria-live="polite">Download failed</p>
+        )}
+        {cachedIds && coverage.totalLayers > 0 && (
+          <div className="mb-2 flex items-center justify-between gap-2 text-[11px] text-ink-3">
+            <span aria-live="polite">
+              Coverage: {coverage.cachedLayers} / {coverage.totalLayers} layers ·{" "}
+              {formatBytes(coverage.cachedBytes)}
+            </span>
+            <button
+              type="button"
+              className="link shrink-0"
+              onClick={() => setCoverageOn((v) => !v)}
+              aria-pressed={coverageOn}
+            >
+              {coverageOn ? "Hide on map" : "Show on map"}
+            </button>
+          </div>
         )}
         <div className="flex gap-2">
           <button

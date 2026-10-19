@@ -227,6 +227,14 @@ export function NavigationOverlay(props: Props) {
     setRecent([]);
   };
 
+  // Alternative routes were computed together with the fastest; picking one
+  // asks the host to redraw and rebuild the turn list, with no re-routing.
+  const selectOption = (index: number) => {
+    window.dispatchEvent(
+      new CustomEvent("openmannin:nav-option", { detail: { index, mode: state.activeMode } }),
+    );
+  };
+
   return (
     <>
       {navig && banner && banner.visible && (
@@ -242,9 +250,13 @@ export function NavigationOverlay(props: Props) {
                   ? "border-danger/50 bg-danger/95 backdrop-blur"
                   : "border-line/50 bg-info/95 backdrop-blur",
           ].join(" ")}
-          aria-live={navig ? "polite" : "off"}
-          role={navig ? "status" : undefined}
         >
+          {/* Announce only the maneuver, never the distance: a live region on
+              the whole card re-reads it on every GPS fix. The instruction text
+              changes with the step, so this stays quiet between turns. */}
+          <span className="sr-only" role="status" aria-live="polite">
+            {banner.primary}. {banner.instruction}
+          </span>
           <div className="flex items-center gap-3">
             <span className="flex shrink-0 items-center justify-center rounded-xl bg-white/20 p-2">
               <ManeuverIcon kind={banner.maneuver} className="h-6 w-6" />
@@ -413,6 +425,31 @@ export function NavigationOverlay(props: Props) {
               })}
             </div>
 
+            {!busy && !failed && state.routeOptions.length > 1 && (
+              <div className="flex flex-wrap gap-1.5 border-t border-line px-3 py-2">
+                {state.routeOptions.map((opt, i) => {
+                  const active = i === state.selectedOption;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => selectOption(i)}
+                      aria-pressed={active}
+                      className={[
+                        "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-colors",
+                        active
+                          ? "bg-accent/12 text-accent ring-1 ring-accent/50"
+                          : "text-ink-2 hover:bg-raised hover:text-ink",
+                      ].join(" ")}
+                    >
+                      <span>{i === 0 ? "Fastest" : `Alt ${i + 1}`}</span>
+                      <span className="tabular-nums opacity-70">{formatDuration(opt.durationS)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             <div className="px-3 py-2.5">
               {busy && (
                 <p className="flex items-center gap-2 text-[12px] italic text-ink-2">
@@ -479,7 +516,13 @@ export function NavigationOverlay(props: Props) {
               <div className="text-[10px] text-ink-3 truncate">{draftLabel(dock, arrived)}</div>
             </div>
           </div>
-          <button type="button" onClick={onToggleSteps} className="btn-icon !h-8 !w-8">
+          <button
+            type="button"
+            onClick={onToggleSteps}
+            className="btn-icon !h-8 !w-8"
+            aria-label={stepsOpen ? "Hide turn-by-turn directions" : "Show turn-by-turn directions"}
+            aria-expanded={stepsOpen}
+          >
             <RouteIcon className="h-4 w-4" />
           </button>
           <button type="button" onClick={onEnd} className="btn !px-3 !py-2 text-xs">
@@ -617,9 +660,12 @@ export function NavigationOverlay(props: Props) {
   );
 }
 
-function draftLabel(_dock: NavigationDock | null, arrived: boolean) {
+function draftLabel(dock: NavigationDock | null, arrived: boolean) {
   if (arrived) return "Arrived";
-  return "Route active";
+  if (!dock) return "Route active";
+  // The compact card leads with distance; show the mode and ETA beneath it so
+  // "Route active" is not the only thing a collapsed route ever says.
+  return [dock.modeLabel, dock.etaLabel].filter(Boolean).join(" · ");
 }
 
 /**

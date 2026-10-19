@@ -18,6 +18,7 @@ import {
   haversineM,
   nearestSnap,
   routeBetween,
+  routeAlternatives,
 } from "../../src/lib/navigation/graph.ts";
 import { PROFILES } from "../../src/lib/navigation/profiles.ts";
 
@@ -90,6 +91,22 @@ test("nearestSnap returns the projection and the along-edge distances", () => {
     Math.abs(hit.distA + hit.distB - 111.3) < 1,
     `distA+distB should be R1's length (111.3 m), got ${hit.distA + hit.distB}`,
   );
+});
+
+test("nearestSnap reaches the full maxSnapM radius, not one index cell", () => {
+  const g = buildGraph({
+    features: [road("residential", [
+      [-4.48, 54.16],
+      [-4.478, 54.16],
+    ])],
+  });
+  // ~250 m due north of the road. A fixed 3x3 probe of 100 m cells only reached
+  // ~100-200 m, so the 300 m driving tolerance was silently unreachable.
+  const lat = 54.16 + 250 / 111320;
+  const hit = nearestSnap(g, -4.479, lat, 300);
+  assert.ok(hit, "a 250 m query must snap under the 300 m driving tolerance");
+  assert.ok(Math.abs(hit.distanceM - 250) < 5, `snap distance ${hit.distanceM}`);
+  assert.equal(nearestSnap(g, -4.479, lat, 150), null, "but not under the 150 m walking tolerance");
 });
 
 test("nearestSnap returns null beyond the snap radius (off the network)", () => {
@@ -378,4 +395,87 @@ test("routeBetween same-edge reverse is refused for driving on one-way", () => {
   const b = { lon: -4.48, lat: 54.16 };  // at A
   assert.equal(routeBetween(g, a, b, DRIVING), null, "same-edge reverse refused");
   assert.ok(routeBetween(g, a, b, WALKING), "walking same-edge reverse allowed");
+});
+
+test("routeAlternatives leads with the fastest and adds a genuinely different route", () => {
+  // Two junctions joined by a direct road and by a longer eastern detour, each
+  // reached by a short stub (so the start/goal snap to a stub, not the middle).
+  const g = buildGraph({
+    features: [
+      road("residential", [
+        [-4.4805, 54.16],
+        [-4.48, 54.16],
+      ]), // start stub
+      road("residential", [
+        [-4.48, 54.161],
+        [-4.4805, 54.161],
+      ]), // end stub
+      road("residential", [
+        [-4.48, 54.16],
+        [-4.48, 54.161],
+      ]), // direct middle
+      road("residential", [
+        [-4.48, 54.16],
+        [-4.4785, 54.16],
+      ]), // S -> W1
+      road("residential", [
+        [-4.4785, 54.16],
+        [-4.4785, 54.161],
+      ]), // W1 -> W2
+      road("residential", [
+        [-4.4785, 54.161],
+        [-4.48, 54.161],
+      ]), // W2 -> G
+    ],
+  });
+  const start = { lon: -4.4805, lat: 54.16 };
+  const goal = { lon: -4.4805, lat: 54.161 };
+
+  const primary = routeBetween(g, start, goal, DRIVING);
+  assert.ok(primary, "the direct route exists");
+
+  const routes = routeAlternatives(g, start, goal, DRIVING);
+  assert.ok(routes.length >= 2, `expected an alternative, got ${routes.length}`);
+  assert.equal(routes[0].distanceM, primary.distanceM, "option 0 is the fastest");
+  assert.ok(
+    routes[1].distanceM > routes[0].distanceM,
+    "the alternative is longer than the fastest",
+  );
+  // The alternative must actually take different roads, not merely repeat.
+  assert.notDeepEqual(routes[1].coordinates, routes[0].coordinates);
+});
+
+test("routeAlternatives returns just the one route when no detour exists", () => {
+  const g = buildGraph({
+    features: [
+      road("residential", [
+        [-4.48, 54.16],
+        [-4.478, 54.16],
+      ]),
+    ],
+  });
+  const routes = routeAlternatives(
+    g,
+    { lon: -4.4795, lat: 54.16 },
+    { lon: -4.4785, lat: 54.16 },
+    DRIVING,
+  );
+  assert.equal(routes.length, 1, "a single carriageway yields a single option");
+  assert.ok(routes[0].distanceM > 0);
+});
+
+test("routeAlternatives returns nothing when an endpoint is off the network", () => {
+  const g = buildGraph({
+    features: [
+      road("residential", [
+        [-4.48, 54.16],
+        [-4.478, 54.16],
+      ]),
+    ],
+  });
+  // Far out to sea: beyond any profile's snap tolerance.
+  assert.deepEqual(
+    routeAlternatives(g, { lon: -4.6, lat: 54.3 }, { lon: -4.478, lat: 54.16 }, DRIVING),
+    [],
+  );
 });

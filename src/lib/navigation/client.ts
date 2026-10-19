@@ -42,9 +42,13 @@ export interface RouteLeg {
 
 export type RouteMap = Partial<Record<RouteMode, RouteLeg | null>>;
 
+/** Extra (non-fastest) routes per mode, fastest of the extras first. */
+export type RouteAlternatives = Partial<Record<RouteMode, RouteLeg[]>>;
+
 export interface RoutesReply {
   ok: boolean;
   routes: RouteMap;
+  alternatives: RouteAlternatives;
   error?: string;
 }
 
@@ -54,8 +58,26 @@ const REPLY_TIMEOUT_MS = 90_000;
 let worker: Worker | null = null;
 let workerPromise: Promise<Worker> | null = null;
 
+/** A worker reply: the fastest route per mode, plus any alternative legs. */
+interface WorkerPayload {
+  routes: RouteMap;
+  alternatives: RouteAlternatives;
+}
+
 /** All waiters for the current worker, keyed by request id. */
-const pending = new Map<number, { resolve: (v: RouteMap) => void; reject: (e: Error) => void }>();
+const pending = new Map<
+  number,
+  { resolve: (v: WorkerPayload) => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> }
+>();
+
+/** Resolve/reject a waiter and clear its deadline so no timer outlives it. */
+function settle(id: number, fn: (entry: { resolve: (v: WorkerPayload) => void; reject: (e: Error) => void }) => void): void {
+  const entry = pending.get(id);
+  if (!entry) return;
+  pending.delete(id);
+  clearTimeout(entry.timer);
+  fn(entry);
+}
 
 function getWorker(): Promise<Worker> {
   if (worker) return Promise.resolve(worker);
@@ -68,18 +90,18 @@ function getWorker(): Promise<Worker> {
     // self.postMessage is delivered to the Worker object that created it; the
     // two are not interchangeable (the pass worker learned this the hard way).
     w.addEventListener("message", (e: MessageEvent) => {
-      const { id, ok, result, error } = (e.data ?? {}) as {
+      const { id, ok, result, alternatives, error } = (e.data ?? {}) as {
         id?: number;
         ok?: boolean;
         result?: RouteMap;
+        alternatives?: RouteAlternatives;
         error?: string;
       };
       if (typeof id !== "number") return;
-      const entry = pending.get(id);
-      if (!entry) return;
-      pending.delete(id);
-      if (ok && result) entry.resolve(result);
-      else entry.reject(new Error(error ?? "routing worker failed"));
+      settle(id, (entry) => {
+        if (ok && result) entry.resolve({ routes: result, alternatives: alternatives ?? {} });
+        else entry.reject(new Error(error ?? "routing worker failed"));
+      });
     });
 
     // A dead worker must not be reused, and everyone waiting on it must learn
@@ -92,8 +114,7 @@ function getWorker(): Promise<Worker> {
         workerPromise = null;
       }
       const err = new Error(`routing worker failed: ${e.message || "worker error"}`);
-      for (const [, entry] of pending) entry.reject(err);
-      pending.clear();
+      for (const [id] of pending) settle(id, (entry) => entry.reject(err));
       console.warn("[nav]", err.message);
     });
 
@@ -114,18 +135,17 @@ export async function computeRoutes(
   try {
     const w = await getWorker();
     const id = ++seq;
-    const routes = await new Promise<RouteMap>((resolve, reject) => {
-      pending.set(id, { resolve, reject });
-      w.postMessage({ id, start, dest, modes });
-      setTimeout(() => {
-        const entry = pending.get(id);
-        if (!entry) return;
-        pending.delete(id);
-        entry.reject(new Error(`routing worker did not reply within ${REPLY_TIMEOUT_MS / 1000}s`));
+    const payload = await new Promise<WorkerPayload>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        settle(id, (entry) =>
+          entry.reject(new Error(`routing worker did not reply within ${REPLY_TIMEOUT_MS / 1000}s`)),
+        );
       }, REPLY_TIMEOUT_MS);
+      pending.set(id, { resolve, reject, timer });
+      w.postMessage({ id, start, dest, modes });
     });
-    return { ok: true, routes };
+    return { ok: true, routes: payload.routes, alternatives: payload.alternatives };
   } catch (e) {
-    return { ok: false, routes: {}, error: (e as Error).message };
+    return { ok: false, routes: {}, alternatives: {}, error: (e as Error).message };
   }
 }

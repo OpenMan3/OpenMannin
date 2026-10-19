@@ -35,6 +35,13 @@ export interface NavigationState {
   routeStatus: RouteStatus;
   routeError: string | null;
   routes: Partial<Record<RouteMode, { distanceM: number; durationS: number } | null>>;
+  /**
+   * The route options for the active mode, fastest first: index 0 is the
+   * fastest, the rest are alternatives. Empty when no route is available.
+   */
+  routeOptions: { distanceM: number; durationS: number }[];
+  /** Which option in `routeOptions` the active mode is currently showing. */
+  selectedOption: number;
   /** Geometry-derived turn-by-turn legs for the active route. */
   steps: NavigationStep[];
   /** Live speed derived from successive GPS fixes, mph. null before two fixes. */

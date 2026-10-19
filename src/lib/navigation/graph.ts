@@ -335,8 +335,13 @@ export function nearestSnap(
   let bestDistance = Infinity;
   let best: { edge: number; lon: number; lat: number; distA: number; distB: number } | null = null;
 
-  for (let dx = -1; dx <= 1; dx++) {
-    for (let dy = -1; dy <= 1; dy++) {
+  // Probe enough rings that a point anywhere in its cell can still reach an
+  // edge up to maxSnapM away. A fixed 3x3 only reached ~100-200 m, so the
+  // 300 m driving tolerance was silently unreachable.
+  const rings = Math.max(1, Math.ceil(maxSnapM / INDEX_CELL_M));
+
+  for (let dx = -rings; dx <= rings; dx++) {
+    for (let dy = -rings; dy <= rings; dy++) {
       const list = graph.index.get(`${cx + dx},${cy + dy}`);
       if (!list) continue;
       for (const e of list) {
@@ -411,12 +416,25 @@ class MinHeap {
   }
 }
 
+/**
+ * A multiplier applied to the traversal time of chosen edges, used to steer a
+ * second search away from the first route's roads without forbidding them.
+ * A hard ban can leave no route at all when the only way through is shared;
+ * penalising keeps a route reachable while making a detour cheaper, which is
+ * exactly the "give me another way round" the alternatives feature wants.
+ */
+interface Penalty {
+  edges: Set<number>;
+  factor: number;
+}
+
 /** A* from a snapped start point to a snapped end point, in network seconds. */
 function search(
   graph: Graph,
   start: SnapResult,
   goal: SnapResult,
   profile: Profile,
+  penalize?: Penalty,
 ): { path: number[]; edges: number[]; timeS: number } | null {
 
   const nodeCount = graph.nodeCount;
@@ -432,17 +450,21 @@ function search(
   const hOf = (n: number) => haversineM(graph.lon[n], graph.lat[n], goal.lon, goal.lat) * invMaxSpeed;
 
   const heap = new MinHeap();
+  // Edge cost with the alternative-route penalty folded in.
+  const costOf = (edge: number, base: number): number =>
+    penalize && penalize.edges.has(edge) ? base * penalize.factor : base;
   // Seeding walks from the projection to an endpoint. `forward` says whether
   // that move follows the way's own A→B direction; a one-way refuses the other.
   const seed = (node: number, distToNodeM: number, viaEdge: number, forward: boolean) => {
-    const time = edgeTimeS(
+    const base = edgeTimeS(
       profile,
       distToNodeM,
       graph.edgeHighway[viaEdge],
       graph.edgeRoad[viaEdge],
       forward,
     );
-    if (time === null) return;
+    if (base === null) return;
+    const time = costOf(viaEdge, base);
     if (time >= g[node]) return;
     g[node] = time;
     parent[node] = -1;
@@ -493,14 +515,15 @@ function search(
       const edge = neighborEdges[k];
       // Traversing edge from `node` to `to` is forward when `node` is the A end.
       const forward = graph.edgeA[edge] === node;
-      const step = edgeTimeS(
+      const base = edgeTimeS(
         profile,
         graph.edgeLenM[edge],
         graph.edgeHighway[edge],
         graph.edgeRoad[edge],
         forward,
       );
-      if (step === null) continue;
+      if (base === null) continue;
+      const step = costOf(edge, base);
       const alt = g[node] + step;
       if (alt >= g[to]) continue;
       g[to] = alt;
@@ -529,24 +552,27 @@ function search(
   return { path, edges, timeS: best.timeS };
 }
 
+/** A route, plus the set of edge ids it used (for penalising an alternative). */
+interface BuiltRoute {
+  result: RouteResult;
+  edges: Set<number>;
+}
+
 /**
- * The full route from a start point to a destination pin over the network,
- * with the two straight connectors included so the drawn line visibly joins
- * the blue dot to the pin.
- *
- * Returns null when either point is off the network for this profile, or when
- * the two are not connected (an island in the sea is not a road).
+ * The full route between two already-snapped points over the network, with the
+ * two straight connectors included so the drawn line visibly joins the blue dot
+ * to the pin. The alternative-route machinery reuses this with a penalty so a
+ * second search can be steered away from the first result's roads.
  */
-export function routeBetween(
+function buildRoute(
   graph: Graph,
   start: LatLng,
   dest: LatLng,
   profile: Profile,
-): RouteResult | null {
-  const startSnap = nearestSnap(graph, start.lon, start.lat, profile.maxSnapM);
-  const goalSnap = nearestSnap(graph, dest.lon, dest.lat, profile.maxSnapM);
-  if (!startSnap || !goalSnap) return null;
-
+  startSnap: SnapResult,
+  goalSnap: SnapResult,
+  penalize?: Penalty,
+): BuiltRoute | null {
   const roadName = (e: number): string | null => graph.edgeRoad[e]?.name ?? null;
   const roadJunction = (e: number): string | null => graph.edgeRoad[e]?.junction ?? null;
   const roadLimit = (e: number): number | null => parseMaxspeedKmh(graph.edgeRoad[e]?.maxspeed);
@@ -579,11 +605,14 @@ export function routeBetween(
   };
 
   let timeS = 0;
+  const usedEdges = new Set<number>();
 
   // Fast path: both projections land on the same road segment. It is only
   // usable when the profile may travel that way along the segment (a one-way
   // with the destination "behind" the start falls through to a full search).
-  let sameEdge = startSnap.edge === goalSnap.edge;
+  // Skipped under a penalty: the fast path ignores edge costs, so it would
+  // always rebuild the very route the alternative search is steering away from.
+  let sameEdge = !penalize && startSnap.edge === goalSnap.edge;
   if (sameEdge) {
     const forward = startSnap.distA <= goalSnap.distA;
     const t = edgeTimeS(
@@ -598,13 +627,17 @@ export function routeBetween(
   }
 
   if (sameEdge) {
+    usedEdges.add(startSnap.edge);
     push([startSnap.lon, startSnap.lat], startName, startJunction, startLimit);
     push([goalSnap.lon, goalSnap.lat], startName, startJunction, startLimit);
     push([dest.lon, dest.lat], goalName, goalJunction, goalLimit);
   } else {
-    const res = search(graph, startSnap, goalSnap, profile);
+    const res = search(graph, startSnap, goalSnap, profile, penalize);
     if (!res) return null;
     timeS = res.timeS;
+    usedEdges.add(startSnap.edge);
+    usedEdges.add(goalSnap.edge);
+    for (const e of res.edges) if (e >= 0) usedEdges.add(e);
     push([startSnap.lon, startSnap.lat], startName, startJunction, startLimit);
     for (let i = 0; i < res.path.length; i++) {
       const n = res.path[i];
@@ -643,11 +676,95 @@ export function routeBetween(
     ) ?? 0);
 
   return {
-    distanceM,
-    durationS: Math.round(timeS + connector),
-    coordinates: coords,
-    segmentNames: names,
-    segmentJunctions: junctions,
-    segmentMaxspeed: maxspeeds,
+    result: {
+      distanceM,
+      durationS: Math.round(timeS + connector),
+      coordinates: coords,
+      segmentNames: names,
+      segmentJunctions: junctions,
+      segmentMaxspeed: maxspeeds,
+    },
+    edges: usedEdges,
   };
+}
+
+/**
+ * The full route from a start point to a destination pin over the network,
+ * with the two straight connectors included so the drawn line visibly joins
+ * the blue dot to the pin.
+ *
+ * Returns null when either point is off the network for this profile, or when
+ * the two are not connected (an island in the sea is not a road).
+ */
+export function routeBetween(
+  graph: Graph,
+  start: LatLng,
+  dest: LatLng,
+  profile: Profile,
+): RouteResult | null {
+  const startSnap = nearestSnap(graph, start.lon, start.lat, profile.maxSnapM);
+  const goalSnap = nearestSnap(graph, dest.lon, dest.lat, profile.maxSnapM);
+  if (!startSnap || !goalSnap) return null;
+  return buildRoute(graph, start, dest, profile, startSnap, goalSnap)?.result ?? null;
+}
+
+export interface AlternativeOptions {
+  /** Extra routes to look for beyond the fastest (default 2). */
+  maxAlternatives?: number;
+  /** How hard to push the search off the previous route's roads (default 3x). */
+  penaltyFactor?: number;
+}
+
+/** A stable identity for a route's edge set, for de-duplicating alternatives. */
+function edgeSignature(edges: Set<number>): string {
+  return [...edges].sort((a, b) => a - b).join(",");
+}
+
+/**
+ * The fastest route followed by up to `maxAlternatives` genuinely different
+ * ones, fastest-first.
+ *
+ * WHY EDGE PENALTY. A second A* with the first route's edges forbidden can
+ * return nothing the moment the only way through shares a bridge or a causeway.
+ * Instead each found route's edges are penalised (multiplied) and the search is
+ * re-run: it prefers untouched roads, so a distinct route surfaces when one
+ * exists, but it can still fall back to shared stretches rather than fail. A
+ * re-run that lands on an already-seen edge set is discarded and the search
+ * stops, since penalising further would only repeat it.
+ */
+export function routeAlternatives(
+  graph: Graph,
+  start: LatLng,
+  dest: LatLng,
+  profile: Profile,
+  opts: AlternativeOptions = {},
+): RouteResult[] {
+  const startSnap = nearestSnap(graph, start.lon, start.lat, profile.maxSnapM);
+  const goalSnap = nearestSnap(graph, dest.lon, dest.lat, profile.maxSnapM);
+  if (!startSnap || !goalSnap) return [];
+
+  const maxAlternatives = opts.maxAlternatives ?? 2;
+  const penaltyFactor = opts.penaltyFactor ?? 3;
+
+  const primary = buildRoute(graph, start, dest, profile, startSnap, goalSnap);
+  if (!primary) return [];
+
+  const routes: RouteResult[] = [primary.result];
+  const penalized = new Set<number>(primary.edges);
+  const seen = new Set<string>([edgeSignature(primary.edges)]);
+
+  for (let i = 0; i < maxAlternatives; i++) {
+    const next = buildRoute(graph, start, dest, profile, startSnap, goalSnap, {
+      edges: penalized,
+      factor: penaltyFactor,
+    });
+    if (!next) break;
+    const sig = edgeSignature(next.edges);
+    if (seen.has(sig)) break;
+    seen.add(sig);
+    routes.push(next.result);
+    for (const e of next.edges) penalized.add(e);
+  }
+
+  return routes;
 }

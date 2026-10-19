@@ -24,7 +24,7 @@
  * hand-bundled the same way the MapLibre and pass workers are.
  */
 
-import { buildGraph, routeBetween, type Graph } from "./graph.ts";
+import { buildGraph, routeAlternatives, type Graph } from "./graph.ts";
 import { PROFILES, type RouteMode } from "./profiles.ts";
 
 type Request = {
@@ -72,12 +72,23 @@ self.addEventListener("message", (e: MessageEvent) => {
     try {
       const graph = await loadGraph();
       const routes: Record<string, unknown> = {};
+      const alternatives: Record<string, unknown> = {};
       for (const mode of modes) {
         const profile = PROFILES[mode];
         if (!profile) continue;
-        routes[mode] = routeBetween(graph, req.start, req.dest, profile);
+        // Option 0 is the fastest; the rest are edge-penalty reruns. Only the
+        // extras travel as alternatives, so the primary is never duplicated on
+        // the wire.
+        const options = routeAlternatives(graph, req.start, req.dest, profile);
+        routes[mode] = options[0] ?? null;
+        alternatives[mode] = options.slice(1);
       }
-      (self as unknown as Worker).postMessage({ id: req.id, ok: true, result: routes });
+      (self as unknown as Worker).postMessage({
+        id: req.id,
+        ok: true,
+        result: routes,
+        alternatives,
+      });
     } catch (err) {
       (self as unknown as Worker).postMessage({
         id: req.id,

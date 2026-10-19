@@ -4,7 +4,7 @@
  * MapView owns the MapLibre instance and the style lifecycle; everything a
  * locate/drop-pin route touches on the map lives in here and is driven by a
  * single `attachNavigation(map, opts)` call. The UI peers (LocateButton,
- * DestinationSheet) stay dumb: they publish the current NavigationState via
+ * NavigationOverlay) stay dumb: they publish the current NavigationState via
  * window events and render whatever state they are handed.
  *
  * Three responsibilities, kept apart by function:
@@ -167,6 +167,10 @@ type Internal = {
   routeStatus: RouteStatus;
   routeError: string | null;
   routes: RouteMap;
+  /** All route options per mode, fastest first (index 0); extras follow. */
+  routeOptions: Partial<Record<RouteMode, RouteLeg[]>>;
+  /** The option each mode is currently showing. */
+  selectedOption: Partial<Record<RouteMode, number>>;
   steps: NavigationStep[];
   /** Copy of what was last published, to skip no-op renders. */
   lastSignature: string;
@@ -233,6 +237,8 @@ function initialState(activeMode: RouteMode): Internal {
     routeStatus: "idle",
     routeError: null,
     routes: {},
+    routeOptions: {},
+    selectedOption: {},
     steps: [],
     lastSignature: "",
     firstFlyPending: false,
@@ -272,6 +278,8 @@ function signature(s: Internal): string {
     s.routeError,
     s.routes.driving ? `${Math.round(s.routes.driving.distanceM)},${Math.round(s.routes.driving.durationS)}` : "n",
     s.routes.walking ? `${Math.round(s.routes.walking.distanceM)},${Math.round(s.routes.walking.durationS)}` : "n",
+    (s.routeOptions[s.activeMode] ?? []).map((r) => `${Math.round(r.distanceM)},${Math.round(r.durationS)}`).join(";"),
+    s.selectedOption[s.activeMode] ?? 0,
     s.steps.map((step) => step.distanceM).join(","),
     s.recenterPending,
     s.followMode,
@@ -297,13 +305,14 @@ function signature(s: Internal): string {
  * Returns the distance travelled along the polyline up to the closest point,
  * and the lateral (perpendicular) distance from the polyline in metres.
  */
-function projectOnRoute(coords: [number, number][], lon: number, lat: number) {
+function projectOnRoute(coords: [number, number][], lon: number, lat: number, hintM?: number) {
   let alongM = 0;
   let bestLateralM = Infinity;
   let bestAlongM = 0;
   let bestSeg = 0;
   let bestProjLon = coords[0][0];
   let bestProjLat = coords[0][1];
+  let bestScore = Infinity;
   for (let i = 1; i < coords.length; i++) {
     const [ax, ay] = coords[i - 1];
     const [bx, by] = coords[i];
@@ -320,7 +329,15 @@ function projectOnRoute(coords: [number, number][], lon: number, lat: number) {
     const projLat = ay + (u * (by - ay));
     const lateral = haversineM(lon, lat, projLon, projLat);
     const cumulative = alongM + u * segM;
-    if (lateral < bestLateralM) {
+    // Prefer the segment near the last known progress. On a route that doubles
+    // back (out-and-back, a road parallel to itself) the globally nearest
+    // segment can be the earlier overlapping pass, which sends progress
+    // backwards and mis-reads off-route. A soft penalty keeps the near-hint
+    // match unless we are genuinely far from it.
+    const stray = hintM === undefined ? 0 : Math.max(0, Math.abs(cumulative - hintM) - 60);
+    const score = lateral + stray * 0.5;
+    if (score < bestScore) {
+      bestScore = score;
       bestLateralM = lateral;
       bestAlongM = cumulative;
       bestSeg = i - 1; // segment index: coords[bestSeg] -> coords[bestSeg + 1]
@@ -355,7 +372,7 @@ function updateRouteProgress(s: Internal): void {
     return;
   }
 
-  const proj = projectOnRoute(coords, s.userLocation.lon, s.userLocation.lat);
+  const proj = projectOnRoute(coords, s.userLocation.lon, s.userLocation.lat, s.progressM);
   const { distanceM, lateralM, segIndex } = proj;
   s.progressM = Math.max(0, distanceM);
   s.remainingM = Math.max(0, (route.distanceM ?? 0) - s.progressM);
@@ -382,10 +399,11 @@ function updateRouteProgress(s: Internal): void {
   s.nextManeuver =
     s.stepIndex < s.baseSteps.length - 1 ? pointAtDistance(coords, nextCumEnd) : null;
 
-  const finalCoord = coords[coords.length - 1];
-  const distToDestinationM = haversineM(proj.snappedLon, proj.snappedLat, finalCoord[0], finalCoord[1]);
+  // Arrival is judged on route-remaining, not crow-flies to the final vertex:
+  // a road that passes within metres of the destination before the real
+  // approach must not declare "arrived" early.
   const off = lateralM > OFF_ROUTE_M[s.activeMode];
-  if (distToDestinationM <= ARRIVED_M) {
+  if (s.remainingM <= ARRIVED_M) {
     s.routeStatus = "arrived";
     s.offRoute = false;
     s.nextManeuver = null;
@@ -665,6 +683,11 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       routeStatus: state.routeStatus,
       routeError: state.routeError,
       routes: state.routes,
+      routeOptions: (state.routeOptions[state.activeMode] ?? []).map((r) => ({
+        distanceM: r.distanceM,
+        durationS: r.durationS,
+      })),
+      selectedOption: state.selectedOption[state.activeMode] ?? 0,
       steps: state.steps,
       speedMph: state.speedMph,
       speedLimitKmh: state.speedLimitKmh,
@@ -1098,7 +1121,29 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     } as never);
   };
 
+  const clearDestinationData = () => {
+    if (!map.getSource(SOURCE_DEST)) return;
+    (map.getSource(SOURCE_DEST) as GeoJSONSource).setData(emptyCollection() as never);
+  };
+
+  // Publish the active route's geometry (or null) for consumers that are not
+  // the map - the elevation profile needs the raw coordinates, which the
+  // public NavigationState deliberately omits (they are large and would bloat
+  // every GPS-driven render).
+  const publishRouteGeometry = (route: RouteLeg | null | undefined) => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(
+      new CustomEvent("openmannin:route-geometry", {
+        detail:
+          route && route.coordinates.length > 1
+            ? { coordinates: route.coordinates, distanceM: route.distanceM ?? 0 }
+            : null,
+      }),
+    );
+  };
+
   const drawRoute = (route: RouteLeg | null | undefined) => {
+    publishRouteGeometry(route);
     const source = map.getSource(SOURCE_ROUTE) as GeoJSONSource | undefined;
     if (!source) return;
     if (!route) {
@@ -1121,6 +1166,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     if (map.getSource(SOURCE_ROUTE)) {
       (map.getSource(SOURCE_ROUTE) as GeoJSONSource).setData(emptyCollection() as never);
     }
+    publishRouteGeometry(null);
     drawManeuver(null);
   };
 
@@ -1199,26 +1245,46 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       routeErrorAt = Date.now();
       state.routeError = reply.error ?? "Routing failed.";
       state.routes = {};
+      state.routeOptions = {};
+      state.selectedOption = {};
       state.steps = [];
       state.baseSteps = [];
       state.stepIndex = 0;
       state.nextStepM = 0;
+      // Do not leave the previous route's polyline on the map under an error
+      // banner: clear it so the error is what the driver sees.
+      clearRouteLayer();
+      state.nextManeuver = null;
       publish();
       return;
     }
 
-    state.routes = reply.routes;
+    state.routes = { ...reply.routes };
+    // Fold the extras in behind the fastest route so option 0 is always the
+    // primary and the UI can enumerate them uniformly.
+    state.routeOptions = {};
+    state.selectedOption = {};
+    for (const mode of ROUTE_MODES) {
+      const primary = state.routes[mode];
+      state.routeOptions[mode] = primary ? [primary, ...(reply.alternatives[mode] ?? [])] : [];
+      state.selectedOption[mode] = 0;
+    }
     state.routesFresh = true;
+    // The status must reflect the mode actually being shown, not just
+    // driving/walking: a cycling-only route is a route, and a null active mode
+    // with a present fallback is not.
     const active = reply.routes[state.activeMode];
-    const bothNull = !reply.routes.driving && !reply.routes.walking;
-    if (bothNull) {
+    if (!active) {
       state.routeStatus = "no-route";
-      state.routeError =
-        "No road route between your position and this pin. It may be away from the road network.";
+      state.routeError = `No ${state.activeMode} route to this pin. It may be away from the network.`;
     } else {
       state.routeStatus = "ready";
       state.routeError = null;
     }
+    // A newly computed route is a fresh set of maneuvers: letting the voice
+    // guide re-announce them would otherwise be suppressed by the once-only
+    // keys reused from the previous route (e.g. after an off-route recalc).
+    spokenKeys = new Set<string>();
     drawRoute(active);
     syncSteps(active);
     liftNavLayers(map);
@@ -1236,8 +1302,48 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     cancelSpeech();
     if (state.routesFresh) {
       const route = state.routes[mode];
+      // Re-evaluate the status for the newly active mode rather than carrying
+      // the previous mode's verdict (a cycling-only leg was labelled "no route").
+      if (!route) {
+        state.routeStatus = "no-route";
+        state.routeError = `No ${mode} route to this pin. It may be away from the network.`;
+      } else if (state.routeStatus !== "arrived") {
+        state.routeStatus = "ready";
+        state.routeError = null;
+      }
       drawRoute(route);
       syncSteps(route);
+    }
+    publish();
+  };
+
+  /**
+   * Show one of the active mode's route options. The legs were all computed
+   * together, so switching is a redraw plus a rebuild of the turn list - no
+   * routing round-trip. The camera re-fits only in preview, never mid-drive,
+   * so picking an alternative does not yank the map while the driver is moving.
+   */
+  const selectOption = (mode: RouteMode, index: number) => {
+    const options = state.routeOptions[mode];
+    if (!options || index < 0 || index >= options.length) return;
+    if ((state.selectedOption[mode] ?? 0) === index) return;
+    state.selectedOption[mode] = index;
+    const route = options[index];
+    state.routes[mode] = route;
+    if (mode !== state.activeMode) {
+      publish();
+      return;
+    }
+    spokenKeys = new Set<string>();
+    cancelSpeech();
+    syncSteps(route);
+    drawRoute(route);
+    if (!state.navigating && (state.routeStatus === "ready" || state.routeStatus === "no-route")) {
+      if (route) {
+        state.routeStatus = "ready";
+        state.routeError = null;
+        fitRoute(route);
+      }
     }
     publish();
   };
@@ -1250,6 +1356,8 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     state.destination = null;
     state.navigating = false;
     state.routes = {};
+    state.routeOptions = {};
+    state.selectedOption = {};
     state.steps = [];
     state.baseSteps = [];
     state.stepIndex = 0;
@@ -1259,7 +1367,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     state.routeError = null;
     state.offRoute = false;
     state.fitPending = false;
-    setDestinationData(0, 0);
+    clearDestinationData();
     clearRouteLayer();
     publish();
   };
@@ -1531,6 +1639,16 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     setActiveMode(mode);
   };
 
+  /** openmannin:nav-option — show alternative {index} of the active (or given) mode. */
+  const onOptionWindow = (e: Event) => {
+    e.stopPropagation();
+    const d = ((e as CustomEvent).detail ?? {}) as { index?: unknown; mode?: unknown };
+    if (typeof d.index !== "number") return;
+    const mode: RouteMode =
+      d.mode === "driving" || d.mode === "walking" || d.mode === "cycling" ? d.mode : state.activeMode;
+    selectOption(mode, d.index);
+  };
+
   const onClearEvent = () => {
     ensureLayers();
     clearDestination();
@@ -1644,6 +1762,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
   window.addEventListener("openmannin:locate", onLocateWindow);
   window.addEventListener("openmannin:navigate", onNavigateWindow);
   window.addEventListener("openmannin:nav-mode", onModeWindow);
+  window.addEventListener("openmannin:nav-option", onOptionWindow);
   window.addEventListener("openmannin:nav-follow", onFollowWindow);
   window.addEventListener("openmannin:nav-voice", onVoiceWindow);
   window.addEventListener("openmannin:clear-nav", onClearWindow);
@@ -1681,6 +1800,7 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
       window.removeEventListener("openmannin:locate", onLocateWindow);
       window.removeEventListener("openmannin:navigate", onNavigateWindow);
       window.removeEventListener("openmannin:nav-mode", onModeWindow);
+      window.removeEventListener("openmannin:nav-option", onOptionWindow);
       window.removeEventListener("openmannin:nav-follow", onFollowWindow);
       window.removeEventListener("openmannin:nav-voice", onVoiceWindow);
       window.removeEventListener("openmannin:clear-nav", onClearWindow);

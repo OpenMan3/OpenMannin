@@ -807,6 +807,31 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+  // ---- Satnav camera -----------------------------------------------------
+  // While navigating, the camera drops into a tilted, heading-up view that
+  // follows behind the car: the dot rides low so the road ahead fills the top
+  // of the screen, the way a dashboard unit frames a route. Tilt and zoom are
+  // set once when navigation engages (a per-frame animation would be cancelled
+  // by the next camera write anyway); the per-frame follow only pans and
+  // rotates.
+  /** Tilt of the navigation camera, in degrees. */
+  const NAV_PITCH = 55;
+  /** Zoom the navigation camera steps up to while following a route. */
+  const NAV_ZOOM = 16.5;
+  /** How far below screen centre the dot rides, as a fraction of the height. */
+  const NAV_DOT_LOWER_FRAC = 0.16;
+
+  /** Engage or release the tilted navigation camera. */
+  const setNavCamera = (on: boolean) => {
+    if (on) {
+      map.setPitch(NAV_PITCH);
+      if (map.getZoom() < NAV_ZOOM) map.setZoom(NAV_ZOOM);
+    } else {
+      map.setPitch(0);
+      map.setBearing(0);
+    }
+  };
+
   const drawUser = () => {
     if (state.displayPos) setUserData(state.displayPos);
   };
@@ -815,10 +840,20 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
   const cameraToDisplay = () => {
     const p = state.displayPos;
     if (!p || state.followMode === "none" || state.recenterPending) return;
-    if (state.followMode === "heading" && state.displayHeadingDeg !== null) {
-      map.setBearing(state.displayHeadingDeg);
-    }
-    map.setCenter([p.lon, p.lat]);
+    const bearing =
+      state.followMode === "heading" && state.displayHeadingDeg !== null
+        ? state.displayHeadingDeg
+        : map.getBearing();
+    // Navigating: hold the dot low so the road ahead is visible. The pixel
+    // offset is a screen-space shift, so it is independent of the persistent
+    // bottom padding MapView maintains for the sheet.
+    const lowerPx = state.navigating ? map.getCanvas().clientHeight * NAV_DOT_LOWER_FRAC : 0;
+    map.easeTo({
+      center: [p.lon, p.lat],
+      bearing,
+      offset: [0, -lowerPx],
+      duration: 0,
+    });
   };
 
   const stopFollowAnim = () => {
@@ -1106,6 +1141,8 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     if (state.locationStatus === "active" || state.locationStatus === "locating") {
       state.locationStatus = "idle";
     }
+    if (state.followMode === "heading") state.followMode = "follow";
+    setNavCamera(false);
     clearUserLayer();
     clearRouteLayer();
     publish();
@@ -1370,6 +1407,8 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     state.routeError = null;
     state.offRoute = false;
     state.fitPending = false;
+    if (state.followMode === "heading") state.followMode = "follow";
+    setNavCamera(false);
     clearDestinationData();
     clearRouteLayer();
     publish();
@@ -1425,6 +1464,8 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     state.destination = dest;
     // A new destination starts a fresh preview: no spoken guidance yet.
     state.navigating = false;
+    if (state.followMode === "heading") state.followMode = "follow";
+    setNavCamera(false);
     spokenKeys = new Set<string>();
     cancelSpeech();
     state.routesFresh = false;
@@ -1622,11 +1663,11 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     if (!state.destination) return;
     state.navigating = true;
     state.fitPending = true;
-    // Jump into tracking so the view follows the car once the route is live;
-    // the user dials heading-up from the follow button if they want it. A
+    // Engage the satnav view: heading-up follow with the dot riding low. A
     // fresh Navigate also clears any parked "Recenter" so following resumes.
-    state.followMode = "follow";
+    state.followMode = "heading";
     state.recenterPending = false;
+    setNavCamera(true);
     if (!state.userLocation) {
       // No fix yet: ask for one; requestRoutes fires when the fix lands.
       state.routeError = null;
@@ -1750,6 +1791,9 @@ export function attachNavigation(map: Map, opts: AttachOptions): NavigationHost 
     // truthiness, which is always true, so this branch was dead.
     ensureLayersAndRoute();
     state.navigating = false;
+    // Release the tilted view and stop rotating to course.
+    if (state.followMode === "heading") state.followMode = "follow";
+    setNavCamera(false);
     spokenKeys = new Set<string>();
     cancelSpeech();
     publish();

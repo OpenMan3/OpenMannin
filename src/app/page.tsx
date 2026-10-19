@@ -298,6 +298,13 @@ function PageContent() {
     );
   }, [nav]);
 
+  // Mirror the host's authoritative navigation state for the slim-while-driving
+  // layout. The host also clears it when a fresh destination is dropped or the
+  // route ends, so the page never has to track those transitions itself.
+  useEffect(() => {
+    setNavigating(nav?.navigating ?? false);
+  }, [nav]);
+
   // ?pick= — reopen the feature popup once the map exists. The clicked
   // position alone is not enough for a popup (it needs the feature's
   // properties), so the layer file is reloaded and the nearest geometry is
@@ -631,7 +638,7 @@ function PageContent() {
           onMapReady={setMap}
           insetBottom={navBottomInset + 8}
           insetTop={navTopInset}
-          mobileBottomInset={64}
+          mobileBottomInset={navigating ? 0 : 64}
           terrain3d={terrain3d}
           measureMode={measureActive}
           measurePoints={measurePoints}
@@ -655,10 +662,12 @@ function PageContent() {
         )}
 
         {/* Elevation profile for the active route (online-only; degrades to a
-            quiet note). Bottom-left on desktop, lifted above the nav card on
-            mobile so it never sits under it. */}
-        {map && routeGeometry && (
-          <div className="absolute left-4 bottom-[calc(7rem+env(safe-area-inset-bottom))] z-20 sm:bottom-4">
+            quiet note). A planning aid, so it shows in the pre-drive preview
+            only - while driving the satnav view owns the map. Mobile docks it
+            top-left so it can never collide with the bottom-anchored nav card;
+            desktop keeps it bottom-left, clear of the right-anchored card. */}
+        {map && routeGeometry && !navigating && (
+          <div className="absolute left-4 top-4 z-20 sm:top-auto sm:bottom-4">
             <ElevationProfile
               coords={routeGeometry.coordinates}
               distanceM={routeGeometry.distanceM}
@@ -717,6 +726,11 @@ function PageContent() {
       </section>
 
 {/* ---- unified bottom tab bar (always visible) ---- */}
+      {/* The tab bar is the home for the layer/search panels. While navigating
+          the screen is deliberately slimmed: the satnav HUD, dock and
+          follow/voice controls own the map, so the bar steps out of the way
+          (End restores it). */}
+      {!navigating && (
       <nav
         aria-label={t("nav.primary")}
         className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 rounded-full border border-line bg-page/90 backdrop-blur-xl shadow-lg px-3 py-2 md:px-4 md:py-2"
@@ -752,6 +766,7 @@ function PageContent() {
           );
         })}
       </nav>
+      )}
     </main>
   );
 }
